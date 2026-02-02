@@ -1,0 +1,136 @@
+<h4>Create Detail</h4>
+
+<form method="POST" action="/dashboard/details/create">
+  <!-- MENU -->
+  <select name="parentId" class="form-select mb-3" required>
+    <% menus.forEach(m => { %>
+      <option
+        value="<%= m._id %>"
+        <%= currentMenuId && currentMenuId.toString() === m._id.toString() ? 'selected' : '' %>
+      >
+        <%= m.title.en %>
+      </option>
+    <% }) %>
+  </select>
+
+  <!-- TYPE -->
+  <select name="type" id="typeSelect" class="form-select mb-3">
+    <option value="html">HTML Block</option>
+    <option value="editor">Text Editor</option>
+  </select>
+
+  <!-- LANGUAGE TABS -->
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-en" type="button">
+        EN
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vi" type="button">
+        VI
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-zh" type="button">
+        ZH
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- EN -->
+    <div class="tab-pane fade show active" id="tab-en">
+      <input class="form-control mb-2" name="title_en" id="title_en" placeholder="Title EN">
+      <input class="form-control mb-3" name="subtitle_en" id="subtitle_en" placeholder="Subtitle EN">
+    </div>
+
+    <!-- VI -->
+    <div class="tab-pane fade" id="tab-vi">
+      <input class="form-control mb-2" name="title_vi" id="title_vi" placeholder="Title VI">
+      <input class="form-control mb-3" name="subtitle_vi" id="subtitle_vi" placeholder="Subtitle VI">
+    </div>
+
+    <!-- ZH -->
+    <div class="tab-pane fade" id="tab-zh">
+      <input class="form-control mb-2" name="title_zh" id="title_zh" placeholder="Title ZH">
+      <input class="form-control mb-3" name="subtitle_zh" id="subtitle_zh" placeholder="Subtitle ZH">
+    </div>
+  </div>
+
+  <!-- HTML -->
+  <div id="htmlBlock">
+    <textarea name="content" class="form-control font-monospace" rows="8"></textarea>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editorBlock" class="d-none">
+    <textarea id="editor"></textarea>
+  </div>
+
+  <button class="btn btn-primary mt-3">Create</button>
+</form>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script>
+  /* ================= TYPE ================= */
+  const typeSelect = document.getElementById("typeSelect");
+  const htmlBlock = document.getElementById("htmlBlock");
+  const editorBlock = document.getElementById("editorBlock");
+  let editor;
+
+  function toggleType(type) {
+    htmlBlock.classList.toggle("d-none", type === "editor");
+    editorBlock.classList.toggle("d-none", type === "html");
+
+    if (type === "editor" && !editor) {
+      ClassicEditor.create(document.getElementById("editor")).then(e => {
+        editor = e;
+        editor.model.document.on("change:data", () => {
+          document.querySelector('[name="content"]').value = editor.getData();
+        });
+      });
+    }
+  }
+
+  toggleType(typeSelect.value);
+  typeSelect.addEventListener("change", e => toggleType(e.target.value));
+
+  /* ================= AUTO COPY LANG ================= */
+  const fields = {
+    title: {
+      en: document.getElementById("title_en"),
+      vi: document.getElementById("title_vi"),
+      zh: document.getElementById("title_zh")
+    },
+    subtitle: {
+      en: document.getElementById("subtitle_en"),
+      vi: document.getElementById("subtitle_vi"),
+      zh: document.getElementById("subtitle_zh")
+    }
+  };
+
+  const edited = {
+    title: { vi: false, zh: false },
+    subtitle: { vi: false, zh: false }
+  };
+
+  // mark edited when user types
+  ["vi", "zh"].forEach(lang => {
+    ["title", "subtitle"].forEach(field => {
+      fields[field][lang].addEventListener("input", () => {
+        edited[field][lang] = true;
+      });
+    });
+  });
+
+  // auto copy from EN
+  ["title", "subtitle"].forEach(field => {
+    fields[field].en.addEventListener("input", e => {
+      ["vi", "zh"].forEach(lang => {
+        if (!edited[field][lang]) {
+          fields[field][lang].value = e.target.value;
+        }
+      });
+    });
+  });
+</script>

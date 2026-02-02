@@ -1,0 +1,21 @@
+<ul class="nav flex-column pt-3">
+  <li class="nav-item">
+    <a
+      href="/dashboard/menus"
+      class="nav-link <%= !currentMenuId ? 'fw-bold active' : '' %>"
+    >
+      Home
+    </a>
+  </li>
+
+  <% menus.forEach(menu => { %>
+  <li class="nav-item">
+    <a
+      href="/dashboard/details/<%= menu._id %>"
+      class="nav-link <%= currentMenuId === menu._id.toString() ? 'fw-bold active' : '' %>"
+    >
+      <%= menu.title.en %>
+    </a>
+  </li>
+  <% }) %>
+</ul>

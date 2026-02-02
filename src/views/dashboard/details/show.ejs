@@ -1,0 +1,32 @@
+<% if (!detail) { %>
+<div class="text-center py-5 border rounded bg-light">
+  <h5>No detail yet</h5>
+  <a
+    href="/dashboard/details/create?menuId=<%= menuId %>"
+    class="btn btn-primary"
+  >
+    + Create Detail
+  </a>
+</div>
+<% } else { %>
+
+<h4 class="mb-1"><%= detail.title?.en || 'Detail' %></h4>
+
+<% if (detail.subtitle?.en) { %>
+<p class="text-muted"><%= detail.subtitle.en %></p>
+<% } %>
+
+<span class="badge bg-info">Type: <%= detail.type %></span>
+
+<hr />
+
+<div class="detail-content"><%- detail.content || '' %></div>
+
+<a
+  href="/dashboard/details/<%= detail._id %>/edit"
+  class="btn btn-warning mt-3"
+>
+  Edit
+</a>
+
+<% } %>

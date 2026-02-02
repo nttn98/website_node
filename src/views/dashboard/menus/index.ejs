@@ -1,0 +1,121 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0">Menus</h4>
+
+  <% if (menus && menus.length) { %>
+  <a href="/dashboard/menus/create" class="btn btn-primary btn-sm">
+    + Add Menu
+  </a>
+  <% } %>
+</div>
+
+<% if (!menus || !menus.length) { %>
+
+<!-- ===== EMPTY STATE ===== -->
+<div class="text-center py-5 border rounded bg-light">
+  <h5 class="mb-2">No menu yet</h5>
+  <p class="text-muted mb-3">Start by creating your first menu</p>
+
+  <a href="/dashboard/menus/create" class="btn btn-primary">+ Add Menu</a>
+</div>
+
+<% } else { %>
+
+<!-- ===== MENU TABLE ===== -->
+<table class="table table-bordered align-middle">
+  <thead class="table-light">
+    <tr>
+      <th>Title</th>
+      <th>Route</th>
+      <th>Type</th>
+      <th class="text-center">Status</th>
+      <th width="180">Action</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% menus.forEach(menu => { %>
+    <tr data-id="<%= menu._id %>">
+      <td><%= menu.title?.en || '-' %></td>
+      <td><%= menu.route || '-' %></td>
+      <td><%= menu.type || '-' %></td>
+
+      <!-- ===== STATUS ===== -->
+      <td class="text-center">
+        <div
+          class="form-check form-switch d-inline-flex align-items-center gap-2"
+        >
+          <input class="form-check-input" type="checkbox" <%= menu.isStatus ?
+          'checked' : '' %> onchange="toggleMenuStatus('<%= menu._id %>', this)"
+          />
+
+          <span
+            class="badge <%= menu.isStatus ? 'bg-success' : 'bg-secondary' %>"
+          >
+            <%= menu.isStatus ? 'Active' : 'Hidden' %>
+          </span>
+        </div>
+      </td>
+
+      <!-- ===== ACTION ===== -->
+      <td>
+        <a
+          href="/dashboard/menus/<%= menu._id %>/edit"
+          class="btn btn-sm btn-warning"
+        >
+          Edit
+        </a>
+
+        <button
+          class="btn btn-sm btn-danger"
+          onclick="deleteMenu('<%= menu._id %>')"
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<% } %>
+
+<script>
+  /* ===== DELETE MENU ===== */
+  function deleteMenu(id) {
+    if (!confirm("Delete this menu?")) return;
+
+    fetch(`/api/menus/${id}`, { method: "DELETE" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert(data.message || "Delete failed");
+        }
+      })
+      .catch(() => alert("Delete failed"));
+  }
+
+  /* ===== TOGGLE STATUS ===== */
+  function toggleMenuStatus(id, el) {
+    fetch(`/api/menus/${id}/toggle`, { method: "PATCH" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data || data.isStatus === undefined) throw new Error();
+
+        const badge = el.closest("td").querySelector(".badge");
+
+        if (data.isStatus) {
+          badge.className = "badge bg-success";
+          badge.innerText = "Active";
+        } else {
+          badge.className = "badge bg-secondary";
+          badge.innerText = "Hidden";
+        }
+      })
+      .catch(() => {
+        el.checked = !el.checked;
+        alert("Update status failed");
+      });
+  }
+</script>
