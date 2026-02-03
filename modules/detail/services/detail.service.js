@@ -1,5 +1,4 @@
 const Detail = require("../models/Detail");
-const Menu = require("../models/Menu");
 
 /* ===== DASHBOARD ===== */
 
@@ -15,30 +14,30 @@ exports.getByMenu = (menuId) => {
 };
 
 exports.create = async (data) => {
-  const menu = await Menu.findById(data.parentId).lean();
-
+  // Menu model sẽ được require từ modules/menu/models/Menu nếu cần
+  // const menu = await Menu.findById(data.parentId).lean();
   return Detail.create({
-    parentId: menu._id,
-    parentName: menu.title.en,
-
+    parentId: data.parentId,
+    parentName: data.parentName,
     type: data.type,
     content: data.content,
-
     title: {
       en: data.title_en,
       vi: data.title_vi,
       zh: data.title_zh,
     },
-
     subtitle: {
       en: data.subtitle_en,
       vi: data.subtitle_vi,
       zh: data.subtitle_zh,
     },
-
     isStatus: true,
     isActive: true,
   });
+};
+
+exports.getDetailById = (id) => {
+  return Detail.findById(id).lean();
 };
 
 exports.updateDetail = (id, data) => {

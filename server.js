@@ -46,10 +46,10 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 
 /* ===== ROUTES ===== */
-app.use("/admin", require("./routes/admin.routes"));
-app.use("/api/menus", require("./routes/menu.routes"));
-app.use("/dashboard", require("./routes/dashboard.routes"));
-app.use("/dashboard/details", require("./routes/detail.routes"));
+app.use("/admin", require("./modules/user/routes/admin.routes"));
+app.use("/api/menus", require("./modules/menu/routes/menu.routes"));
+app.use("/dashboard", require("./modules/dashboard/routes/dashboard.routes"));
+app.use("/dashboard/details", require("./modules/detail/routes/detail.routes"));
 
 app.get("/", (req, res) => {
   if (!req.session.admin) {

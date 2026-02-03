@@ -1,4 +1,4 @@
-const menuService = require("../services/menu.service");
+const menuService = require("../../menu/services/menu.service");
 
 exports.index = async (req, res) => {
   try {

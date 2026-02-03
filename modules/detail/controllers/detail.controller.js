@@ -1,5 +1,5 @@
 const detailService = require("../services/detail.service");
-const menuService = require("../services/menu.service");
+const menuService = require("../../menu/services/menu.service");
 
 /* ===== LIST ===== */
 exports.index = async (req, res) => {
@@ -14,7 +14,7 @@ exports.index = async (req, res) => {
 
 /* ===== CREATE ===== */
 exports.createForm = async (req, res) => {
-  const menus = await Menu.find({ isActive: true }).lean();
+  const menus = await menuService.getAllMenus();
 
   res.locals.menus = menus;
   res.locals.currentMenuId = req.query.menuId || null;
@@ -49,13 +49,9 @@ exports.delete = async (req, res) => {
   res.json({ success: true });
 };
 
-const Detail = require("../models/Detail");
-const Menu = require("../models/Menu");
-
 exports.showDetailByMenu = async (req, res) => {
   const menuId = req.params.menuId;
-
-  const menus = await Menu.find({ isActive: true }).lean();
+  const menus = await menuService.getAllMenus();
   const detail = await detailService.getByMenu(menuId);
 
   res.locals.menus = menus;
