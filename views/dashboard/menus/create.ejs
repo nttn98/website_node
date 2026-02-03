@@ -13,10 +13,23 @@
     <input type="text" name="route" class="form-control" placeholder="/about" />
   </div>
 
+  <!-- PARENT MENU -->
+  <div class="mb-3">
+    <label class="form-label">Parent Menu (optional)</label>
+    <select name="parentId" id="parentId" class="form-select">
+      <option value="">-- None --</option>
+      <% if (menus && menus.length) { %> <% menus.forEach(function(menu) { %>
+      <option value="<%= menu._id %>" data-type="<%= menu.type %>">
+        <%= menu.title?.en || menu.title || '-' %>
+      </option>
+      <% }) %> <% } %>
+    </select>
+  </div>
+
   <!-- TYPE -->
   <div class="mb-3">
     <label class="form-label">Type</label>
-    <select name="type" class="form-select" required>
+    <select name="type" id="typeSelect" class="form-select" required>
       <option value="top">Top menu</option>
       <option value="bot">Footer menu</option>
     </select>
@@ -44,3 +57,21 @@
 
   <a href="/dashboard/menus" class="btn btn-secondary ms-2">Cancel</a>
 </form>
+
+<script>
+  // Auto-set type if parent selected, else allow user to pick
+  const parentSelect = document.getElementById("parentId");
+  const typeSelect = document.getElementById("typeSelect");
+  parentSelect.addEventListener("change", function () {
+    const selected = parentSelect.options[parentSelect.selectedIndex];
+    const parentType = selected.getAttribute("data-type");
+    if (parentSelect.value && parentType) {
+      typeSelect.value = parentType;
+      typeSelect.setAttribute("readonly", "readonly");
+      typeSelect.setAttribute("disabled", "disabled");
+    } else {
+      typeSelect.removeAttribute("readonly");
+      typeSelect.removeAttribute("disabled");
+    }
+  });
+</script>

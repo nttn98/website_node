@@ -1,13 +1,6 @@
 {
-  "watch": [
-    "server.js",
-    "controllers",
-    "services",
-    "routes",
-    "models",
-    "middleware"
-  ],
-  "ext": "js,json",
-  "ignore": ["node_modules", "public", "views"],
+  "watch": ["server.js", "modules", "views"],
+  "ext": "js,json,ejs",
+  "ignore": ["node_modules", "public"],
   "exec": "node server.js"
 }

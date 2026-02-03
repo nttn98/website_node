@@ -49,7 +49,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/admin", require("./modules/user/routes/admin.routes"));
 app.use("/api/menus", require("./modules/menu/routes/menu.routes"));
 app.use("/dashboard", require("./modules/dashboard/routes/dashboard.routes"));
-app.use("/dashboard/details", require("./modules/detail/routes/detail.routes"));
+app.use("/details", require("./modules/detail/routes/detail.routes"));
+app.use("/articles", require("./modules/article/routes/article.routes"));
 
 app.get("/", (req, res) => {
   if (!req.session.admin) {

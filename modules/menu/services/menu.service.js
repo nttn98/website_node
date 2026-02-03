@@ -10,15 +10,22 @@ exports.getMenuById = (id) => {
   return Menu.findById(id).lean();
 };
 
-exports.createMenu = (data) => {
+exports.createMenu = async (data) => {
+  let parentName = null;
+  if (data.parentId) {
+    const parentMenu = await Menu.findById(data.parentId).lean();
+    if (parentMenu)
+      parentName = parentMenu.title?.en || parentMenu.title || null;
+  }
   return Menu.create({
     title: new Map([
-      ["en", data.title],
-      ["vi", data.title],
-      ["zh", data.title],
+      ["en", data.title_en || data.title || ""],
+      ["vi", data.title_vi || data.title || ""],
+      ["zh", data.title_zh || data.title || ""],
     ]),
     route: data.route || null,
-    parent: data.parent || null,
+    parentId: data.parentId || null,
+    parentName,
     order: Number(data.order) || 0,
     type: data.type || "top",
     isButton: data.isButton === "on",
@@ -27,18 +34,26 @@ exports.createMenu = (data) => {
   });
 };
 
-exports.updateMenu = (id, data) => {
+exports.updateMenu = async (id, data) => {
+  let parentName = null;
+  if (data.parentId) {
+    const parentMenu = await Menu.findById(data.parentId).lean();
+    if (parentMenu)
+      parentName = parentMenu.title?.en || parentMenu.title || null;
+  }
   const update = {
     route: data.route || null,
-    parent: data.parent || null,
+    parentId: data.parentId || null,
+    parentName,
     order: Number(data.order) || 0,
     type: data.type,
     isButton: data.isButton === "on",
   };
 
-  if (data.title) {
-    update["title.en"] = data.title;
-  }
+  // Multi-language title support
+  if (data.title_en) update["title.en"] = data.title_en;
+  if (data.title_vi) update["title.vi"] = data.title_vi;
+  if (data.title_zh) update["title.zh"] = data.title_zh;
 
   return Menu.findByIdAndUpdate(id, update);
 };

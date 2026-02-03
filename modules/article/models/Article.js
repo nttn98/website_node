@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const DetailSchema = new mongoose.Schema(
+const ArticleSchema = new mongoose.Schema(
   {
     /* ===== MULTI LANGUAGE ===== */
     title: {
@@ -25,11 +25,22 @@ const DetailSchema = new mongoose.Schema(
     /* ===== RELATION ===== */
     parentId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "Detail",
+      required: true,
+    },
+
+    subParentId: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Menu",
       required: true,
     },
 
     parentName: {
+      type: String, // snapshot title.en của Detail
+      required: true,
+    },
+
+    subParentName: {
       type: String, // snapshot title.en của Menu
       required: true,
     },
@@ -39,14 +50,6 @@ const DetailSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
-    /* ===== OPTIONAL ===== */
-    listArticles: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Article",
-      },
-    ],
 
     /* ===== STATUS ===== */
     isStatus: {
@@ -62,4 +65,4 @@ const DetailSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Detail", DetailSchema);
+module.exports = mongoose.model("Article", ArticleSchema);

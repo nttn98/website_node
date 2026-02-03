@@ -1,23 +1,34 @@
 <h4>Create Detail</h4>
 
-<form method="POST" action="/dashboard/details/create">
+<form method="POST" action="/details/create">
   <!-- MENU -->
-  <select name="parentId" class="form-select mb-3" required>
-    <% menus.forEach(m => { %>
-      <option
-        value="<%= m._id %>"
-        <%= currentMenuId && currentMenuId.toString() === m._id.toString() ? 'selected' : '' %>
-      >
-        <%= m.title.en %>
-      </option>
-    <% }) %>
-  </select>
+  <% if (!currentMenuId) { %>
+    <select name="parentId" class="form-select mb-3" required>
+      <% menus.forEach(m => { %>
+        <option
+          value="<%= m._id %>"
+          <%= currentMenuId && currentMenuId.toString() === m._id.toString() ? 'selected' : '' %>
+        >
+          <%= m.title.en %>
+        </option>
+      <% }) %>
+    </select>
+  <% } else { %>
+    <input type="hidden" name="parentId" value="<%= currentMenuId %>" />
+  <% } %>
 
   <!-- TYPE -->
   <select name="type" id="typeSelect" class="form-select mb-3">
     <option value="html">HTML Block</option>
     <option value="editor">Text Editor</option>
   </select>
+
+  <!-- ARTICLES -->
+  <div class="mb-3">
+    <label class="form-label">Articles (IDs, cách nhau bởi dấu phẩy)</label>
+    <input type="text" name="listArticles" class="form-control" placeholder="e.g. 601234,601235" />
+    <div class="form-text">Nhập các Article ID, cách nhau bởi dấu phẩy. (Tích hợp chọn nâng cao sau)</div>
+  </div>
 
   <!-- LANGUAGE TABS -->
   <ul class="nav nav-tabs mb-3" role="tablist">

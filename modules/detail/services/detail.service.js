@@ -1,3 +1,9 @@
+// Lấy tất cả detail của 1 menu
+exports.getDetailsByMenu = (menuId) => {
+  return Detail.find({ parentId: menuId, isActive: true })
+    .sort({ createdAt: -1 })
+    .lean();
+};
 const Detail = require("../models/Detail");
 
 /* ===== DASHBOARD ===== */
@@ -43,7 +49,7 @@ exports.getDetailById = (id) => {
 exports.updateDetail = (id, data) => {
   const update = {
     type: data.type,
-    isStatus: data.isStatus === "on",
+    content: data.content,
   };
 
   if (data.title_en) update["title.en"] = data.title_en;
@@ -54,7 +60,11 @@ exports.updateDetail = (id, data) => {
   if (data.subtitle_vi) update["subtitle.vi"] = data.subtitle_vi;
   if (data.subtitle_zh) update["subtitle.zh"] = data.subtitle_zh;
 
-  return Detail.findByIdAndUpdate(id, update);
+  return Detail.findByIdAndUpdate(
+    id,
+    { $set: update },
+    { new: true, runValidators: true }
+  );
 };
 
 exports.deleteDetail = (id) => {

@@ -1,5 +1,5 @@
 const express = require("express");
-const controller = require("../controllers/detail.controller");
+const controller = require("../controllers/article.controller");
 
 const router = express.Router();
 
@@ -10,6 +10,5 @@ router.get("/:id/edit", controller.editForm);
 router.post("/:id/update", controller.update);
 router.delete("/:id", controller.delete);
 router.post("/:id/toggle", controller.toggleStatus);
-router.get("/:menuId", controller.showDetailByMenu);
 
 module.exports = router;

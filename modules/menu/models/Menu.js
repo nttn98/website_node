@@ -13,9 +13,13 @@ const MenuSchema = new mongoose.Schema(
       default: null,
     },
 
-    parent: {
+    parentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Menu",
+      default: null,
+    },
+    parentName: {
+      type: String,
       default: null,
     },
 
@@ -46,6 +50,8 @@ const MenuSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // (removed listChildMenu, now using parentId/parentName)
   },
   { timestamps: true }
 );

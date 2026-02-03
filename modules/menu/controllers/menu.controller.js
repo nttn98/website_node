@@ -15,7 +15,7 @@ exports.createMenuForm = async (req, res) => {
   const menus = await menuService.getAllMenus();
   res.locals.menus = menus;
 
-  res.render("dashboard/menus/create");
+  res.render("dashboard/menus/create", { menus });
 };
 
 /* ===== EDIT FORM ===== */
@@ -26,17 +26,22 @@ exports.editMenuForm = async (req, res) => {
   res.locals.menus = menus;
   res.locals.currentMenuId = menu._id.toString();
 
-  res.render("dashboard/menus/edit", { menu });
+  res.render("dashboard/menus/edit", { menu, menus });
 };
 
 /* ===== API ===== */
 exports.createMenu = async (req, res) => {
-  await menuService.createMenu(req.body);
+  let data = { ...req.body };
+  // parentId can be null or empty string
+  if (!data.parentId) data.parentId = null;
+  await menuService.createMenu(data);
   res.redirect("/dashboard/menus");
 };
 
 exports.updateMenu = async (req, res) => {
-  await menuService.updateMenu(req.params.id, req.body);
+  let data = { ...req.body };
+  if (!data.parentId) data.parentId = null;
+  await menuService.updateMenu(req.params.id, data);
   res.redirect("/dashboard/menus");
 };
 

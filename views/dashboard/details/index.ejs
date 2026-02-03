@@ -1,0 +1,102 @@
+<a href="/details/create?menuId=<%= menuId %>" class="btn btn-primary">
+  + Create Detail
+</a>
+
+<% if (!details || details.length === 0) { %>
+<div class="text-center py-5 border rounded bg-light">
+  <h5>No detail yet</h5>
+</div>
+<% } else { %>
+<div class="row g-3">
+  <% details.forEach(detail => { %>
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100 border-0 detail-card">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <h5 class="mb-0"><%= detail.title?.en || 'Detail' %></h5>
+          <span class="badge bg-info">Type: <%= detail.type %></span>
+        </div>
+        <% if (detail.subtitle?.en) { %>
+        <p class="text-muted small mb-2"><%= detail.subtitle.en %></p>
+        <% } %>
+        <div class="mb-2">
+          <span
+            class="badge <%= detail.isStatus ? 'bg-success' : 'bg-secondary' %>"
+          >
+            <%= detail.isStatus ? 'Active' : 'Inactive' %>
+          </span>
+        </div>
+        <div class="detail-content mb-2" style="min-height: 40px">
+          <%- detail.content || '' %>
+        </div>
+        <div class="mt-2">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <div class="fw-bold text-primary">Articles:</div>
+            <a
+              href="/articles/create?parentId=<%= detail._id %>&subParentId=<%= menuId %>"
+              class="btn btn-sm btn-success"
+            >
+              + Add Article
+            </a>
+          </div>
+          <% if (detail.listArticles && detail.listArticles.length > 0) { %>
+          <ul class="list-group list-group-flush">
+            <% detail.listArticles.forEach(article => { %>
+            <li class="list-group-item px-0 py-1">
+              <a
+                href="/articles/<%= article._id %>"
+                class="text-decoration-none"
+              >
+                <%= article.title ? article.title : 'Article' %>
+              </a>
+            </li>
+            <% }) %>
+          </ul>
+          <% } else { %>
+          <div class="text-muted small">No articles yet.</div>
+          <% } %>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <form
+            method="POST"
+            action="/details/<%= detail._id %>/toggle"
+            style="display: inline"
+          >
+            <button class="btn btn-sm btn-outline-warning" type="submit">
+              <%= detail.isStatus ? 'Deactivate' : 'Activate' %>
+            </button>
+          </form>
+          <a
+            href="/details/<%= detail._id %>/edit"
+            class="btn btn-sm btn-outline-primary"
+          >
+            Edit
+          </a>
+          <form
+            method="POST"
+            action="/details/<%= detail._id %>?_method=DELETE"
+            style="display: inline"
+            onsubmit="return confirm('Are you sure to delete?')"
+          >
+            <button class="btn btn-sm btn-outline-danger" type="submit">
+              Delete
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% }) %>
+</div>
+<style>
+  .detail-card:hover {
+    box-shadow: 0 0 0 2px #ffc107, 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-color: #ffc107;
+    transition: box-shadow 0.2s;
+  }
+  .detail-content {
+    font-size: 0.97em;
+    color: #333;
+  }
+</style>
+<% } %>

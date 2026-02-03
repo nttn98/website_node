@@ -1,18 +1,22 @@
 <h4>Edit Detail</h4>
 
-<form method="POST" action="/dashboard/details/<%= detail._id %>/update">
+<form method="POST" action="/details/<%= detail._id %>/update">
 
   <!-- MENU (READONLY) -->
-  <select class="form-select mb-3" disabled>
-    <% menus.forEach(m => { %>
-      <option
-        value="<%= m._id %>"
-        <%= m._id.toString() === detail.parentId.toString() ? 'selected' : '' %>
-      >
-        <%= m.title.en %>
-      </option>
-    <% }) %>
-  </select>
+  <% if (!detail.parentId) { %>
+    <select name="parentId" class="form-select mb-3" required>
+      <% menus.forEach(m => { %>
+        <option
+          value="<%= m._id %>"
+          <%= m._id.toString() === detail.parentId?.toString() ? 'selected' : '' %>
+        >
+          <%= m.title.en %>
+        </option>
+      <% }) %>
+    </select>
+  <% } else { %>
+    <input type="hidden" name="parentId" value="<%= detail.parentId %>" />
+  <% } %>
 
   <!-- TYPE -->
   <select name="type" id="typeSelect" class="form-select mb-3">
@@ -23,6 +27,13 @@
       Text Editor
     </option>
   </select>
+
+  <!-- ARTICLES -->
+  <div class="mb-3">
+    <label class="form-label">Articles (IDs, cách nhau bởi dấu phẩy)</label>
+    <input type="text" name="listArticles" class="form-control" value="<%= detail.listArticles ? detail.listArticles.map(a => a._id || a).join(',') : '' %>" placeholder="e.g. 601234,601235" />
+    <div class="form-text">Nhập các Article ID, cách nhau bởi dấu phẩy. (Tích hợp chọn nâng cao sau)</div>
+  </div>
 
   <!-- LANGUAGE TABS -->
   <ul class="nav nav-tabs mb-3" role="tablist">
