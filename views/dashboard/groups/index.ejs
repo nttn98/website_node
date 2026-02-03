@@ -1,0 +1,107 @@
+<a href="/groups/create?menuId=<%= menuId %>" class="btn btn-primary">
+  + Create Group
+</a>
+
+<% if (!groups || groups.length === 0) { %>
+<div class="text-center py-5 border rounded bg-light">
+  <h5>No group yet</h5>
+</div>
+<% } else { %>
+<div class="row g-3">
+  <% groups.forEach(group => { %>
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100 border-0 group-card">
+      <% if (group.image) { %>
+      <img
+        src="<%= group.image %>"
+        alt="Image"
+        class="card-img-top"
+        style="max-height: 180px; object-fit: cover"
+      />
+      <% } %>
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <h5 class="mb-0"><%= group.title?.en || 'Group' %></h5>
+          <span class="badge bg-info">Type: <%= group.type %></span>
+        </div>
+        <% if (group.subtitle?.en) { %>
+        <p class="text-muted small mb-2"><%= group.subtitle.en %></p>
+        <% } %>
+        <div class="mb-2">
+          <span
+            class="badge <%= group.isStatus ? 'bg-success' : 'bg-secondary' %>"
+          >
+            <%= group.isStatus ? 'Active' : 'Inactive' %>
+          </span>
+        </div>
+        <div class="group-content mb-2" style="min-height: 40px">
+          <%- group.content || '' %>
+        </div>
+        <div class="mt-2">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <div class="fw-bold text-primary">Details:</div>
+            <a
+              href="/details/create?parentId=<%= group._id %>&subParentId=<%= menuId %>"
+              class="btn btn-sm btn-success"
+            >
+              + Add Detail
+            </a>
+          </div>
+          <% if (group.listArticles && group.listArticles.length > 0) { %>
+          <ul class="list-group list-group-flush">
+            <% group.listArticles.forEach(detail => { %>
+            <li class="list-group-item px-0 py-1">
+              <a href="/details/<%= detail._id %>" class="text-decoration-none">
+                <%= detail.title ? detail.title : 'Detail' %>
+              </a>
+            </li>
+            <% }) %>
+          </ul>
+          <% } else { %>
+          <div class="text-muted small">No details yet.</div>
+          <% } %>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <form
+            method="POST"
+            action="/groups/<%= group._id %>/toggle"
+            style="display: inline"
+          >
+            <button class="btn btn-sm btn-outline-warning" type="submit">
+              <%= group.isStatus ? 'Deactivate' : 'Activate' %>
+            </button>
+          </form>
+          <a
+            href="/groups/<%= group._id %>/edit"
+            class="btn btn-sm btn-outline-primary"
+          >
+            Edit
+          </a>
+          <form
+            method="POST"
+            action="/groups/<%= group._id %>?_method=DELETE"
+            style="display: inline"
+            onsubmit="return confirm('Are you sure to delete?')"
+          >
+            <button class="btn btn-sm btn-outline-danger" type="submit">
+              Delete
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% }) %>
+</div>
+<style>
+  .group-card:hover {
+    box-shadow: 0 0 0 2px #ffc107, 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-color: #ffc107;
+    transition: box-shadow 0.2s;
+  }
+  .group-content {
+    font-size: 0.97em;
+    color: #333;
+  }
+</style>
+<% } %>

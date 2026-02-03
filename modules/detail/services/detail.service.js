@@ -1,30 +1,19 @@
-// Lấy tất cả detail của 1 menu
-exports.getDetailsByMenu = (menuId) => {
-  return Detail.find({ parentId: menuId, isActive: true })
-    .sort({ createdAt: -1 })
-    .lean();
-};
 const Detail = require("../models/Detail");
 
-/* ===== DASHBOARD ===== */
-
-exports.getAllDetails = () => {
+exports.getAllArticles = () => {
   return Detail.find({ isActive: true }).sort({ createdAt: -1 }).lean();
 };
 
-exports.getByMenu = (menuId) => {
-  return Detail.findOne({
-    parentId: menuId,
-    isActive: true,
-  }).lean();
+exports.getArticleById = (id) => {
+  return Detail.findById(id).lean();
 };
 
-exports.create = async (data) => {
-  // Menu model sẽ được require từ modules/menu/models/Menu nếu cần
-  // const menu = await Menu.findById(data.parentId).lean();
+exports.createArticle = async (data) => {
   return Detail.create({
     parentId: data.parentId,
+    subParentId: data.subParentId,
     parentName: data.parentName,
+    subParentName: data.subParentName,
     type: data.type,
     content: data.content,
     title: {
@@ -37,30 +26,22 @@ exports.create = async (data) => {
       vi: data.subtitle_vi,
       zh: data.subtitle_zh,
     },
-    image: data.image || "",
     isStatus: true,
     isActive: true,
   });
 };
 
-exports.getDetailById = (id) => {
-  return Detail.findById(id).lean();
-};
-
-exports.updateDetail = (id, data) => {
+exports.updateArticle = (id, data) => {
   const update = {
     type: data.type,
     content: data.content,
   };
-
   if (data.title_en) update["title.en"] = data.title_en;
   if (data.title_vi) update["title.vi"] = data.title_vi;
   if (data.title_zh) update["title.zh"] = data.title_zh;
-
   if (data.subtitle_en) update["subtitle.en"] = data.subtitle_en;
   if (data.subtitle_vi) update["subtitle.vi"] = data.subtitle_vi;
   if (data.subtitle_zh) update["subtitle.zh"] = data.subtitle_zh;
-
   return Detail.findByIdAndUpdate(
     id,
     { $set: update },
@@ -68,7 +49,7 @@ exports.updateDetail = (id, data) => {
   );
 };
 
-exports.deleteDetail = (id) => {
+exports.deleteArticle = (id) => {
   return Detail.findByIdAndUpdate(id, {
     isActive: false,
     isStatus: false,

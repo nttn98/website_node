@@ -4,12 +4,12 @@ const path = require("path");
 // Set storage engine
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../public/uploads/details"));
+    cb(null, path.join(__dirname, "../public/uploads/groups"));
   },
   filename: function (req, file, cb) {
     // Use title_en and id for filename if available
     let ext = path.extname(file.originalname);
-    let title = (req.body.title_en || "detail")
+    let title = (req.body.title_en || "group")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");

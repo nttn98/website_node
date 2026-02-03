@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const ArticleSchema = new mongoose.Schema(
+const GroupSchema = new mongoose.Schema(
   {
     /* ===== MULTI LANGUAGE ===== */
     title: {
@@ -25,22 +25,11 @@ const ArticleSchema = new mongoose.Schema(
     /* ===== RELATION ===== */
     parentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Detail",
-      required: true,
-    },
-
-    subParentId: {
-      type: mongoose.Schema.Types.ObjectId,
       ref: "Menu",
       required: true,
     },
 
     parentName: {
-      type: String, // snapshot title.en của Detail
-      required: true,
-    },
-
-    subParentName: {
       type: String, // snapshot title.en của Menu
       required: true,
     },
@@ -48,6 +37,12 @@ const ArticleSchema = new mongoose.Schema(
     /* ===== CONTENT ===== */
     content: {
       type: String,
+      default: "",
+    },
+
+    /* ===== IMAGE ===== */
+    image: {
+      type: String, // URL to image in /public/uploads/groups
       default: "",
     },
 
@@ -65,4 +60,4 @@ const ArticleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Article", ArticleSchema);
+module.exports = mongoose.model("Group", GroupSchema);

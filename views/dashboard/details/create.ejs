@@ -1,112 +1,144 @@
 <h4>Create Detail</h4>
-
-<form method="POST" action="/details/create" enctype="multipart/form-data">
-    <input type="hidden" name="parentName" id="parentNameInput" value="<%= menus && menus.length && (menus.find(m => m._id.toString() === (currentMenuId ? currentMenuId.toString() : ''))?.title?.en || (menus[0]?.title?.en || '')) %>">
-  <!-- MENU -->
-  <% if (!currentMenuId) { %>
-    <select name="parentId" class="form-select mb-3" id="parentIdSelect" required>
-      <% menus.forEach(m => { %>
-        <option
-          value="<%= m._id %>"
-          data-title-en="<%= m.title.en %>"
-          <%= currentMenuId && currentMenuId.toString() === m._id.toString() ? 'selected' : '' %>
-        >
-          <%= m.title.en %>
-        </option>
+<form method="POST" action="/details/create">
+  <!-- DETAIL -->
+  <% if (parentId) { %>
+  <input type="hidden" name="parentId" value="<%= parentId %>" />
+  <div class="mb-3">
+    <label class="form-label">Group</label>
+    <input
+      type="text"
+      class="form-control"
+      value="<%= groups.find(d => d._id.toString() === parentId.toString())?.title?.en || '' %>"
+      readonly
+    />
+  </div>
+  <% } else { %>
+  <div class="mb-3">
+    <label class="form-label">Group</label>
+    <select name="parentId" class="form-select" required>
+      <% groups.forEach(d => { %>
+      <option value="<%= d._id %>"><%= d.title?.en %></option>
       <% }) %>
     </select>
-  <% } else { %>
-    <input type="hidden" name="parentId" value="<%= currentMenuId %>" />
-  <% } %>
-
-  <!-- TYPE -->
-  <select name="type" id="typeSelect" class="form-select mb-3">
-    <option value="html">HTML Block</option>
-    <option value="editor">Text Editor</option>
-  </select>
-
-  <!-- IMAGE UPLOAD -->
-  <div class="mb-3">
-    <label class="form-label">Image</label>
-    <input type="file" name="image" id="imageInput" class="form-control" accept="image/*" />
-    <div class="form-text">Chọn hình ảnh cho detail. Hình sẽ được lưu vật lý, DB chỉ lưu URL. Tên file sẽ dựa trên Title EN và id.</div>
-    <img id="imagePreview" src="#" alt="Preview" class="img-thumbnail mt-2 d-none" style="max-width: 200px;" />
   </div>
-
+  <% } %>
+  <!-- MENU -->
+  <% if (subParentId) { %>
+  <input type="hidden" name="subParentId" value="<%= subParentId %>" />
+  <div class="mb-3">
+    <label class="form-label">Menu</label>
+    <input
+      type="text"
+      class="form-control"
+      value="<%= menus.find(m => m._id.toString() === subParentId.toString())?.title?.en || '' %>"
+      readonly
+    />
+  </div>
+  <% } else { %>
+  <div class="mb-3">
+    <label class="form-label">Menu</label>
+    <select name="subParentId" class="form-select" required>
+      <% menus.forEach(m => { %>
+      <option value="<%= m._id %>"><%= m.title?.en %></option>
+      <% }) %>
+    </select>
+  </div>
+  <% } %>
+  <!-- TYPE -->
+  <div class="mb-3">
+    <label class="form-label">Type</label>
+    <select name="type" id="typeSelect" class="form-select" required>
+      <option value="html">HTML Block</option>
+      <option value="editor">Text Editor</option>
+    </select>
+  </div>
   <!-- LANGUAGE TABS -->
   <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item">
-      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-en" type="button">
+      <button
+        class="nav-link active"
+        data-bs-toggle="tab"
+        data-bs-target="#tab-en"
+        type="button"
+      >
         EN
       </button>
     </li>
     <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vi" type="button">
+      <button
+        class="nav-link"
+        data-bs-toggle="tab"
+        data-bs-target="#tab-vi"
+        type="button"
+      >
         VI
       </button>
     </li>
     <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-zh" type="button">
+      <button
+        class="nav-link"
+        data-bs-toggle="tab"
+        data-bs-target="#tab-zh"
+        type="button"
+      >
         ZH
       </button>
     </li>
   </ul>
-
   <div class="tab-content">
     <!-- EN -->
     <div class="tab-pane fade show active" id="tab-en">
-      <input class="form-control mb-2" name="title_en" id="title_en" placeholder="Title EN">
-      <input class="form-control mb-3" name="subtitle_en" id="subtitle_en" placeholder="Subtitle EN">
+      <input class="form-control mb-2" name="title_en" placeholder="Title EN" />
+      <input
+        class="form-control mb-3"
+        name="subtitle_en"
+        placeholder="Subtitle EN"
+      />
     </div>
-
     <!-- VI -->
     <div class="tab-pane fade" id="tab-vi">
-      <input class="form-control mb-2" name="title_vi" id="title_vi" placeholder="Title VI">
-      <input class="form-control mb-3" name="subtitle_vi" id="subtitle_vi" placeholder="Subtitle VI">
+      <input class="form-control mb-2" name="title_vi" placeholder="Title VI" />
+      <input
+        class="form-control mb-3"
+        name="subtitle_vi"
+        placeholder="Subtitle VI"
+      />
     </div>
-
     <!-- ZH -->
     <div class="tab-pane fade" id="tab-zh">
-      <input class="form-control mb-2" name="title_zh" id="title_zh" placeholder="Title ZH">
-      <input class="form-control mb-3" name="subtitle_zh" id="subtitle_zh" placeholder="Subtitle ZH">
+      <input class="form-control mb-2" name="title_zh" placeholder="Title ZH" />
+      <input
+        class="form-control mb-3"
+        name="subtitle_zh"
+        placeholder="Subtitle ZH"
+      />
     </div>
   </div>
-
   <!-- HTML -->
   <div id="htmlBlock">
-    <textarea name="content" class="form-control font-monospace" rows="8"></textarea>
+    <textarea
+      name="content"
+      class="form-control font-monospace"
+      rows="8"
+    ></textarea>
   </div>
-
   <!-- EDITOR -->
   <div id="editorBlock" class="d-none">
     <textarea id="editor"></textarea>
   </div>
-
   <button class="btn btn-primary mt-3">Create</button>
 </form>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
-    // Sync parentName hidden input when parentId changes
-    const parentIdSelect = document.getElementById('parentIdSelect');
-    const parentNameInput = document.getElementById('parentNameInput');
-    if (parentIdSelect && parentNameInput) {
-      parentIdSelect.addEventListener('change', function(e) {
-        const selected = parentIdSelect.options[parentIdSelect.selectedIndex];
-        parentNameInput.value = selected.getAttribute('data-title-en') || '';
-      });
-    }
-  /* ================= TYPE ================= */
   const typeSelect = document.getElementById("typeSelect");
   const htmlBlock = document.getElementById("htmlBlock");
   const editorBlock = document.getElementById("editorBlock");
   let editor;
-
   function toggleType(type) {
     htmlBlock.classList.toggle("d-none", type === "editor");
     editorBlock.classList.toggle("d-none", type === "html");
-
     if (type === "editor" && !editor) {
-      ClassicEditor.create(document.getElementById("editor")).then(e => {
+      ClassicEditor.create(document.getElementById("editor")).then((e) => {
         editor = e;
         editor.model.document.on("change:data", () => {
           document.querySelector('[name="content"]').value = editor.getData();
@@ -114,81 +146,6 @@
       });
     }
   }
-
   toggleType(typeSelect.value);
-  typeSelect.addEventListener("change", e => toggleType(e.target.value));
-
-  /* ================= AUTO COPY LANG ================= */
-  const fields = {
-    title: {
-      en: document.getElementById("title_en"),
-      vi: document.getElementById("title_vi"),
-      zh: document.getElementById("title_zh")
-    },
-    subtitle: {
-      en: document.getElementById("subtitle_en"),
-      vi: document.getElementById("subtitle_vi"),
-      zh: document.getElementById("subtitle_zh")
-    }
-  };
-
-  const edited = {
-    title: { vi: false, zh: false },
-    subtitle: { vi: false, zh: false }
-  };
-
-  // mark edited when user types
-  ["vi", "zh"].forEach(lang => {
-    ["title", "subtitle"].forEach(field => {
-      fields[field][lang].addEventListener("input", () => {
-        edited[field][lang] = true;
-      });
-    });
-  });
-
-  // auto copy from EN
-  ["title", "subtitle"].forEach(field => {
-    fields[field].en.addEventListener("input", e => {
-      ["vi", "zh"].forEach(lang => {
-        if (!edited[field][lang]) {
-          fields[field][lang].value = e.target.value;
-        }
-      });
-    });
-  });
-  // Image preview with filename suggestion
-  const imageInput = document.getElementById('imageInput');
-  const imagePreview = document.getElementById('imagePreview');
-  const titleEnInput = document.getElementById('title_en');
-  let tempId = Date.now();
-  function getSafeFilename(title, id, ext) {
-    return (
-      (title || 'detail')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '') +
-      '-' + id + ext
-    );
-  }
-  if (imageInput) {
-    imageInput.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-          imagePreview.src = ev.target.result;
-          imagePreview.classList.remove('d-none');
-        };
-        reader.readAsDataURL(file);
-        // Show filename suggestion (for backend to use)
-        let ext = file.name.substring(file.name.lastIndexOf('.'));
-        let title = titleEnInput.value || 'detail';
-        let filename = getSafeFilename(title, tempId, ext);
-        imageInput.setAttribute('data-filename', filename);
-      } else {
-        imagePreview.src = '#';
-        imagePreview.classList.add('d-none');
-      }
-    });
-  }
+  typeSelect.addEventListener("change", (e) => toggleType(e.target.value));
 </script>
