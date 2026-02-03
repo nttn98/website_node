@@ -15,9 +15,15 @@ exports.index = async (req, res) => {
   res.locals.menus = menus;
   res.locals.currentMenuId = menuId ? menuId.toString() : null;
 
+  let message = null;
+  if (req.query.success && req.session && req.session.detailMessage) {
+    message = req.session.detailMessage;
+    delete req.session.detailMessage;
+  }
   res.render("dashboard/details/index", {
     menuId,
     details,
+    message,
   });
 };
 
@@ -30,11 +36,22 @@ exports.createForm = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  // Lấy parentName từ menu
+  // Lấy parentName từ menu (for filename)
   const menu = await menuService.getMenuById(req.body.parentId);
   req.body.parentName = menu?.title?.en || "";
-  await detailService.create(req.body);
-  res.redirect(`/details?menuId=${req.body.parentId}`);
+
+  // Handle uploaded image
+  if (req.file) {
+    req.body.image = `/uploads/details/${req.file.filename}`;
+  }
+
+  const created = await detailService.create(req.body);
+  if (req.headers.accept && req.headers.accept.includes("application/json")) {
+    return res.json({ success: true, detail: created });
+  }
+  req.session = req.session || {};
+  req.session.detailMessage = "Created successfully!";
+  res.redirect(`/details?menuId=${req.body.parentId}&success=1`);
 };
 
 /* ===== EDIT ===== */
@@ -49,19 +66,34 @@ exports.editForm = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  // Đảm bảo luôn truyền parentId khi update
-  if (!req.body.parentId) {
+  // Đảm bảo luôn truyền parentId và parentName khi update (for filename)
+  if (!req.body.parentId || !req.body.parentName) {
     const detail = await detailService.getDetailById(req.params.id);
-    req.body.parentId = detail.parentId;
+    req.body.parentId = req.body.parentId || detail.parentId;
+    // Get parentName from menu
+    const menu = await menuService.getMenuById(req.body.parentId);
+    req.body.parentName = menu?.title?.en || "";
   }
-  await detailService.updateDetail(req.params.id, req.body);
-  res.redirect(`/details?menuId=${req.body.parentId}`);
+  // Handle uploaded image (overwrite old)
+  if (req.file) {
+    req.body.image = `/uploads/details/${req.file.filename}`;
+  }
+  const updated = await detailService.updateDetail(req.params.id, req.body);
+  if (req.headers.accept && req.headers.accept.includes("application/json")) {
+    return res.json({ success: true, detail: updated });
+  }
+  req.session = req.session || {};
+  req.session.detailMessage = "Updated successfully!";
+  res.redirect(`/details?menuId=${req.body.parentId}&success=1`);
 };
 
 /* ===== DELETE ===== */
 exports.delete = async (req, res) => {
+  const detail = await detailService.getDetailById(req.params.id);
   await detailService.deleteDetail(req.params.id);
-  res.json({ success: true });
+  req.session = req.session || {};
+  req.session.detailMessage = "Deleted successfully!";
+  res.redirect(`/details?menuId=${detail.parentId}&success=1`);
 };
 
 exports.showDetailByMenu = async (req, res) => {
@@ -72,8 +104,14 @@ exports.showDetailByMenu = async (req, res) => {
   res.locals.menus = menus;
   res.locals.currentMenuId = menuId;
 
+  let message = null;
+  if (req.session && req.session.detailMessage) {
+    message = req.session.detailMessage;
+    delete req.session.detailMessage;
+  }
   res.render("dashboard/details/index", {
     menuId,
     details,
+    message,
   });
 };

@@ -40,6 +40,12 @@ const DetailSchema = new mongoose.Schema(
       default: "",
     },
 
+    /* ===== IMAGE ===== */
+    image: {
+      type: String, // URL to image in /public/uploads/details
+      default: "",
+    },
+
     /* ===== OPTIONAL ===== */
     listArticles: [
       {

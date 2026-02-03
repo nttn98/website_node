@@ -11,6 +11,14 @@
   <% details.forEach(detail => { %>
   <div class="col-md-6 col-lg-4">
     <div class="card shadow-sm h-100 border-0 detail-card">
+      <% if (detail.image) { %>
+      <img
+        src="<%= detail.image %>"
+        alt="Image"
+        class="card-img-top"
+        style="max-height: 180px; object-fit: cover"
+      />
+      <% } %>
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <h5 class="mb-0"><%= detail.title?.en || 'Detail' %></h5>

@@ -37,6 +37,7 @@ exports.create = async (data) => {
       vi: data.subtitle_vi,
       zh: data.subtitle_zh,
     },
+    image: data.image || "",
     isStatus: true,
     isActive: true,
   });

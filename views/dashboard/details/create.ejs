@@ -1,12 +1,14 @@
 <h4>Create Detail</h4>
 
-<form method="POST" action="/details/create">
+<form method="POST" action="/details/create" enctype="multipart/form-data">
+    <input type="hidden" name="parentName" id="parentNameInput" value="<%= menus && menus.length && (menus.find(m => m._id.toString() === (currentMenuId ? currentMenuId.toString() : ''))?.title?.en || (menus[0]?.title?.en || '')) %>">
   <!-- MENU -->
   <% if (!currentMenuId) { %>
-    <select name="parentId" class="form-select mb-3" required>
+    <select name="parentId" class="form-select mb-3" id="parentIdSelect" required>
       <% menus.forEach(m => { %>
         <option
           value="<%= m._id %>"
+          data-title-en="<%= m.title.en %>"
           <%= currentMenuId && currentMenuId.toString() === m._id.toString() ? 'selected' : '' %>
         >
           <%= m.title.en %>
@@ -23,11 +25,12 @@
     <option value="editor">Text Editor</option>
   </select>
 
-  <!-- ARTICLES -->
+  <!-- IMAGE UPLOAD -->
   <div class="mb-3">
-    <label class="form-label">Articles (IDs, cách nhau bởi dấu phẩy)</label>
-    <input type="text" name="listArticles" class="form-control" placeholder="e.g. 601234,601235" />
-    <div class="form-text">Nhập các Article ID, cách nhau bởi dấu phẩy. (Tích hợp chọn nâng cao sau)</div>
+    <label class="form-label">Image</label>
+    <input type="file" name="image" id="imageInput" class="form-control" accept="image/*" />
+    <div class="form-text">Chọn hình ảnh cho detail. Hình sẽ được lưu vật lý, DB chỉ lưu URL. Tên file sẽ dựa trên Title EN và id.</div>
+    <img id="imagePreview" src="#" alt="Preview" class="img-thumbnail mt-2 d-none" style="max-width: 200px;" />
   </div>
 
   <!-- LANGUAGE TABS -->
@@ -83,6 +86,15 @@
 </form>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
+    // Sync parentName hidden input when parentId changes
+    const parentIdSelect = document.getElementById('parentIdSelect');
+    const parentNameInput = document.getElementById('parentNameInput');
+    if (parentIdSelect && parentNameInput) {
+      parentIdSelect.addEventListener('change', function(e) {
+        const selected = parentIdSelect.options[parentIdSelect.selectedIndex];
+        parentNameInput.value = selected.getAttribute('data-title-en') || '';
+      });
+    }
   /* ================= TYPE ================= */
   const typeSelect = document.getElementById("typeSelect");
   const htmlBlock = document.getElementById("htmlBlock");
@@ -144,4 +156,39 @@
       });
     });
   });
+  // Image preview with filename suggestion
+  const imageInput = document.getElementById('imageInput');
+  const imagePreview = document.getElementById('imagePreview');
+  const titleEnInput = document.getElementById('title_en');
+  let tempId = Date.now();
+  function getSafeFilename(title, id, ext) {
+    return (
+      (title || 'detail')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') +
+      '-' + id + ext
+    );
+  }
+  if (imageInput) {
+    imageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          imagePreview.src = ev.target.result;
+          imagePreview.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+        // Show filename suggestion (for backend to use)
+        let ext = file.name.substring(file.name.lastIndexOf('.'));
+        let title = titleEnInput.value || 'detail';
+        let filename = getSafeFilename(title, tempId, ext);
+        imageInput.setAttribute('data-filename', filename);
+      } else {
+        imagePreview.src = '#';
+        imagePreview.classList.add('d-none');
+      }
+    });
+  }
 </script>
