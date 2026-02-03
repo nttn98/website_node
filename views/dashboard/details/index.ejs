@@ -1,72 +1,90 @@
 <h4>Details</h4>
 <a href="/details/create" class="btn btn-primary mb-3">+ Create Detail</a>
-<% if (!details || details.length === 0) { %>
-<div class="text-center py-5 border rounded bg-light">
-  <h5>No detail yet</h5>
-</div>
-<% } else { %>
-<div class="row g-3">
-  <% details.forEach(detail => { %>
-  <div class="col-md-6 col-lg-4">
-    <div class="card shadow-sm h-100 border-0 detail-card">
-      <div class="card-body">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <h5 class="mb-0"><%= detail.title?.en || 'Detail' %></h5>
-          <span class="badge bg-info">Type: <%= detail.type %></span>
+<div id="detail-list"></div>
+
+<script>
+  function renderDetails(details) {
+    if (!details || !details.length) {
+      document.getElementById(
+        "detail-list"
+      ).innerHTML = `<div class="text-center py-5 border rounded bg-light"><h5>No detail yet</h5></div>`;
+      return;
+    }
+    let html = '<div class="row g-3">';
+    details.forEach((detail) => {
+      html += `<div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm h-100 border-0 detail-card">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <h5 class="mb-0">${detail.title?.en || "Detail"}</h5>
+              <span class="badge bg-info">Type: ${detail.type}</span>
+            </div>
+            ${
+              detail.subtitle?.en
+                ? `<p class="text-muted small mb-2">${detail.subtitle.en}</p>`
+                : ""
+            }
+            <div class="mb-2"><span class="badge ${
+              detail.isStatus ? "bg-success" : "bg-secondary"
+            }">${detail.isStatus ? "Active" : "Inactive"}</span></div>
+            <div class="mb-2">
+              <span class="badge bg-secondary">Group: ${
+                detail.parentName || ""
+              }</span>
+              <span class="badge bg-warning ms-2">Menu: ${
+                detail.subParentName || ""
+              }</span>
+            </div>
+            <div class="detail-content mb-2" style="min-height:40px">${
+              detail.content || ""
+            }</div>
+            <div class="d-flex gap-2 flex-wrap mt-2">
+              <button class="btn btn-sm btn-outline-warning" onclick="toggleDetailStatus('${
+                detail._id
+              }', this)">${detail.isStatus ? "Deactivate" : "Activate"}</button>
+              <a href="/details/${
+                detail._id
+              }/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteDetail('${
+                detail._id
+              }')">Delete</button>
+            </div>
+          </div>
         </div>
-        <% if (detail.subtitle?.en) { %>
-        <p class="text-muted small mb-2"><%= detail.subtitle.en %></p>
-        <% } %>
-        <div class="mb-2">
-          <span
-            class="badge <%= detail.isStatus ? 'bg-success' : 'bg-secondary' %>"
-          >
-            <%= detail.isStatus ? 'Active' : 'Inactive' %>
-          </span>
-        </div>
-        <div class="mb-2">
-          <span class="badge bg-secondary">
-            Group: <%= detail.parentName %>
-          </span>
-          <span class="badge bg-warning ms-2">
-            Menu: <%= detail.subParentName %>
-          </span>
-        </div>
-        <div class="detail-content mb-2" style="min-height: 40px">
-          <%- detail.content || '' %>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-          <form
-            method="POST"
-            action="/details/<%= detail._id %>/toggle"
-            style="display: inline"
-          >
-            <button class="btn btn-sm btn-outline-warning" type="submit">
-              <%= detail.isStatus ? 'Deactivate' : 'Activate' %>
-            </button>
-          </form>
-          <a
-            href="/details/<%= detail._id %>/edit"
-            class="btn btn-sm btn-outline-primary"
-          >
-            Edit
-          </a>
-          <form
-            method="POST"
-            action="/details/<%= detail._id %>?_method=DELETE"
-            style="display: inline"
-            onsubmit="return confirm('Are you sure to delete?')"
-          >
-            <button class="btn btn-sm btn-outline-danger" type="submit">
-              Delete
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-  <% }) %>
-</div>
+      </div>`;
+    });
+    html += "</div>";
+    document.getElementById("detail-list").innerHTML = html;
+  }
+
+  function fetchDetails() {
+    fetch("/details")
+      .then((res) => res.json())
+      .then((data) => renderDetails(data.data));
+  }
+
+  function toggleDetailStatus(id, btn) {
+    fetch(`/details/${id}/toggle`, { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) fetchDetails();
+        else alert("Toggle failed");
+      });
+  }
+
+  function deleteDetail(id) {
+    if (!confirm("Are you sure to delete?")) return;
+    fetch(`/details/${id}`, { method: "DELETE" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) fetchDetails();
+        else alert("Delete failed");
+      });
+  }
+
+  fetchDetails();
+</script>
+
 <style>
   .detail-card:hover {
     box-shadow: 0 0 0 2px #17a2b8, 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -78,4 +96,3 @@
     color: #333;
   }
 </style>
-<% } %>

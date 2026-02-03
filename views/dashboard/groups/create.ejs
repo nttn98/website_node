@@ -1,23 +1,24 @@
 <h4>Create Group</h4>
 
-<form method="POST" action="/groups/create" enctype="multipart/form-data">
-    <input type="hidden" name="parentName" id="parentNameInput" value="<%= menus && menus.length && (menus.find(m => m._id.toString() === (currentMenuId ? currentMenuId.toString() : ''))?.title?.en || (menus[0]?.title?.en || '')) %>">
-  <!-- MENU -->
-  <% if (!currentMenuId) { %>
-    <select name="parentId" class="form-select mb-3" id="parentIdSelect" required>
-      <% menus.forEach(m => { %>
-        <option
-          value="<%= m._id %>"
-          data-title-en="<%= m.title.en %>"
-          <%= currentMenuId && currentMenuId.toString() === m._id.toString() ? 'selected' : '' %>
-        >
-          <%= m.title.en %>
-        </option>
-      <% }) %>
-    </select>
-  <% } else { %>
-    <input type="hidden" name="parentId" value="<%= currentMenuId %>" />
-  <% } %>
+<form id="group-create-form" enctype="multipart/form-data">
+  <input
+    type="hidden"
+    name="parentName"
+    id="parentNameInput"
+    value="<%= menus && menus.length && (menus.find(m => m._id.toString() === (currentMenuId ? currentMenuId.toString() : ''))?.title?.en || (menus[0]?.title?.en || '')) %>"
+  />
+  <!-- MENU (multi-parent) -->
+  <label class="form-label">Parents</label>
+  <select
+    name="listParents"
+    id="parentIdSelect"
+    class="form-select mb-3"
+    multiple
+    required
+  >
+    <optgroup label="Top menu" id="topMenuGroup"></optgroup>
+    <optgroup label="Footer menu" id="botMenuGroup"></optgroup>
+  </select>
 
   <!-- TYPE -->
   <select name="type" id="typeSelect" class="form-select mb-3">
@@ -27,26 +28,60 @@
 
   <!-- IMAGE UPLOAD -->
   <div class="mb-3">
-    <label class="form-label">Image</label>
-    <input type="file" name="image" id="imageInput" class="form-control" accept="image/*" />
-    <div class="form-text">Chọn hình ảnh cho group. Hình sẽ được lưu vật lý, DB chỉ lưu URL. Tên file sẽ dựa trên Title EN và id.</div>
-    <img id="imagePreview" src="#" alt="Preview" class="img-thumbnail mt-2 d-none" style="max-width: 200px;" />
+    <label class="form-label">Images</label>
+    <input
+      type="file"
+      name="images"
+      id="imageInput"
+      class="form-control"
+      accept="image/*"
+      multiple
+    />
+    <div class="form-text">Chọn nhiều hình ảnh cho group.</div>
+    <div id="imagePreviewList" class="d-flex flex-wrap mt-2"></div>
+    <!-- BUTTONS -->
+    <div class="mb-3">
+      <label class="form-label">Buttons</label>
+      <input
+        type="text"
+        name="listButtons"
+        id="buttonsInput"
+        class="form-control"
+        placeholder='[{"label":"Button1","action":"#"}]'
+      />
+      <div class="form-text">Nhập JSON cho nút (label, action, ...).</div>
+    </div>
   </div>
 
   <!-- LANGUAGE TABS -->
   <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item">
-      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-en" type="button">
+      <button
+        class="nav-link active"
+        data-bs-toggle="tab"
+        data-bs-target="#tab-en"
+        type="button"
+      >
         EN
       </button>
     </li>
     <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vi" type="button">
+      <button
+        class="nav-link"
+        data-bs-toggle="tab"
+        data-bs-target="#tab-vi"
+        type="button"
+      >
         VI
       </button>
     </li>
     <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-zh" type="button">
+      <button
+        class="nav-link"
+        data-bs-toggle="tab"
+        data-bs-target="#tab-zh"
+        type="button"
+      >
         ZH
       </button>
     </li>
@@ -55,26 +90,60 @@
   <div class="tab-content">
     <!-- EN -->
     <div class="tab-pane fade show active" id="tab-en">
-      <input class="form-control mb-2" name="title_en" id="title_en" placeholder="Title EN">
-      <input class="form-control mb-3" name="subtitle_en" id="subtitle_en" placeholder="Subtitle EN">
+      <input
+        class="form-control mb-2"
+        name="title_en"
+        id="title_en"
+        placeholder="Title EN"
+      />
+      <input
+        class="form-control mb-3"
+        name="subtitle_en"
+        id="subtitle_en"
+        placeholder="Subtitle EN"
+      />
     </div>
 
     <!-- VI -->
     <div class="tab-pane fade" id="tab-vi">
-      <input class="form-control mb-2" name="title_vi" id="title_vi" placeholder="Title VI">
-      <input class="form-control mb-3" name="subtitle_vi" id="subtitle_vi" placeholder="Subtitle VI">
+      <input
+        class="form-control mb-2"
+        name="title_vi"
+        id="title_vi"
+        placeholder="Title VI"
+      />
+      <input
+        class="form-control mb-3"
+        name="subtitle_vi"
+        id="subtitle_vi"
+        placeholder="Subtitle VI"
+      />
     </div>
 
     <!-- ZH -->
     <div class="tab-pane fade" id="tab-zh">
-      <input class="form-control mb-2" name="title_zh" id="title_zh" placeholder="Title ZH">
-      <input class="form-control mb-3" name="subtitle_zh" id="subtitle_zh" placeholder="Subtitle ZH">
+      <input
+        class="form-control mb-2"
+        name="title_zh"
+        id="title_zh"
+        placeholder="Title ZH"
+      />
+      <input
+        class="form-control mb-3"
+        name="subtitle_zh"
+        id="subtitle_zh"
+        placeholder="Subtitle ZH"
+      />
     </div>
   </div>
 
   <!-- HTML -->
   <div id="htmlBlock">
-    <textarea name="content" class="form-control font-monospace" rows="8"></textarea>
+    <textarea
+      name="content"
+      class="form-control font-monospace"
+      rows="8"
+    ></textarea>
   </div>
 
   <!-- EDITOR -->
@@ -83,18 +152,80 @@
   </div>
 
   <button class="btn btn-primary mt-3">Create</button>
+  <button class="btn btn-primary mt-3" type="submit">Create</button>
 </form>
+
+<script>
+  // Lấy danh sách menu cho select (multi-parent)
+  fetch("/api/menus")
+    .then((res) => res.json())
+    .then((data) => {
+      const menus = data.data || [];
+      const topGroup = document.getElementById("topMenuGroup");
+      const botGroup = document.getElementById("botMenuGroup");
+      if (topGroup) topGroup.innerHTML = "";
+      if (botGroup) botGroup.innerHTML = "";
+      menus.forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = m._id;
+        opt.textContent = m.title?.en || m.title || "-";
+        if (m.type === "top") topGroup.appendChild(opt);
+        else if (m.type === "bot") botGroup.appendChild(opt);
+      });
+    });
+
+  // Submit form bằng fetch
+  document
+    .getElementById("group-create-form")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      // Multi-parent
+      const parentSelect = document.getElementById("parentIdSelect");
+      const selectedParents = Array.from(parentSelect.selectedOptions).map(
+        (opt) => ({ parentId: opt.value, parentName: opt.textContent })
+      );
+      formData.delete("listParents");
+      formData.append("listParents", JSON.stringify(selectedParents));
+      // Multi-images
+      const imageInput = document.getElementById("imageInput");
+      if (imageInput && imageInput.files.length > 0) {
+        for (let i = 0; i < imageInput.files.length; i++) {
+          formData.append("images", imageInput.files[i]);
+        }
+      }
+      // Buttons
+      const buttonsInput = document.getElementById("buttonsInput");
+      if (buttonsInput && buttonsInput.value) {
+        formData.delete("listButtons");
+        formData.append("listButtons", buttonsInput.value);
+      }
+      fetch("/groups/create", {
+        method: "POST",
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((resp) => {
+          if (resp.success)
+            window.location.href =
+              "/groups?menuId=" + (selectedParents[0]?.parentId || "");
+          else alert("Create failed");
+        })
+        .catch(() => alert("Create failed"));
+    });
+</script>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
-    // Sync parentName hidden input when parentId changes
-    const parentIdSelect = document.getElementById('parentIdSelect');
-    const parentNameInput = document.getElementById('parentNameInput');
-    if (parentIdSelect && parentNameInput) {
-      parentIdSelect.addEventListener('change', function(e) {
-        const selected = parentIdSelect.options[parentIdSelect.selectedIndex];
-        parentNameInput.value = selected.getAttribute('data-title-en') || '';
-      });
-    }
+  // Sync parentName hidden input when parentId changes
+  const parentIdSelect = document.getElementById("parentIdSelect");
+  const parentNameInput = document.getElementById("parentNameInput");
+  if (parentIdSelect && parentNameInput) {
+    parentIdSelect.addEventListener("change", function (e) {
+      const selected = parentIdSelect.options[parentIdSelect.selectedIndex];
+      parentNameInput.value = selected.getAttribute("data-title-en") || "";
+    });
+  }
   /* ================= TYPE ================= */
   const typeSelect = document.getElementById("typeSelect");
   const htmlBlock = document.getElementById("htmlBlock");
@@ -106,7 +237,7 @@
     editorBlock.classList.toggle("d-none", type === "html");
 
     if (type === "editor" && !editor) {
-      ClassicEditor.create(document.getElementById("editor")).then(e => {
+      ClassicEditor.create(document.getElementById("editor")).then((e) => {
         editor = e;
         editor.model.document.on("change:data", () => {
           document.querySelector('[name="content"]').value = editor.getData();
@@ -116,30 +247,30 @@
   }
 
   toggleType(typeSelect.value);
-  typeSelect.addEventListener("change", e => toggleType(e.target.value));
+  typeSelect.addEventListener("change", (e) => toggleType(e.target.value));
 
   /* ================= AUTO COPY LANG ================= */
   const fields = {
     title: {
       en: document.getElementById("title_en"),
       vi: document.getElementById("title_vi"),
-      zh: document.getElementById("title_zh")
+      zh: document.getElementById("title_zh"),
     },
     subtitle: {
       en: document.getElementById("subtitle_en"),
       vi: document.getElementById("subtitle_vi"),
-      zh: document.getElementById("subtitle_zh")
-    }
+      zh: document.getElementById("subtitle_zh"),
+    },
   };
 
   const edited = {
     title: { vi: false, zh: false },
-    subtitle: { vi: false, zh: false }
+    subtitle: { vi: false, zh: false },
   };
 
   // mark edited when user types
-  ["vi", "zh"].forEach(lang => {
-    ["title", "subtitle"].forEach(field => {
+  ["vi", "zh"].forEach((lang) => {
+    ["title", "subtitle"].forEach((field) => {
       fields[field][lang].addEventListener("input", () => {
         edited[field][lang] = true;
       });
@@ -147,48 +278,32 @@
   });
 
   // auto copy from EN
-  ["title", "subtitle"].forEach(field => {
-    fields[field].en.addEventListener("input", e => {
-      ["vi", "zh"].forEach(lang => {
+  ["title", "subtitle"].forEach((field) => {
+    fields[field].en.addEventListener("input", (e) => {
+      ["vi", "zh"].forEach((lang) => {
         if (!edited[field][lang]) {
           fields[field][lang].value = e.target.value;
         }
       });
     });
   });
-  // Image preview with filename suggestion
-  const imageInput = document.getElementById('imageInput');
-  const imagePreview = document.getElementById('imagePreview');
-  const titleEnInput = document.getElementById('title_en');
-  let tempId = Date.now();
-  function getSafeFilename(title, id, ext) {
-    return (
-      (title || 'group')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '') +
-      '-' + id + ext
-    );
-  }
-  if (imageInput) {
-    imageInput.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
+  // Image preview (multi)
+  const imageInput = document.getElementById("imageInput");
+  const imagePreviewList = document.getElementById("imagePreviewList");
+  if (imageInput && imagePreviewList) {
+    imageInput.addEventListener("change", function (e) {
+      imagePreviewList.innerHTML = "";
+      Array.from(imageInput.files).forEach((file) => {
         const reader = new FileReader();
-        reader.onload = function(ev) {
-          imagePreview.src = ev.target.result;
-          imagePreview.classList.remove('d-none');
+        reader.onload = function (ev) {
+          const img = document.createElement("img");
+          img.src = ev.target.result;
+          img.className = "img-thumbnail me-2 mb-2";
+          img.style.maxWidth = "120px";
+          imagePreviewList.appendChild(img);
         };
         reader.readAsDataURL(file);
-        // Show filename suggestion (for backend to use)
-        let ext = file.name.substring(file.name.lastIndexOf('.'));
-        let title = titleEnInput.value || 'group';
-        let filename = getSafeFilename(title, tempId, ext);
-        imageInput.setAttribute('data-filename', filename);
-      } else {
-        imagePreview.src = '#';
-        imagePreview.classList.add('d-none');
-      }
+      });
     });
   }
 </script>

@@ -1,5 +1,5 @@
 {
-  "watch": ["server.js", "modules", "views"],
+  "watch": ["server.js", "modules", "views", "swagger.js"],
   "ext": "js,json,ejs",
   "ignore": ["node_modules", "public"],
   "exec": "node server.js"

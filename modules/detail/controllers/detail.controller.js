@@ -4,7 +4,7 @@ const menuService = require("../../menu/services/menu.service");
 
 exports.index = async (req, res) => {
   const details = await detailService.getAllArticles();
-  res.render("dashboard/details/index", { details });
+  res.json({ success: true, data: details });
 };
 
 exports.createForm = async (req, res) => {
@@ -14,13 +14,12 @@ exports.createForm = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  // Lấy tên cha/subcha
   const group = await groupService.getDetailById(req.body.parentId);
   const menu = await menuService.getMenuById(req.body.subParentId);
   req.body.parentName = group?.title?.en || "";
   req.body.subParentName = menu?.title?.en || "";
-  await detailService.createArticle(req.body);
-  res.redirect("/details");
+  const created = await detailService.createArticle(req.body);
+  res.status(201).json({ success: true, data: created });
 };
 
 exports.editForm = async (req, res) => {
@@ -31,8 +30,8 @@ exports.editForm = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  await detailService.updateArticle(req.params.id, req.body);
-  res.redirect("/details");
+  const updated = await detailService.updateArticle(req.params.id, req.body);
+  res.json({ success: true, data: updated });
 };
 
 exports.delete = async (req, res) => {
@@ -41,6 +40,6 @@ exports.delete = async (req, res) => {
 };
 
 exports.toggleStatus = async (req, res) => {
-  await detailService.toggleStatus(req.params.id);
-  res.redirect("back");
+  const detail = await detailService.toggleStatus(req.params.id);
+  res.json({ success: true, isStatus: detail.isStatus });
 };

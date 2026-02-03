@@ -23,28 +23,39 @@ const GroupSchema = new mongoose.Schema(
     },
 
     /* ===== RELATION ===== */
-    parentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Menu",
-      required: true,
-    },
+    listParents: [
+      {
+        parentId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Menu",
+          required: true,
+        },
+        parentName: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
 
-    parentName: {
-      type: String, // snapshot title.en của Menu
-      required: true,
-    },
+    /* ===== IMAGES ===== */
+    images: [
+      {
+        type: String,
+        default: "",
+      },
+    ],
 
-    /* ===== CONTENT ===== */
-    content: {
-      type: String,
-      default: "",
+    order: {
+      type: Number,
+      default: 0,
     },
-
-    /* ===== IMAGE ===== */
-    image: {
-      type: String, // URL to image in /public/uploads/groups
-      default: "",
-    },
+    listButtons: [
+      {
+        label: String,
+        link: String,
+        type: String,
+      },
+    ],
 
     /* ===== STATUS ===== */
     isStatus: {

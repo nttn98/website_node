@@ -17,7 +17,7 @@ exports.createMenu = async (data) => {
     if (parentMenu)
       parentName = parentMenu.title?.en || parentMenu.title || null;
   }
-  return Menu.create({
+  const menu = await Menu.create({
     title: new Map([
       ["en", data.title_en || data.title || ""],
       ["vi", data.title_vi || data.title || ""],
@@ -32,6 +32,7 @@ exports.createMenu = async (data) => {
     isStatus: true,
     isActive: true,
   });
+  return menu.toObject();
 };
 
 exports.updateMenu = async (id, data) => {
@@ -55,19 +56,21 @@ exports.updateMenu = async (id, data) => {
   if (data.title_vi) update["title.vi"] = data.title_vi;
   if (data.title_zh) update["title.zh"] = data.title_zh;
 
-  return Menu.findByIdAndUpdate(id, update);
+  await Menu.findByIdAndUpdate(id, update);
+  return Menu.findById(id).lean();
 };
 
 exports.deleteMenu = async (id) => {
-  return Menu.findByIdAndUpdate(id, {
+  await Menu.findByIdAndUpdate(id, {
     isActive: false,
     isStatus: false,
   });
+  return { success: true };
 };
 
 exports.toggleMenu = async (id) => {
   const menu = await Menu.findById(id);
   menu.isStatus = !menu.isStatus;
   await menu.save();
-  return menu;
+  return { success: true, isStatus: menu.isStatus };
 };

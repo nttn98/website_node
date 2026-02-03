@@ -4,6 +4,15 @@ exports.getDetailsByMenu = (menuId) => {
     .sort({ createdAt: -1 })
     .lean();
 };
+// Lấy tất cả group của 1 menu (theo listParents)
+exports.getDetailsByMenu = (menuId) => {
+  return Group.find({
+    "listParents.parentId": menuId,
+    isActive: true,
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+};
 const Group = require("../models/Group");
 
 /* ===== DASHBOARD ===== */
@@ -42,6 +51,41 @@ exports.create = async (data) => {
     isActive: true,
   });
 };
+exports.create = async (data) => {
+  // Chuẩn hóa listParents
+  let listParents = [];
+  if (Array.isArray(data.listParents)) {
+    listParents = data.listParents;
+  } else if (data.parentId && data.parentName) {
+    listParents = [{ parentId: data.parentId, parentName: data.parentName }];
+  }
+  // Chuẩn hóa images
+  let images = [];
+  if (Array.isArray(data.images)) images = data.images;
+  else if (data.image) images = [data.image];
+  // Chuẩn hóa listButtons
+  let listButtons = Array.isArray(data.listButtons) ? data.listButtons : [];
+  return Group.create({
+    listParents,
+    type: data.type,
+    content: data.content,
+    title: {
+      en: data.title_en,
+      vi: data.title_vi,
+      zh: data.title_zh,
+    },
+    subtitle: {
+      en: data.subtitle_en,
+      vi: data.subtitle_vi,
+      zh: data.subtitle_zh,
+    },
+    images,
+    listButtons,
+    order: Number(data.order) || 0,
+    isStatus: true,
+    isActive: true,
+  });
+};
 
 exports.getDetailById = (id) => {
   return Group.findById(id).lean();
@@ -66,6 +110,45 @@ exports.updateDetail = (id, data) => {
     { $set: update },
     { new: true, runValidators: true }
   );
+};
+exports.updateDetail = async (id, data) => {
+  // Chuẩn hóa listParents
+  let listParents = [];
+  if (Array.isArray(data.listParents)) {
+    listParents = data.listParents;
+  } else if (data.parentId && data.parentName) {
+    listParents = [{ parentId: data.parentId, parentName: data.parentName }];
+  }
+  // Chuẩn hóa images
+  let images = [];
+  if (Array.isArray(data.images)) images = data.images;
+  else if (data.image) images = [data.image];
+  // Chuẩn hóa listButtons
+  let listButtons = Array.isArray(data.listButtons) ? data.listButtons : [];
+  return Group.findByIdAndUpdate(
+    id,
+    {
+      listParents,
+      type: data.type,
+      content: data.content,
+      title: {
+        en: data.title_en,
+        vi: data.title_vi,
+        zh: data.title_zh,
+      },
+      subtitle: {
+        en: data.subtitle_en,
+        vi: data.subtitle_vi,
+        zh: data.subtitle_zh,
+      },
+      images,
+      listButtons,
+      order: Number(data.order) || 0,
+      isStatus: data.isStatus !== undefined ? data.isStatus : true,
+      isActive: data.isActive !== undefined ? data.isActive : true,
+    },
+    { new: true }
+  ).lean();
 };
 
 exports.deleteDetail = (id) => {

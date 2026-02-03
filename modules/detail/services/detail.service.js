@@ -9,7 +9,7 @@ exports.getArticleById = (id) => {
 };
 
 exports.createArticle = async (data) => {
-  return Detail.create({
+  const detail = await Detail.create({
     parentId: data.parentId,
     subParentId: data.subParentId,
     parentName: data.parentName,
@@ -29,9 +29,10 @@ exports.createArticle = async (data) => {
     isStatus: true,
     isActive: true,
   });
+  return detail.toObject();
 };
 
-exports.updateArticle = (id, data) => {
+exports.updateArticle = async (id, data) => {
   const update = {
     type: data.type,
     content: data.content,
@@ -42,11 +43,12 @@ exports.updateArticle = (id, data) => {
   if (data.subtitle_en) update["subtitle.en"] = data.subtitle_en;
   if (data.subtitle_vi) update["subtitle.vi"] = data.subtitle_vi;
   if (data.subtitle_zh) update["subtitle.zh"] = data.subtitle_zh;
-  return Detail.findByIdAndUpdate(
+  await Detail.findByIdAndUpdate(
     id,
     { $set: update },
     { new: true, runValidators: true }
   );
+  return Detail.findById(id).lean();
 };
 
 exports.deleteArticle = (id) => {

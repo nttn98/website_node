@@ -1,6 +1,6 @@
 <h4 class="mb-4">Create Menu</h4>
 
-<form method="POST" action="/api/menus">
+<form id="menu-create-form">
   <!-- TITLE -->
   <div class="mb-3">
     <label class="form-label">Title (EN)</label>
@@ -18,11 +18,8 @@
     <label class="form-label">Parent Menu (optional)</label>
     <select name="parentId" id="parentId" class="form-select">
       <option value="">-- None --</option>
-      <% if (menus && menus.length) { %> <% menus.forEach(function(menu) { %>
-      <option value="<%= menu._id %>" data-type="<%= menu.type %>">
-        <%= menu.title?.en || menu.title || '-' %>
-      </option>
-      <% }) %> <% } %>
+      <optgroup label="Top menu" id="topMenuGroup"></optgroup>
+      <optgroup label="Footer menu" id="botMenuGroup"></optgroup>
     </select>
   </div>
 
@@ -53,10 +50,53 @@
   </div>
 
   <!-- SUBMIT -->
-  <button class="btn btn-primary">Save</button>
 
+  <button class="btn btn-primary" type="submit">Save</button>
   <a href="/dashboard/menus" class="btn btn-secondary ms-2">Cancel</a>
 </form>
+
+<script>
+  // Lấy danh sách menu cho select parent
+  fetch("/api/menus")
+    .then((res) => res.json())
+    .then((data) => {
+      const menus = data.data || [];
+      const topGroup = document.getElementById("topMenuGroup");
+      const botGroup = document.getElementById("botMenuGroup");
+      if (topGroup) topGroup.innerHTML = "";
+      if (botGroup) botGroup.innerHTML = "";
+      menus.forEach((menu) => {
+        const opt = document.createElement("option");
+        opt.value = menu._id;
+        opt.setAttribute("data-type", menu.type);
+        opt.textContent = menu.title?.en || menu.title || "-";
+        if (menu.type === "top") topGroup.appendChild(opt);
+        else if (menu.type === "bot") botGroup.appendChild(opt);
+      });
+    });
+
+  // Submit form bằng fetch
+  document
+    .getElementById("menu-create-form")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+      if (!data.title) return alert("Title is required");
+      fetch("/api/menus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+        .then((res) => res.json())
+        .then((resp) => {
+          if (resp.success) window.location.href = "/dashboard/menus";
+          else alert("Create failed");
+        })
+        .catch(() => alert("Create failed"));
+    });
+</script>
 
 <script>
   // Auto-set type if parent selected, else allow user to pick

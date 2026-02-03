@@ -1,5 +1,5 @@
 <h4>Edit Detail</h4>
-<form method="POST" action="/details/<%= detail._id %>/update">
+<form id="detail-edit-form">
   <!-- DETAIL (READONLY) -->
   <input type="hidden" name="parentId" value="<%= detail.parentId %>" />
   <div class="mb-3">
@@ -57,8 +57,26 @@
   <div id="editorBlock" class="<%= detail.type === 'editor' ? '' : 'd-none' %>">
     <textarea id="editor"><%= detail.content || '' %></textarea>
   </div>
-  <button class="btn btn-success mt-3">Update</button>
+  <button class="btn btn-success mt-3" type="submit">Update</button>
 </form>
+
+<script>
+  document.getElementById('detail-edit-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    fetch('/details/<%= detail._id %>/update', {
+      method: 'POST',
+      body: formData
+    })
+      .then(res => res.json())
+      .then(resp => {
+        if (resp.success) window.location.href = '/details';
+        else alert('Update failed');
+      })
+      .catch(() => alert('Update failed'));
+  });
+</script>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
   const typeSelect = document.getElementById("typeSelect");

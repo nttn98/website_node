@@ -1,10 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/dashboard.controller");
-const menuController = require("../../menu/controllers/menu.controller");
 
-router.get("/menus", menuController.getAllMenus);
-router.get("/menus/create", menuController.createMenuForm);
-router.get("/menus/:id/edit", menuController.editMenuForm);
+/**
+ * @swagger
+ * /dashboard:
+ *   get:
+ *     summary: Lấy dashboard (danh sách menu)
+ *     tags:
+ *       - Dashboard
+ *     responses:
+ *       200:
+ *         description: Danh sách menu
+ */
+router.get("/", controller.index);
 
 module.exports = router;

@@ -1,22 +1,10 @@
 <h4>Edit Group</h4>
 
-<form method="POST" action="/groups/<%= group._id %>/update" enctype="multipart/form-data">
+<form id="group-edit-form" enctype="multipart/form-data">
 
-  <!-- MENU (READONLY) -->
-  <% if (!group.parentId) { %>
-    <select name="parentId" class="form-select mb-3" required>
-      <% menus.forEach(m => { %>
-        <option
-          value="<%= m._id %>"
-          <%= m._id.toString() === group.parentId?.toString() ? 'selected' : '' %>
-        >
-          <%= m.title.en %>
-        </option>
-      <% }) %>
-    </select>
-  <% } else { %>
-    <input type="hidden" name="parentId" value="<%= group.parentId %>" />
-  <% } %>
+  <!-- MENU (multi-parent) -->
+  <label class="form-label">Parents</label>
+  <select name="listParents" id="parentIdSelect" class="form-select mb-3" multiple required></select>
 
   <!-- TYPE -->
   <select name="type" id="typeSelect" class="form-select mb-3">
@@ -31,21 +19,20 @@
 
   <!-- IMAGE UPLOAD (show old, preview new) -->
   <div class="mb-3">
-    <label class="form-label">Image</label>
-    <div class="row g-2 align-items-center">
-      <% if (group.image) { %>
-        <div class="col-auto text-center">
-          <div class="small text-muted mb-1">Current Image</div>
-          <img src="<%= group.image %>" alt="Current Image" class="img-thumbnail border border-primary" style="max-width: 160px;" id="oldImage" />
-        </div>
-      <% } %>
-      <div class="col-auto text-center">
-        <div class="small text-muted mb-1">New Image Preview</div>
-        <img id="imagePreview" src="#" alt="Preview" class="img-thumbnail border border-success d-none" style="max-width: 160px;" />
-      </div>
-      <div class="col-12 mt-2">
-        <input type="file" name="image" id="imageInput" class="form-control" accept="image/*" />
-      </div>
+    <label class="form-label">Images</label>
+    <div id="oldImageList" class="d-flex flex-wrap mb-2">
+      <% if (Array.isArray(group.images) && group.images.length) { group.images.forEach(function(img) { %>
+        <img src="<%= img %>" alt="Current Image" class="img-thumbnail border border-primary me-2 mb-2" style="max-width: 120px;" />
+      <% }) } %>
+    </div>
+    <input type="file" name="images" id="imageInput" class="form-control" accept="image/*" multiple />
+    <div class="form-text">Chọn nhiều hình ảnh cho group.</div>
+    <div id="imagePreviewList" class="d-flex flex-wrap mt-2"></div>
+    <!-- BUTTONS -->
+    <div class="mb-3">
+      <label class="form-label">Buttons</label>
+      <input type="text" name="listButtons" id="buttonsInput" class="form-control" value='<%= JSON.stringify(group.listButtons || []) %>' placeholder='[{"label":"Button1","action":"#"}]' />
+      <div class="form-text">Nhập JSON cho nút (label, action, ...).</div>
     </div>
   </div>
 
@@ -136,41 +123,81 @@
 
   <button class="btn btn-success mt-3">Update</button>
 <a href="/groups?menuId=<%= group.parentId %>" class="btn btn-secondary mt-3 ms-2">Cancel</a>
+  <button class="btn btn-success mt-3" type="submit">Update</button>
 </form>
+
+<script>
+  // Lấy danh sách menu cho select
+  // Lấy danh sách menu cho select (multi-parent)
+  fetch('/api/menus')
+    .then(res => res.json())
+    .then(data => {
+      const menus = data.data || [];
+      const select = document.getElementById('parentIdSelect');
+      const groupParents = Array.isArray(<%= JSON.stringify(group.listParents || []) %>) ? <%= JSON.stringify(group.listParents || []) %> : [];
+      menus.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m._id;
+        opt.textContent = m.title?.en || m.title || '-';
+        if (groupParents.some(p => p.parentId === m._id)) opt.selected = true;
+        select.appendChild(opt);
+      });
+    });
+
+  // Submit form bằng fetch
+  document.getElementById('group-edit-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    // Multi-parent
+    const parentSelect = document.getElementById('parentIdSelect');
+    const selectedParents = Array.from(parentSelect.selectedOptions).map(opt => ({ parentId: opt.value, parentName: opt.textContent }));
+    formData.delete('listParents');
+    formData.append('listParents', JSON.stringify(selectedParents));
+    // Multi-images
+    const imageInput = document.getElementById('imageInput');
+    if (imageInput && imageInput.files.length > 0) {
+      for (let i = 0; i < imageInput.files.length; i++) {
+        formData.append('images', imageInput.files[i]);
+      }
+    }
+    // Buttons
+    const buttonsInput = document.getElementById('buttonsInput');
+    if (buttonsInput && buttonsInput.value) {
+      formData.delete('listButtons');
+      formData.append('listButtons', buttonsInput.value);
+    }
+    fetch('/groups/<%= group._id %>/update', {
+      method: 'POST',
+      body: formData
+    })
+      .then(res => res.json())
+      .then(resp => {
+        if (resp.success) window.location.href = '/groups?menuId=' + (selectedParents[0]?.parentId || '');
+        else alert('Update failed');
+      })
+      .catch(() => alert('Update failed'));
+  });
+</script>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
-    // Image preview with filename suggestion for edit
+    // Image preview (multi)
     const imageInput = document.getElementById('imageInput');
-    const imagePreview = document.getElementById('imagePreview');
-    const titleEnInput = document.getElementById('title_en');
-    function getSafeFilename(title, id, ext) {
-      return (
-        (title || 'group')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '') +
-        '-' + id + ext
-      );
-    }
-    if (imageInput) {
+    const imagePreviewList = document.getElementById('imagePreviewList');
+    if (imageInput && imagePreviewList) {
       imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
+        imagePreviewList.innerHTML = '';
+        Array.from(imageInput.files).forEach(file => {
           const reader = new FileReader();
           reader.onload = function(ev) {
-            imagePreview.src = ev.target.result;
-            imagePreview.classList.remove('d-none');
+            const img = document.createElement('img');
+            img.src = ev.target.result;
+            img.className = 'img-thumbnail me-2 mb-2';
+            img.style.maxWidth = '120px';
+            imagePreviewList.appendChild(img);
           };
           reader.readAsDataURL(file);
-          // Show filename suggestion (for backend to use)
-          let ext = file.name.substring(file.name.lastIndexOf('.'));
-          let title = titleEnInput.value || 'group';
-          let filename = getSafeFilename(title, '<%= group._id %>', ext);
-          imageInput.setAttribute('data-filename', filename);
-        } else {
-          imagePreview.src = '#';
-          imagePreview.classList.add('d-none');
-        }
+        });
       });
     }
   const typeSelect = document.getElementById("typeSelect");

@@ -1,49 +1,25 @@
 <h4>Create Detail</h4>
-<form method="POST" action="/details/create">
+<form id="detail-create-form">
   <!-- DETAIL -->
-  <% if (parentId) { %>
-  <input type="hidden" name="parentId" value="<%= parentId %>" />
   <div class="mb-3">
     <label class="form-label">Group</label>
-    <input
-      type="text"
-      class="form-control"
-      value="<%= groups.find(d => d._id.toString() === parentId.toString())?.title?.en || '' %>"
-      readonly
-    />
+    <select
+      name="parentId"
+      class="form-select"
+      id="parentIdSelect"
+      required
+    ></select>
   </div>
-  <% } else { %>
-  <div class="mb-3">
-    <label class="form-label">Group</label>
-    <select name="parentId" class="form-select" required>
-      <% groups.forEach(d => { %>
-      <option value="<%= d._id %>"><%= d.title?.en %></option>
-      <% }) %>
-    </select>
-  </div>
-  <% } %>
   <!-- MENU -->
-  <% if (subParentId) { %>
-  <input type="hidden" name="subParentId" value="<%= subParentId %>" />
   <div class="mb-3">
     <label class="form-label">Menu</label>
-    <input
-      type="text"
-      class="form-control"
-      value="<%= menus.find(m => m._id.toString() === subParentId.toString())?.title?.en || '' %>"
-      readonly
-    />
+    <select
+      name="subParentId"
+      class="form-select"
+      id="subParentIdSelect"
+      required
+    ></select>
   </div>
-  <% } else { %>
-  <div class="mb-3">
-    <label class="form-label">Menu</label>
-    <select name="subParentId" class="form-select" required>
-      <% menus.forEach(m => { %>
-      <option value="<%= m._id %>"><%= m.title?.en %></option>
-      <% }) %>
-    </select>
-  </div>
-  <% } %>
   <!-- TYPE -->
   <div class="mb-3">
     <label class="form-label">Type</label>
@@ -127,7 +103,55 @@
     <textarea id="editor"></textarea>
   </div>
   <button class="btn btn-primary mt-3">Create</button>
+  <button class="btn btn-primary mt-3" type="submit">Create</button>
 </form>
+
+<script>
+  // Lấy danh sách group cho select
+  fetch("/groups")
+    .then((res) => res.json())
+    .then((data) => {
+      const groups = data.groups || [];
+      const select = document.getElementById("parentIdSelect");
+      groups.forEach((g) => {
+        const opt = document.createElement("option");
+        opt.value = g._id;
+        opt.textContent = g.title?.en || g.title || "-";
+        select.appendChild(opt);
+      });
+    });
+  // Lấy danh sách menu cho select
+  fetch("/api/menus")
+    .then((res) => res.json())
+    .then((data) => {
+      const menus = data.data || [];
+      const select = document.getElementById("subParentIdSelect");
+      menus.forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = m._id;
+        opt.textContent = m.title?.en || m.title || "-";
+        select.appendChild(opt);
+      });
+    });
+  // Submit form bằng fetch
+  document
+    .getElementById("detail-create-form")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      fetch("/details/create", {
+        method: "POST",
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((resp) => {
+          if (resp.success) window.location.href = "/details";
+          else alert("Create failed");
+        })
+        .catch(() => alert("Create failed"));
+    });
+</script>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
   const typeSelect = document.getElementById("typeSelect");

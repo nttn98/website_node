@@ -1,6 +1,6 @@
 <h4 class="mb-4">Edit Menu</h4>
 
-<form method="POST" action="/api/menus/<%= menu._id %>?_method=PUT">
+<form id="menu-edit-form">
 
   <!-- ===== LANGUAGE TABS ===== -->
   <ul class="nav nav-tabs mb-3" role="tablist">
@@ -141,14 +141,49 @@
   </div>
 
   <!-- SUBMIT -->
-  <button class="btn btn-warning">
-    Update
-  </button>
 
-  <a href="/dashboard/menus" class="btn btn-secondary ms-2">
-    Cancel
-  </a>
+  <button class="btn btn-warning" type="submit">Update</button>
+  <a href="/dashboard/menus" class="btn btn-secondary ms-2">Cancel</a>
 </form>
+
+<script>
+  // Lấy danh sách menu cho select parent
+  fetch('/api/menus')
+    .then(res => res.json())
+    .then(data => {
+      const menus = data.data || [];
+      const parentSelect = document.getElementById('parentId');
+      menus.forEach(m => {
+        if (!('<%= menu._id %>' && m._id === '<%= menu._id %>')) {
+          const opt = document.createElement('option');
+          opt.value = m._id;
+          opt.setAttribute('data-type', m.type);
+          opt.textContent = m.title?.en || m.title || '-';
+          if ('<%= menu.parentId ? menu.parentId.toString() : "" %>' === m._id) opt.selected = true;
+          parentSelect.appendChild(opt);
+        }
+      });
+    });
+
+  // Submit form bằng fetch
+  document.getElementById('menu-edit-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    fetch('/api/menus/<%= menu._id %>', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+      .then(res => res.json())
+      .then(resp => {
+        if (resp.success) window.location.href = '/dashboard/menus';
+        else alert('Update failed');
+      })
+      .catch(() => alert('Update failed'));
+  });
+</script>
 
 <script>
   // Auto-set type if parent selected, else allow user to pick
