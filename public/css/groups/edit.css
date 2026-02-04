@@ -1,0 +1,186 @@
+:root {
+  --ui-navy: #0f2444;
+  --ui-bronze: #b89b5e;
+}
+
+/* Tab Style */
+.nav-tabs-minimal {
+  border: none;
+  display: flex;
+  gap: 25px;
+  border-bottom: 1px solid #eee;
+  padding: 0;
+}
+.nav-tabs-minimal .nav-link {
+  border: none;
+  background: none;
+  padding: 10px 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #ccc;
+  border-bottom: 2px solid transparent;
+  transition: 0.3s;
+}
+.nav-tabs-minimal .nav-link.active {
+  color: var(--ui-navy);
+  border-bottom-color: var(--ui-bronze);
+}
+.tab-pane-custom {
+  display: none;
+}
+.tab-pane-custom.active {
+  display: block;
+  animation: fadeIn 0.4s ease;
+}
+
+/* Form Elements */
+.form-group-minimal label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--ui-bronze);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  display: block;
+}
+.form-group-minimal input {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  background: transparent;
+  font-weight: 600;
+  color: var(--ui-navy);
+  outline: none;
+}
+.form-group-minimal input:focus {
+  border-bottom-color: var(--ui-navy);
+}
+
+.label-bronze {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--ui-bronze);
+  letter-spacing: 1px;
+}
+.select-clean-sm {
+  border: 1px solid #eee;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--ui-navy);
+  outline: none;
+}
+.form-control-minimal {
+  width: 100%;
+  border: 1px solid #eee;
+  padding: 15px;
+  background: #fbfbfc;
+  border-radius: 4px;
+  outline: none;
+}
+.code-font {
+  font-family: "Courier New", Courier, monospace;
+}
+
+/* Content Block */
+.content-block {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Select2 Custom */
+.select-clean {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+}
+
+/* Right Side Buttons & Upload */
+.btn-save-minimal {
+  width: 100%;
+  background: var(--ui-navy);
+  color: white;
+  border: none;
+  padding: 16px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  transition: 0.3s;
+}
+.btn-save-minimal:hover {
+  background: var(--ui-bronze);
+  color: var(--ui-navy);
+}
+
+.custom-file-upload {
+  border: 2px dashed #eee;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  border-radius: 4px;
+}
+.custom-file-upload input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+}
+.upload-label {
+  font-size: 0.7rem;
+  color: #999;
+  font-weight: 700;
+}
+
+/* Select2 Styling (multiple) */
+.select2-container--default .select2-selection--multiple {
+  border: none !important;
+  border-bottom: 1px solid #ddd !important;
+  border-radius: 0 !important;
+}
+.select2-selection__choice {
+  background: var(--ui-navy) !important;
+  color: var(--ui-bronze) !important;
+  border: none !important;
+  font-size: 0.65rem !important;
+  font-weight: 800 !important;
+}
+
+/* Card */
+.card {
+  border: none;
+  border-radius: 12px;
+}
+.card-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.btn-back {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #999;
+  border: 1px solid #eee;
+  padding: 8px 15px;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.header-minimal h4 {
+  font-size: 1.2rem;
+}

@@ -1,0 +1,91 @@
+:root {
+  --ui-navy: #0f2444;
+  --ui-bronze: #b89b5e;
+}
+
+/* Style Tabs Minimal */
+.nav-tabs-minimal {
+  border: none;
+  gap: 20px;
+  border-bottom: 1px solid #eee;
+}
+.nav-tabs-minimal .nav-link {
+  border: none;
+  padding: 10px 0;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #ccc;
+  background: transparent;
+  transition: 0.3s;
+  border-bottom: 2px solid transparent;
+}
+.nav-tabs-minimal .nav-link.active {
+  color: var(--ui-navy);
+  border-bottom: 2px solid var(--ui-bronze);
+}
+
+/* Kế thừa từ trang Create */
+.form-group-minimal label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--ui-bronze);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  display: block;
+}
+.form-group-minimal input,
+.form-group-minimal select {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  background: transparent;
+  font-weight: 600;
+  color: var(--ui-navy);
+  outline: none;
+  transition: 0.3s;
+}
+.form-group-minimal input:focus {
+  border-bottom-color: var(--ui-navy);
+}
+
+.btn-save-minimal {
+  width: 100%;
+  background: var(--ui-navy);
+  color: white;
+  border: none;
+  padding: 16px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.btn-save-minimal:hover {
+  background: var(--ui-bronze);
+  color: var(--ui-navy);
+}
+
+.btn-back {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #999;
+  text-decoration: none;
+  padding: 8px 15px;
+  border: 1px solid #eee;
+}
+
+.switch-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+/* Nút Switch TO */
+.form-check-input {
+  width: 3.2rem !important;
+  height: 1.6rem !important;
+  cursor: pointer;
+}
+.form-switch .form-check-input:checked {
+  background-color: var(--ui-bronze);
+  border-color: var(--ui-bronze);
+}

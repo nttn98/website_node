@@ -1,113 +1,132 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0">Menus</h4>
-  <a href="/dashboard/menus/create" class="btn btn-primary btn-sm">
-    + Add Menu
+<link rel="stylesheet" href="/css/menus/index.css" />
+
+<div class="d-flex justify-content-between align-items-end mb-4">
+  <div>
+    <h4 class="fw-800 mb-1" style="color: var(--ui-navy); letter-spacing: -1px">
+      HỆ THỐNG MENU
+    </h4>
+    <div class="d-flex align-items-center gap-2">
+      <p class="small text-muted mb-0">Quản lý cấu trúc danh mục thông minh</p>
+    </div>
+  </div>
+
+  <a href="/dashboard/menus/create" class="btn-ui-main">
+    <span class="plus-symbol">+</span>
+    THÊM MENU
   </a>
 </div>
 
-<div id="menu-list"></div>
+<div id="menu-list" class="table-container-minimal"></div>
 
 <script>
-  // Render menu table from API
   function renderMenus(menus) {
+    const listContainer = document.getElementById("menu-list");
     if (!menus || !menus.length) {
-      document.getElementById("menu-list").innerHTML = `
-        <div class="text-center py-5 border rounded bg-light">
-          <h5 class="mb-2">No menu yet</h5>
-          <p class="text-muted mb-3">Start by creating your first menu</p>
-          <a href="/dashboard/menus/create" class="btn btn-primary">+ Add Menu</a>
-        </div>
-      `;
+      listContainer.innerHTML = `<div class="p-5 text-center text-muted">No data available</div>`;
       return;
-    }
-    let html = `<table class="table table-bordered align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Title</th>
-          <th>Route</th>
-          <th>Type</th>
-          <th>Parent</th>
-          <th class="text-center">Status</th>
-          <th width="180">Action</th>
-        </tr>
-      </thead>
-      <tbody>`;
-    menus.forEach((menu) => {
-      html += `<tr data-id="${menu._id}">
-        <td>${menu.title?.en || "-"}</td>
-        <td>${menu.route || "-"}</td>
-        <td>${menu.type || "-"}</td>
-        <td>${menu.parentName || "-"}</td>
-        <td class="text-center">
-          <div class="form-check form-switch d-inline-flex align-items-center gap-2">
-            <input class="form-check-input" type="checkbox" ${
-              menu.isStatus ? "checked" : ""
-            } onchange="toggleMenuStatus('${menu._id}', this)" />
-            <span class="badge ${
-              menu.isStatus ? "bg-success" : "bg-secondary"
-            }">${menu.isStatus ? "Active" : "Hidden"}</span>
-          </div>
-        </td>
-        <td>
-          <a href="/dashboard/menus/${
-            menu._id
-          }/edit" class="btn btn-sm btn-warning">Edit</a>
-          <button class="btn btn-sm btn-danger" onclick="deleteMenu('${
-            menu._id
-          }')">Delete</button>
-        </td>
-      </tr>`;
-    });
-    html += "</tbody></table>";
-    document.getElementById("menu-list").innerHTML = html;
-  }
+    } // Sắp xếp dữ liệu theo cấu trúc Cha -> Con
 
-  // Fetch and render on page load
+    const structuredData = [];
+    const parents = menus.filter((m) => !m.parentId);
+    parents.forEach((parent) => {
+      structuredData.push(parent);
+      const children = menus.filter(
+        (c) => c.parentId && c.parentId.toString() === parent._id.toString()
+      );
+      children.forEach((child) => structuredData.push(child));
+    });
+
+    let html = `
+   <table class="table-clean">
+    <thead>
+     <tr>
+      <th width="40%">Thông tin chi tiết</th>
+      <th width="20%">Danh mục cha</th>
+      <th width="20%" class="text-center">Trạng thái</th>
+      <th width="20%" class="text-end">Thao tác</th>
+     </tr>
+    </thead>
+    <tbody>`;
+
+    structuredData.forEach((menu) => {
+      const isParent = !menu.parentId;
+      const rowClass = isParent ? "row-parent" : "row-child";
+
+      html += `
+    <tr class="${rowClass}">
+     <td>
+      <div class="indent-wrapper">
+       ${!isParent ? '<div class="indent-guide"></div>' : ""}
+       <div>
+        <div class="menu-info-primary">
+         ${menu.title?.en || "-"} 
+         <span class="type-tag ml-2">${menu.type || "Link"}</span>
+        </div>
+        <div class="menu-info-secondary">${menu.route || "/"}</div>
+       </div>
+      </div>
+     </td>
+     <td>
+      <span class="small fw-600 ${
+        isParent ? "text-bronze" : "text-muted"
+      }" style="font-size: 0.75rem;">
+       ${isParent ? "GỐC" : menu.parentName || "—"}
+      </span>
+     </td>
+     <td class="text-center">
+      <div class="d-flex align-items-center justify-content-center gap-3">
+        <span class="status-dot ${
+          menu.isStatus ? "dot-active" : "dot-hidden"
+        }"></span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" ${
+            menu.isStatus ? "checked" : ""
+          } 
+            onchange="toggleMenuStatus('${menu._id}', this)" />
+        </div>
+      </div>
+     </td>
+     <td class="text-end">
+      <a href="/dashboard/menus/${
+        menu._id
+      }/edit" class="action-circle" title="Sửa">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+      </a>
+      <button onclick="deleteMenu('${
+        menu._id
+      }')" class="action-circle btn-del" title="Xóa">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+      </button>
+     </td>
+    </tr>`;
+    });
+
+    html += "</tbody></table>";
+    listContainer.innerHTML = html;
+  } // Khởi chạy
+
   fetch("/api/menus")
     .then((res) => res.json())
     .then((data) => renderMenus(data.data))
     .catch(() => renderMenus([]));
 
-  // ...existing code for deleteMenu, toggleMenuStatus...
-</script>
-
-<script>
-  /* ===== DELETE MENU ===== */
-  function deleteMenu(id) {
-    if (!confirm("Delete this menu?")) return;
-
-    fetch(`/api/menus/${id}`, { method: "DELETE" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          location.reload();
-        } else {
-          alert(data.message || "Delete failed");
-        }
-      })
-      .catch(() => alert("Delete failed"));
-  }
-
-  /* ===== TOGGLE STATUS ===== */
   function toggleMenuStatus(id, el) {
     fetch(`/api/menus/${id}/toggle`, { method: "PATCH" })
       .then((res) => res.json())
       .then((data) => {
-        if (!data || data.isStatus === undefined) throw new Error();
+        const dot = el.closest("td").querySelector(".status-dot");
+        dot.className = data.isStatus
+          ? "status-dot dot-active"
+          : "status-dot dot-hidden";
+      });
+  }
 
-        const badge = el.closest("td").querySelector(".badge");
-
-        if (data.isStatus) {
-          badge.className = "badge bg-success";
-          badge.innerText = "Active";
-        } else {
-          badge.className = "badge bg-secondary";
-          badge.innerText = "Hidden";
-        }
-      })
-      .catch(() => {
-        el.checked = !el.checked;
-        alert("Update status failed");
+  function deleteMenu(id) {
+    if (!confirm("Xác nhận xóa menu này?")) return;
+    fetch(`/api/menus/${id}`, { method: "DELETE" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) location.reload();
       });
   }
 </script>

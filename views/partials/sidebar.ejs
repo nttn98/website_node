@@ -1,30 +1,111 @@
+<div class="sidebar-brand p-4">
+  <div class="brand-text">U&I</div>
+  <div class="brand-sub">Logistics Corporation</div>
+</div>
+
+<style>
+  .toggle-btn {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #adb5bd;
+    transition: all 0.2s ease;
+    font-size: 14px;
+  }
+  .toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #6c757d;
+  }
+  .children-list {
+    transition: all 0.3s ease;
+  }
+</style>
+
 <ul class="nav flex-column pt-3">
   <li class="nav-item">
     <a
       href="/dashboard/menus"
-      class="nav-link <%= !currentMenuId ? 'fw-bold active' : '' %>"
+      class="nav-link <%= !currentMenuId && locals.currentPage === 'menus' ? 'active fw-bold' : '' %>"
     >
       Home
     </a>
   </li>
 
-  <% /* True EJS recursion for tree menu, no stack */ %> <% function
+  <li class="nav-item">
+    <a
+      href="/dashboard/groups"
+      class="nav-link <%= locals.currentPage === 'groups' ? 'active fw-bold' : '' %>"
+    >
+      Quản lý group
+    </a>
+  </li>
+
+  <div class="menu-divider">HỆ THỐNG DANH MỤC</div>
+
+  <% /* LOGIC GỐC CỦA BẠN - ĐẢM BẢO LIST MENU HIỆN RA */ %> <% function
   getChildren(parentId) { return menus.filter(function(m) { return (m.parentId ?
   m.parentId.toString() : null) === (parentId ? parentId.toString() : null); });
   } %> <% function renderTree(parentId, level) { var children =
   getChildren(parentId); children.forEach(function(menu) { %>
   <li class="nav-item" style="padding-left: <%= level * 16 %>px">
-    <a
-      href="/groups/<%= menu._id %>"
-      class="nav-link <%= currentMenuId === menu._id.toString() ? 'fw-bold active' : '' %>"
-    >
-      <%= menu.title.en %>
-    </a>
+    <div class="d-flex align-items-center">
+      <a
+        href="/dashboard/groups?menuId=<%= menu._id %>"
+        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> flex-grow-1"
+      >
+        <%= menu.title.en %>
+      </a>
+      <% if (getChildren(menu._id).length) { %>
+      <span class="toggle-btn ms-2" data-target="children-<%= menu._id %>">
+        <i class="bi bi-chevron-right"></i>
+      </span>
+      <% } %>
+    </div>
     <% if (getChildren(menu._id).length) { %>
-    <ul class="nav flex-column ms-2">
+    <ul
+      class="nav flex-column ms-2 children-list d-none"
+      id="children-<%= menu._id %>"
+    >
       <% renderTree(menu._id, level + 1); %>
     </ul>
     <% } %>
   </li>
   <% }); } %> <% renderTree(null, 0); %>
 </ul>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Khôi phục trạng thái toggle từ localStorage
+    document.querySelectorAll(".toggle-btn").forEach((btn) => {
+      const targetId = btn.getAttribute("data-target");
+      if (localStorage.getItem(targetId) === "open") {
+        const targetUl = document.getElementById(targetId);
+        targetUl.classList.remove("d-none");
+        btn.innerHTML = '<i class="bi bi-chevron-down"></i>';
+      }
+    });
+
+    // Xử lý click toggle
+    document.querySelectorAll(".toggle-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const targetId = this.getAttribute("data-target");
+        const targetUl = document.getElementById(targetId);
+        const isHidden = targetUl.classList.contains("d-none");
+        if (isHidden) {
+          targetUl.classList.remove("d-none");
+          this.innerHTML = '<i class="bi bi-chevron-down"></i>';
+          localStorage.setItem(targetId, "open");
+        } else {
+          targetUl.classList.add("d-none");
+          this.innerHTML = '<i class="bi bi-chevron-right"></i>';
+          localStorage.setItem(targetId, "closed");
+        }
+      });
+    });
+  });
+</script>

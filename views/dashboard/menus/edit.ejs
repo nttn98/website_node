@@ -1,207 +1,184 @@
-<h4 class="mb-4">Edit Menu</h4>
+<link rel="stylesheet" href="/css/menus/edit.css" />
 
-<form id="menu-edit-form">
+<div class="header-minimal mb-5">
+  <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
+    <div>
+      <h4 class="fw-800 text-navy mb-0">CHỈNH SỬA MENU</h4>
+      <p class="text-muted small mb-0">ID: <span class="text-bronze"><%= menu._id %></span></p>
+    </div>
+    <a href="/dashboard/menus" class="btn-back">QUAY LẠI</a>
+  </div>
+</div>
 
-  <!-- ===== LANGUAGE TABS ===== -->
-  <ul class="nav nav-tabs mb-3" role="tablist">
-    <li class="nav-item">
-      <button
-        class="nav-link active"
-        data-bs-toggle="tab"
-        data-bs-target="#lang-en"
-        type="button"
-      >
-        EN
-      </button>
-    </li>
-    <li class="nav-item">
-      <button
-        class="nav-link"
-        data-bs-toggle="tab"
-        data-bs-target="#lang-vi"
-        type="button"
-      >
-        VI
-      </button>
-    </li>
-    <li class="nav-item">
-      <button
-        class="nav-link"
-        data-bs-toggle="tab"
-        data-bs-target="#lang-zh"
-        type="button"
-      >
-        ZH
-      </button>
-    </li>
-  </ul>
+<form id="menu-edit-form" class="row">
+  <div class="col-md-7">
+    <ul class="nav nav-tabs-minimal mb-4" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#lang-en" type="button">ENGLISH</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#lang-vi" type="button">TIẾNG VIỆT</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#lang-zh" type="button">中文 (ZH)</button>
+      </li>
+    </ul>
 
-  <!-- ===== TAB CONTENT ===== -->
-  <div class="tab-content mb-4">
-    <!-- EN -->
-    <div class="tab-pane fade show active" id="lang-en">
-      <div class="mb-3">
-        <label class="form-label">Title (EN)</label>
-        <input
-          type="text"
-          name="title_en"
-          class="form-control"
-          value="<%= menu.title?.en || '' %>"
-          required
-        />
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="lang-en">
+        <div class="form-group-minimal mb-4">
+          <label>TITLE (EN)</label>
+          <input type="text" name="title_en" value="<%= menu.title?.en || '' %>" required />
+        </div>
+      </div>
+      <div class="tab-pane fade" id="lang-vi">
+        <div class="form-group-minimal mb-4">
+          <label>TIÊU ĐỀ (VI)</label>
+          <input type="text" name="title_vi" value="<%= menu.title?.vi || '' %>" />
+        </div>
+      </div>
+      <div class="tab-pane fade" id="lang-zh">
+        <div class="form-group-minimal mb-4">
+          <label>标题 (ZH)</label>
+          <input type="text" name="title_zh" value="<%= menu.title?.zh || '' %>" />
+        </div>
       </div>
     </div>
 
-    <!-- VI -->
-    <div class="tab-pane fade" id="lang-vi">
-      <div class="mb-3">
-        <label class="form-label">Title (VI)</label>
-        <input
-          type="text"
-          name="title_vi"
-          class="form-control"
-          value="<%= menu.title?.vi || '' %>"
-        />
-      </div>
+    <div class="form-group-minimal mb-4">
+      <label>ĐƯỜNG DẪN (ROUTE)</label>
+      <input type="text" name="route" value="<%= menu.route || '' %>" placeholder="/path-name" />
     </div>
 
-    <!-- ZH -->
-    <div class="tab-pane fade" id="lang-zh">
-      <div class="mb-3">
-        <label class="form-label">Title (ZH)</label>
-        <input
-          type="text"
-          name="title_zh"
-          class="form-control"
-          value="<%= menu.title?.zh || '' %>"
-        />
+    <div class="row">
+      <div class="col-6">
+        <div class="form-group-minimal mb-4">
+          <label>VỊ TRÍ</label>
+          <select name="type" id="typeSelect">
+            <option value="top" <%= menu.type === 'top' ? 'selected' : '' %>>Header Menu</option>
+            <option value="bot" <%= menu.type === 'bot' ? 'selected' : '' %>>Footer Menu</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-minimal mb-4">
+          <label>THỨ TỰ</label>
+          <input type="number" name="order" value="<%= menu.order || 0 %>" />
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ===== COMMON FIELDS ===== -->
+  <div class="col-md-5 ps-md-5">
+    <div class="form-group-minimal mb-4">
+      <label>DANH MỤC CHA</label>
+      <select name="parentId" id="parentId">
+        <option value="">-- Menu gốc (Gốc) --</option>
+        <% if (menus && menus.length) { %>
+          <% menus.forEach(function(m) { 
+             if (!menu._id || m._id.toString() !== menu._id.toString()) { %>
+            <option value="<%= m._id %>" data-type="<%= m.type %>" 
+              <%= (menu.parentId && menu.parentId.toString() === m._id.toString()) ? 'selected' : '' %>>
+              ↳ <%= m.title?.en || m.title || '-' %>
+            </option>
+          <% }} ) %>
+        <% } %>
+      </select>
+    </div>
 
+    <div class="switch-card mb-5">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <span class="fw-700 small text-navy d-block">HIỂN THỊ NÚT</span>
+          <small class="text-muted" style="font-size: 0.6rem;">Display as button</small>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="isButton" id="isButton" <%= menu.isButton ? 'checked' : '' %>>
+        </div>
+      </div>
+    </div>
 
-  <!-- ROUTE -->
-  <div class="mb-3">
-    <label class="form-label">Route</label>
-    <input
-      type="text"
-      name="route"
-      class="form-control"
-      value="<%= menu.route || '' %>"
-    />
+    <button type="submit" class="btn-save-minimal">CẬP NHẬT THAY ĐỔI</button>
+    <p class="text-center mt-3">
+        <a href="/dashboard/menus" class="text-muted small fw-700 text-decoration-none" style="font-size: 0.65rem;">HỦY BỎ</a>
+    </p>
   </div>
-
-  <!-- PARENT MENU -->
-  <div class="mb-3">
-    <label class="form-label">Parent Menu (optional)</label>
-    <select name="parentId" id="parentId" class="form-select">
-      <option value="">-- None --</option>
-      <% if (menus && menus.length) { %>
-        <% menus.forEach(function(m) { if (!menu._id || m._id.toString() !== menu._id.toString()) { %>
-          <option value="<%= m._id %>" data-type="<%= m.type %>" <%= (menu.parentId && menu.parentId.toString() === m._id.toString()) ? 'selected' : '' %>><%= m.title?.en || m.title || '-' %></option>
-        <% }} ) %>
-      <% } %>
-    </select>
-  </div>
-
-  <!-- TYPE -->
-  <div class="mb-3">
-    <label class="form-label">Type</label>
-    <select name="type" id="typeSelect" class="form-select" required>
-      <option value="top" <%= menu.type === 'top' ? 'selected' : '' %>>Top menu</option>
-      <option value="bot" <%= menu.type === 'bot' ? 'selected' : '' %>>Footer menu</option>
-    </select>
-  </div>
-
-  <!-- ORDER -->
-  <div class="mb-3">
-    <label class="form-label">Order</label>
-    <input
-      type="number"
-      name="order"
-      class="form-control"
-      value="<%= menu.order || 0 %>"
-    />
-  </div>
-
-  <!-- IS BUTTON -->
-  <div class="form-check mb-4">
-    <input
-      type="checkbox"
-      name="isButton"
-      class="form-check-input"
-      id="isButton"
-      <%= menu.isButton ? 'checked' : '' %>
-    />
-    <label for="isButton" class="form-check-label">
-      Display as button
-    </label>
-  </div>
-
-  <!-- SUBMIT -->
-
-  <button class="btn btn-warning" type="submit">Update</button>
-  <a href="/dashboard/menus" class="btn btn-secondary ms-2">Cancel</a>
 </form>
 
 <script>
-  // Lấy danh sách menu cho select parent
-  fetch('/api/menus')
-    .then(res => res.json())
-    .then(data => {
-      const menus = data.data || [];
-      const parentSelect = document.getElementById('parentId');
-      menus.forEach(m => {
-        if (!('<%= menu._id %>' && m._id === '<%= menu._id %>')) {
-          const opt = document.createElement('option');
-          opt.value = m._id;
-          opt.setAttribute('data-type', m.type);
-          opt.textContent = m.title?.en || m.title || '-';
-          if ('<%= menu.parentId ? menu.parentId.toString() : "" %>' === m._id) opt.selected = true;
-          parentSelect.appendChild(opt);
-        }
-      });
-    });
+  // 1. XỬ LÝ CHUYỂN TAB (Vanilla JS - Không cần Bootstrap JS)
+  const tabButtons = document.querySelectorAll('.nav-tabs-minimal .nav-link');
+  const tabPanes = document.querySelectorAll('.tab-content .tab-pane');
 
-  // Submit form bằng fetch
+  tabButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const targetId = this.getAttribute('data-bs-target');
+
+      // Gỡ bỏ class active ở các nút khác
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      // Ẩn tất cả các tab content
+      tabPanes.forEach(pane => {
+        pane.classList.remove('show', 'active');
+      });
+
+      // Kích hoạt nút hiện tại và tab tương ứng
+      this.classList.add('active');
+      const activePane = document.querySelector(targetId);
+      if (activePane) {
+        activePane.classList.add('show', 'active');
+      }
+    });
+  });
+
+  // 2. LOGIC ĐỒNG BỘ LOẠI MENU (TYPE) VỚI MENU CHA
+  const parentSelect = document.getElementById('parentId');
+  const typeSelect = document.getElementById('typeSelect');
+
+  function syncTypeWithParent() {
+    const selected = parentSelect.options[parentSelect.selectedIndex];
+    if (!selected) return;
+    
+    const parentType = selected.getAttribute('data-type');
+    if (parentSelect.value && parentType) {
+      typeSelect.value = parentType;
+      typeSelect.style.pointerEvents = 'none';
+      typeSelect.style.opacity = '0.5';
+    } else {
+      typeSelect.style.pointerEvents = 'auto';
+      typeSelect.style.opacity = '1';
+    }
+  }
+
+  parentSelect.addEventListener('change', syncTypeWithParent);
+  syncTypeWithParent(); // Chạy ngay khi load trang để kiểm tra dữ liệu cũ
+
+  // 3. SUBMIT FORM QUA API
   document.getElementById('menu-edit-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
+    
+    // Thu thập dữ liệu form
+    const formData = new FormData(this);
     const data = Object.fromEntries(formData.entries());
+    
+    // Xử lý riêng cho Checkbox (vì FormData mặc định bỏ qua nếu không check)
+    data.isButton = document.getElementById('isButton').checked;
+
     fetch('/api/menus/<%= menu._id %>', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     })
-      .then(res => res.json())
-      .then(resp => {
-        if (resp.success) window.location.href = '/dashboard/menus';
-        else alert('Update failed');
-      })
-      .catch(() => alert('Update failed'));
+    .then(res => res.json())
+    .then(resp => {
+      if (resp.success) {
+        window.location.href = '/dashboard/menus';
+      } else {
+        alert('Cập nhật thất bại: ' + (resp.message || 'Lỗi hệ thống'));
+      }
+    })
+    .catch(err => {
+      console.error('Error:', err);
+      alert('Không thể kết nối với máy chủ');
+    });
   });
-</script>
-
-<script>
-  // Auto-set type if parent selected, else allow user to pick
-  const parentSelect = document.getElementById('parentId');
-  const typeSelect = document.getElementById('typeSelect');
-  function syncTypeWithParent() {
-    const selected = parentSelect.options[parentSelect.selectedIndex];
-    const parentType = selected.getAttribute('data-type');
-    if (parentSelect.value && parentType) {
-      typeSelect.value = parentType;
-      typeSelect.setAttribute('readonly', 'readonly');
-      typeSelect.setAttribute('disabled', 'disabled');
-    } else {
-      typeSelect.removeAttribute('readonly');
-      typeSelect.removeAttribute('disabled');
-    }
-  }
-  parentSelect.addEventListener('change', syncTypeWithParent);
-  // On page load, sync if parent is already selected
-  syncTypeWithParent();
 </script>

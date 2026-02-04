@@ -1,128 +1,131 @@
-<a href="#" id="create-group-btn" class="btn btn-primary mb-3">
-  + Create Group
-</a>
-<div id="group-list"></div>
+<link rel="stylesheet" href="/css/groups/index.css" />
+
+<% const currentMenu = menus.find(m => m._id.toString() === currentMenuId); %>
+
+<div class="d-flex justify-content-between align-items-end mb-4">
+  <div>
+    <h4 class="fw-800 mb-1" style="color: var(--ui-navy); letter-spacing: -1px">
+      QUẢN LÝ NHÓM<% if (currentMenu) { %>: <%= currentMenu.title.en %><% } %>
+    </h4>
+    <div class="d-flex align-items-center gap-2">
+      <p class="small text-muted mb-0">
+        <% if (currentMenu) { %>Nhóm thuộc menu "<%= currentMenu.title.en %>"<%
+        } else { %>Phân nhóm nội dung theo Menu<% } %>
+      </p>
+    </div>
+  </div>
+
+  <a
+    href="/dashboard/groups/create<% if (currentMenuId) { %>?menuId=<%= currentMenuId %><% } %>"
+    class="btn-ui-main"
+  >
+    <span class="plus-symbol">+</span>
+    THÊM GROUP MỚI
+  </a>
+</div>
+
+<div id="group-list" class="table-container-minimal"></div>
 
 <script>
-  // Lấy menuId từ query string nếu có
+  function renderGroups(groups) {
+    const listContainer = document.getElementById("group-list");
+    if (!groups || !groups.length) {
+      listContainer.innerHTML = `<div class="p-5 text-center text-muted">Chưa có group nào.</div>`;
+      return;
+    }
+
+    let html = `
+   <table class="table-clean">
+    <thead>
+     <tr>
+      <th width="30%">Thông tin chi tiết</th>
+      <th width="15%">Loại</th>
+      <th width="20%">Menu cha</th>
+      <th width="10%">Thứ tự</th>
+      <th width="10%" class="text-center">Trạng thái</th>
+      <th width="15%" class="text-end">Thao tác</th>
+     </tr>
+    </thead>
+    <tbody>`;
+
+    groups.forEach((group) => {
+      const imgUrl =
+        (group.images && group.images[0]) ||
+        group.image ||
+        "https://placehold.co/100x75?text=No+Image";
+
+      html += `
+      <tr>
+        <td>
+          <div class="d-flex align-items-center">
+            <img src="${imgUrl}" style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px; margin-right: 12px;" />
+            <div>
+              <div class="fw-bold">${group.title?.en || "Group Name"}</div>
+              <div class="text-muted small">${group.subtitle?.en || ""}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="badge-minimal">${group.type}</span>
+        </td>
+        <td>
+          ${
+            (group.listParents || [])
+              .map(
+                (p) => `<span class="badge-minimal me-1">${p.parentName}</span>`
+              )
+              .join("") || '<span class="text-muted small">Không có</span>'
+          }
+        </td>
+        <td>
+          <span class="fw-bold">${group.order || 0}</span>
+        </td>
+        <td class="text-center">
+          <span class="badge-minimal ${group.isStatus ? "badge-active" : ""}">
+            ${group.isStatus ? "ACTIVE" : "INACTIVE"}
+          </span>
+        </td>
+        <td class="text-end">
+          <button class="action-circle" onclick="toggleGroupStatus('${
+            group._id
+          }', this)" title="Trạng thái">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </button>
+          <a href="/dashboard/groups/${
+            group._id
+          }/edit<% if (currentMenuId) { %>?menuId=<%= currentMenuId %><% } %>" class="action-circle" title="Sửa">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </a>
+          <button onclick="deleteGroup('${
+            group._id
+          }')" class="action-circle btn-del" title="Xóa">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        </td>
+      </tr>`;
+    });
+
+    html += "</tbody></table>";
+    listContainer.innerHTML = html;
+  }
+
   function getMenuId() {
     const url = new URL(window.location.href);
     return url.searchParams.get("menuId") || "";
   }
 
-  function renderGroups(groups, menuId) {
-    if (!groups || !groups.length) {
-      document.getElementById(
-        "group-list"
-      ).innerHTML = `<div class="text-center py-5 border rounded bg-light"><h5>No group yet</h5></div>`;
-      return;
-    }
-    let html = '<div class="row g-3">';
-    groups.forEach((group) => {
-      html += `<div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm h-100 border-0 group-card">
-          ${
-            Array.isArray(group.images) && group.images.length > 0
-              ? group.images
-                  .map(
-                    (img) =>
-                      `<img src="${img}" alt="Image" class="card-img-top" style="max-height:180px;object-fit:cover" />`
-                  )
-                  .join("")
-              : group.image
-              ? `<img src="${group.image}" alt="Image" class="card-img-top" style="max-height:180px;object-fit:cover" />`
-              : ""
-          }
-          <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <h5 class="mb-0">${group.title?.en || "Group"}</h5>
-              <span class="badge bg-info">Type: ${group.type}</span>
-            </div>
-            ${
-              group.subtitle?.en
-                ? `<p class="text-muted small mb-2">${group.subtitle.en}</p>`
-                : ""
-            }
-            <div class="mb-2"><span class="badge ${
-              group.isStatus ? "bg-success" : "bg-secondary"
-            }">${group.isStatus ? "Active" : "Inactive"}</span></div>
-            <div class="group-content mb-2" style="min-height:40px">${
-              group.content || ""
-            }</div>
-            <div class="mb-2">
-              <div class="fw-bold text-primary">Parents:</div>
-              ${
-                Array.isArray(group.listParents) && group.listParents.length > 0
-                  ? group.listParents
-                      .map(
-                        (p) =>
-                          `<span class="badge bg-secondary me-1">${p.parentName}</span>`
-                      )
-                      .join("")
-                  : '<span class="text-muted small">No parent</span>'
-              }
-            </div>
-            <div class="mb-2">
-              <div class="fw-bold text-primary">Buttons:</div>
-              ${
-                Array.isArray(group.listButtons) && group.listButtons.length > 0
-                  ? group.listButtons
-                      .map(
-                        (b) =>
-                          `<button class="btn btn-sm btn-outline-dark me-1">${
-                            b.label || b.text || "Button"
-                          }</button>`
-                      )
-                      .join("")
-                  : '<span class="text-muted small">No buttons</span>'
-              }
-            </div>
-            <div class="mt-2">
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="fw-bold text-primary">Details:</div>
-                <a href="/details/create?parentId=${
-                  group._id
-                }&subParentId=${menuId}" class="btn btn-sm btn-success">+ Add Detail</a>
-              </div>
-              ${
-                group.listArticles && group.listArticles.length > 0
-                  ? `<ul class="list-group list-group-flush">${group.listArticles
-                      .map(
-                        (detail) =>
-                          `<li class="list-group-item px-0 py-1"><a href="/details/${
-                            detail._id
-                          }" class="text-decoration-none">${
-                            detail.title || "Detail"
-                          }</a></li>`
-                      )
-                      .join("")}</ul>`
-                  : '<div class="text-muted small">No details yet.</div>'
-              }
-            </div>
-            <div class="d-flex gap-2 flex-wrap mt-2">
-              <button class="btn btn-sm btn-outline-warning" onclick="toggleGroupStatus('${
-                group._id
-              }', this)">${group.isStatus ? "Deactivate" : "Activate"}</button>
-              <a href="/groups/${
-                group._id
-              }/edit" class="btn btn-sm btn-outline-primary">Edit</a>
-              <button class="btn btn-sm btn-outline-danger" onclick="deleteGroup('${
-                group._id
-              }')">Delete</button>
-            </div>
-          </div>
-        </div>
-      </div>`;
-    });
-    html += "</div>";
-    document.getElementById("group-list").innerHTML = html;
-  }
-
   function fetchGroups() {
     const menuId = getMenuId();
-    fetch(`/groups?menuId=${menuId}`)
+    const url = menuId ? `/groups?menuId=${menuId}` : "/groups";
+    fetch(url)
       .then((res) => res.json())
-      .then((data) => renderGroups(data.groups, menuId));
+      .then((data) => renderGroups(data.groups));
   }
 
   function toggleGroupStatus(id, btn) {
@@ -144,24 +147,5 @@
       });
   }
 
-  document
-    .getElementById("create-group-btn")
-    .addEventListener("click", function () {
-      const menuId = getMenuId();
-      window.location.href = `/groups/create?menuId=${menuId}`;
-    });
-
   fetchGroups();
 </script>
-
-<style>
-  .group-card:hover {
-    box-shadow: 0 0 0 2px #ffc107, 0 2px 8px rgba(0, 0, 0, 0.08);
-    border-color: #ffc107;
-    transition: box-shadow 0.2s;
-  }
-  .group-content {
-    font-size: 0.97em;
-    color: #333;
-  }
-</style>

@@ -34,6 +34,7 @@ const GroupSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        _id: false,
       },
     ],
 
@@ -49,6 +50,7 @@ const GroupSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
     listButtons: [
       {
         label: String,

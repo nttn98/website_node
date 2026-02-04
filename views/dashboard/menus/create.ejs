@@ -1,89 +1,136 @@
-<h4 class="mb-4">Create Menu</h4>
+<link rel="stylesheet" href="/css/menus/create.css" />
 
-<form id="menu-create-form">
-  <!-- TITLE -->
-  <div class="mb-3">
-    <label class="form-label">Title (EN)</label>
-    <input type="text" name="title" class="form-control" required />
+<div class="header-minimal mb-5">
+  <div
+    class="d-flex justify-content-between align-items-center border-bottom pb-3"
+  >
+    <div>
+      <h4 class="fw-800 text-navy mb-0">HỆ THỐNG MENU</h4>
+      <p class="text-muted small mb-0">Cấu trúc danh mục hệ thống</p>
+    </div>
+    <a href="/dashboard/menus" class="btn-back">QUAY LẠI</a>
+  </div>
+</div>
+
+<form id="menu-create-form" class="row">
+  <div class="col-md-7">
+    <div class="form-group-minimal mb-4">
+      <label>TIÊU ĐỀ (EN)</label>
+      <input type="text" name="title" placeholder="Nhập tên menu..." required />
+    </div>
+
+    <div class="form-group-minimal mb-4">
+      <label>ĐƯỜNG DẪN (ROUTE)</label>
+      <input type="text" name="route" placeholder="/duong-dan" />
+    </div>
+
+    <div class="row">
+      <div class="col-6">
+        <div class="form-group-minimal mb-4">
+          <label>VỊ TRÍ</label>
+          <select name="type" id="typeSelect">
+            <option value="top">Header Menu</option>
+            <option value="bot">Footer Menu</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-minimal mb-4">
+          <label>THỨ TỰ</label>
+          <input type="number" name="order" value="0" />
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- ROUTE -->
-  <div class="mb-3">
-    <label class="form-label">Route</label>
-    <input type="text" name="route" class="form-control" placeholder="/about" />
+  <div class="col-md-5 ps-md-5">
+    <div class="form-group-minimal mb-4">
+      <label>DANH MỤC CHA</label>
+      <select name="parentId" id="parentId">
+        <option value="">-- Menu gốc --</option>
+        <optgroup label="Top" id="topMenuGroup"></optgroup>
+        <optgroup label="Footer" id="botMenuGroup"></optgroup>
+      </select>
+    </div>
+
+    <div class="switch-card mb-5">
+      <div class="d-flex justify-content-between">
+        <span class="fw-700 small text-navy">HIỂN THỊ DẠNG NÚT</span>
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="isButton"
+            id="isButton"
+          />
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-save-minimal">LƯU CẤU HÌNH</button>
   </div>
-
-  <!-- PARENT MENU -->
-  <div class="mb-3">
-    <label class="form-label">Parent Menu (optional)</label>
-    <select name="parentId" id="parentId" class="form-select">
-      <option value="">-- None --</option>
-      <optgroup label="Top menu" id="topMenuGroup"></optgroup>
-      <optgroup label="Footer menu" id="botMenuGroup"></optgroup>
-    </select>
-  </div>
-
-  <!-- TYPE -->
-  <div class="mb-3">
-    <label class="form-label">Type</label>
-    <select name="type" id="typeSelect" class="form-select" required>
-      <option value="top">Top menu</option>
-      <option value="bot">Footer menu</option>
-    </select>
-  </div>
-
-  <!-- ORDER -->
-  <div class="mb-3">
-    <label class="form-label">Order</label>
-    <input type="number" name="order" class="form-control" value="0" />
-  </div>
-
-  <!-- IS BUTTON -->
-  <div class="form-check mb-3">
-    <input
-      type="checkbox"
-      name="isButton"
-      class="form-check-input"
-      id="isButton"
-    />
-    <label for="isButton" class="form-check-label">Display as button</label>
-  </div>
-
-  <!-- SUBMIT -->
-
-  <button class="btn btn-primary" type="submit">Save</button>
-  <a href="/dashboard/menus" class="btn btn-secondary ms-2">Cancel</a>
 </form>
 
 <script>
-  // Lấy danh sách menu cho select parent
+  // 1. Fetch & Render Parent Options
   fetch("/api/menus")
     .then((res) => res.json())
     .then((data) => {
-      const menus = data.data || [];
       const topGroup = document.getElementById("topMenuGroup");
       const botGroup = document.getElementById("botMenuGroup");
-      if (topGroup) topGroup.innerHTML = "";
-      if (botGroup) botGroup.innerHTML = "";
-      menus.forEach((menu) => {
-        const opt = document.createElement("option");
-        opt.value = menu._id;
-        opt.setAttribute("data-type", menu.type);
-        opt.textContent = menu.title?.en || menu.title || "-";
-        if (menu.type === "top") topGroup.appendChild(opt);
-        else if (menu.type === "bot") botGroup.appendChild(opt);
-      });
-    });
 
-  // Submit form bằng fetch
+      // Xóa trắng nội dung cũ trước khi render (đề phòng)
+      topGroup.innerHTML = "";
+      botGroup.innerHTML = "";
+
+      // Kiểm tra dữ liệu và lặp
+      const menus = data.data || data; // Hỗ trợ cả 2 định dạng trả về
+
+      menus.forEach((m) => {
+        // Chỉ những menu nào không có parentId thì mới được làm Menu Cha
+        if (!m.parentId) {
+          const opt = document.createElement("option");
+          opt.value = m._id;
+          opt.textContent = `↳ ${m.title?.en || m.title || "No Title"}`;
+          opt.dataset.type = m.type;
+
+          if (m.type === "top") {
+            topGroup.appendChild(opt);
+          } else {
+            botGroup.appendChild(opt);
+          }
+        }
+      });
+
+      console.log("Đã render danh mục cha thành công.");
+    })
+    .catch((err) => console.error("Lỗi khi load danh mục cha:", err));
+
+  // 2. Auto-logic cho Parent/Type (Giữ nguyên)
+  document.getElementById("parentId").addEventListener("change", function () {
+    const selectedOption = this.options[this.selectedIndex];
+    const parentType = selectedOption.dataset.type;
+    const typeSelect = document.getElementById("typeSelect");
+
+    if (this.value && parentType) {
+      typeSelect.value = parentType;
+      typeSelect.style.pointerEvents = "none";
+      typeSelect.style.opacity = "0.5";
+    } else {
+      typeSelect.style.pointerEvents = "auto";
+      typeSelect.style.opacity = "1";
+    }
+  });
+
+  // 3. Submit Form (Giữ nguyên)
   document
     .getElementById("menu-create-form")
     .addEventListener("submit", function (e) {
       e.preventDefault();
-      const form = e.target;
-      const formData = new FormData(form);
+      const formData = new FormData(this);
       const data = Object.fromEntries(formData.entries());
-      if (!data.title) return alert("Title is required");
+      data.isButton = document.getElementById("isButton").checked;
+
       fetch("/api/menus", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -92,26 +139,7 @@
         .then((res) => res.json())
         .then((resp) => {
           if (resp.success) window.location.href = "/dashboard/menus";
-          else alert("Create failed");
-        })
-        .catch(() => alert("Create failed"));
+          else alert("Lưu thất bại!");
+        });
     });
-</script>
-
-<script>
-  // Auto-set type if parent selected, else allow user to pick
-  const parentSelect = document.getElementById("parentId");
-  const typeSelect = document.getElementById("typeSelect");
-  parentSelect.addEventListener("change", function () {
-    const selected = parentSelect.options[parentSelect.selectedIndex];
-    const parentType = selected.getAttribute("data-type");
-    if (parentSelect.value && parentType) {
-      typeSelect.value = parentType;
-      typeSelect.setAttribute("readonly", "readonly");
-      typeSelect.setAttribute("disabled", "disabled");
-    } else {
-      typeSelect.removeAttribute("readonly");
-      typeSelect.removeAttribute("disabled");
-    }
-  });
 </script>

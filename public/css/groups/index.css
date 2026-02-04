@@ -1,0 +1,138 @@
+:root {
+  --ui-navy: #0f2444;
+  --ui-bronze: #b89b5e;
+}
+
+.fw-800 {
+  font-weight: 800;
+}
+
+/* Nút thêm mới */
+.btn-ui-main {
+  background: var(--ui-navy);
+  color: var(--ui-bronze);
+  padding: 10px 24px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  border: none;
+  text-decoration: none;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(15, 36, 68, 0.2);
+}
+.btn-ui-main:hover {
+  background: var(--ui-bronze);
+  color: var(--ui-navy);
+  transform: translateY(-2px);
+}
+.plus-symbol {
+  font-size: 1rem;
+  margin-right: 8px;
+}
+
+/* Container bảng */
+.table-container-minimal {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f1f1;
+}
+
+.table-clean {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+
+.table-clean th {
+  padding: 12px 20px;
+  font-size: 0.65rem;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #f8f8f8;
+}
+
+.table-clean tbody tr {
+  transition: 0.2s;
+}
+.table-clean tbody tr:hover {
+  background: #f4f7fa !important;
+}
+
+.table-clean td {
+  padding: 14px 20px;
+  border-bottom: 1px solid #fcfcfc;
+}
+
+/* Badge */
+.badge-minimal {
+  font-size: 0.6rem;
+  padding: 3px 8px;
+  background: #f8f9fa;
+  color: #666;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.badge-active {
+  background: var(--ui-bronze);
+  color: var(--ui-navy);
+}
+
+/* Action Buttons */
+.action-circle {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f8f9fa;
+  color: #888;
+  transition: 0.2s;
+  border: none;
+  margin-left: 5px;
+  text-decoration: none;
+}
+.action-circle:hover {
+  background: var(--ui-navy);
+  color: var(--ui-bronze);
+}
+.btn-del:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.badge-minimal {
+  font-size: 0.65rem;
+  padding: 4px 8px;
+  border-radius: 2px;
+  font-weight: 700;
+  background: #f0f0f0;
+  color: #666;
+}
+.badge-active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.btn-action-minimal {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--ui-navy);
+  text-decoration: none;
+  padding: 5px 10px;
+  border: 1px solid #eee;
+  margin-left: 5px;
+  transition: 0.3s;
+}
+.btn-action-minimal:hover {
+  border-color: var(--ui-navy);
+  background: var(--ui-navy);
+  color: white;
+}
+.btn-del:hover {
+  background: #dc3545;
+  border-color: #dc3545;
+}

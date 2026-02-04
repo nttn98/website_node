@@ -1,0 +1,70 @@
+/* Minimalist Luxury Toast Notification */
+:root {
+  --ui-navy: #0f2444;
+  --ui-bronze: #b89b5e;
+  /* Màu xanh đẹp: Sự kết hợp giữa xanh rừng sâu và xanh cổ vịt */
+  --ui-success-luxury: #164a41;
+  /* Màu đỏ đẹp: Đỏ Ruby đậm */
+  --ui-error-luxury: #7b1113;
+  --ui-white: #ffffff;
+}
+
+.toast-notification {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 18px 25px;
+  z-index: 10000;
+
+  color: var(--ui-white);
+  /* Bo góc cực nhỏ để giữ nét cứng cáp sang trọng */
+  border-radius: 2px;
+
+  /* Đổ bóng theo phong cách phủ mờ (Soft shadow) */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  /* Typography tinh tế */
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+
+  /* Hiệu ứng trượt nhẹ từ phải qua và mờ dần */
+  transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  opacity: 0;
+  transform: translateX(30px);
+  pointer-events: none;
+}
+
+.toast-notification.show {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* Biến thể SUCCESS - Xanh Forest Teal phối viền Bronze */
+.toast-notification.success {
+  background: var(--ui-success-luxury);
+  border-left: 5px solid var(--ui-bronze);
+  /* Hiệu ứng ánh kim nhẹ */
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    transparent 100%
+  );
+}
+
+/* Biến thể ERROR - Đỏ Ruby phối viền Trắng bạc */
+.toast-notification.error {
+  background: var(--ui-error-luxury);
+  border-left: 5px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Hiệu ứng khi ẩn đi */
+.toast-notification.hide {
+  opacity: 0;
+  transform: translateY(-20px);
+}

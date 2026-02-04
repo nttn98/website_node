@@ -1,0 +1,153 @@
+.fw-800 {
+  font-weight: 800;
+}
+
+/* Nút thêm mới */
+.btn-ui-main {
+  background: var(--ui-navy);
+  color: var(--ui-bronze);
+  padding: 10px 24px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  border: none;
+  text-decoration: none;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(15, 36, 68, 0.2);
+}
+.btn-ui-main:hover {
+  background: var(--ui-bronze);
+  color: var(--ui-navy);
+  transform: translateY(-2px);
+}
+
+/* Container bảng */
+.table-container-minimal {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f1f1;
+}
+
+.table-clean {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+
+.table-clean th {
+  padding: 12px 20px;
+  font-size: 0.65rem;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #f8f8f8;
+}
+
+/* Phân biệt Cha - Con qua Background */
+.row-parent {
+  background: #fbfbfc;
+}
+.row-child {
+  background: white;
+}
+
+.table-clean tbody tr {
+  transition: 0.2s;
+}
+.table-clean tbody tr:hover {
+  background: #f4f7fa !important;
+}
+
+.table-clean td {
+  padding: 14px 20px;
+  border-bottom: 1px solid #fcfcfc;
+}
+
+/* Typography & Info */
+.menu-info-primary {
+  font-weight: 700;
+  color: var(--ui-navy);
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+}
+.menu-info-secondary {
+  font-family: "Monaco", monospace;
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+/* Đường kẻ hướng dẫn cho menu con */
+.indent-wrapper {
+  display: flex;
+  align-items: center;
+}
+.indent-guide {
+  width: 20px;
+  height: 20px;
+  border-left: 2px solid #dee2e6;
+  border-bottom: 2px solid #dee2e6;
+  margin-right: 15px;
+  margin-left: 10px;
+  margin-top: -10px;
+  border-bottom-left-radius: 4px;
+}
+
+.type-tag {
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  background: #eee;
+  border-radius: 4px;
+  color: #666;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Action Buttons */
+.action-circle {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f8f9fa;
+  color: #888;
+  transition: 0.2s;
+  border: none;
+  margin-left: 5px;
+  text-decoration: none;
+}
+.action-circle:hover {
+  background: var(--ui-navy);
+  color: var(--ui-bronze);
+}
+.btn-del:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* Status Switch */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+.dot-active {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+.dot-hidden {
+  background: #d1d5db;
+}
+.form-switch .form-check-input {
+  width: 2rem;
+  cursor: pointer;
+}
+.form-switch .form-check-input:checked {
+  background-color: var(--ui-bronze);
+  border-color: var(--ui-bronze);
+}

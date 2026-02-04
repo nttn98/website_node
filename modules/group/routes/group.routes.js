@@ -21,6 +21,33 @@ const router = express.Router();
  *         description: Danh sách group
  */
 router.get("/", controller.index);
+router.get("/:menuId", controller.index);
+
+/**
+ * @swagger
+ * /groups/next-order/{menuId}:
+ *   get:
+ *     summary: Lấy thứ tự tiếp theo cho group trong menu
+ *     parameters:
+ *       - in: path
+ *         name: menuId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     tags:
+ *       - Group
+ *     responses:
+ *       200:
+ *         description: Thứ tự tiếp theo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 nextOrder:
+ *                   type: integer
+ */
+router.get("/next-order/:menuId", controller.getNextOrder);
 
 /**
  * @swagger
@@ -137,6 +164,6 @@ router.post("/:id/toggle", controller.toggleStatus);
  *       200:
  *         description: Danh sách group
  */
-router.get("/:menuId", controller.showDetailByMenu);
+router.get("/:menuId", controller.showGroupByMenu);
 
 module.exports = router;

@@ -1,224 +1,364 @@
-<h4>Edit Group</h4>
+<link rel="stylesheet" href="/css/groups/edit.css" />
 
-<form id="group-edit-form" enctype="multipart/form-data">
-
-  <!-- MENU (multi-parent) -->
-  <label class="form-label">Parents</label>
-  <select name="listParents" id="parentIdSelect" class="form-select mb-3" multiple required></select>
-
-  <!-- TYPE -->
-  <select name="type" id="typeSelect" class="form-select mb-3">
-    <option value="html" <%= group.type === 'html' ? 'selected' : '' %>>
-      HTML Block
-    </option>
-    <option value="editor" <%= group.type === 'editor' ? 'selected' : '' %>>
-      Text Editor
-    </option>
-  </select>
-
-
-  <!-- IMAGE UPLOAD (show old, preview new) -->
-  <div class="mb-3">
-    <label class="form-label">Images</label>
-    <div id="oldImageList" class="d-flex flex-wrap mb-2">
-      <% if (Array.isArray(group.images) && group.images.length) { group.images.forEach(function(img) { %>
-        <img src="<%= img %>" alt="Current Image" class="img-thumbnail border border-primary me-2 mb-2" style="max-width: 120px;" />
-      <% }) } %>
+<div class="header-minimal mb-5">
+  <div
+    class="d-flex justify-content-between align-items-center border-bottom pb-3"
+  >
+    <div>
+      <h4 class="fw-800 text-navy mb-0">CHỈNH SỬA GROUP</h4>
+      <p class="text-muted small mb-0">Cập nhật thông tin group</p>
     </div>
-    <input type="file" name="images" id="imageInput" class="form-control" accept="image/*" multiple />
-    <div class="form-text">Chọn nhiều hình ảnh cho group.</div>
-    <div id="imagePreviewList" class="d-flex flex-wrap mt-2"></div>
-    <!-- BUTTONS -->
-    <div class="mb-3">
-      <label class="form-label">Buttons</label>
-      <input type="text" name="listButtons" id="buttonsInput" class="form-control" value='<%= JSON.stringify(group.listButtons || []) %>' placeholder='[{"label":"Button1","action":"#"}]' />
-      <div class="form-text">Nhập JSON cho nút (label, action, ...).</div>
+    <button
+      type="button"
+      onclick="history.back()"
+      class="btn-back text-decoration-none"
+    >
+      QUAY LẠI
+    </button>
+  </div>
+</div>
+
+<form id="group-edit-form" enctype="multipart/form-data" class="row g-4">
+  <input type="hidden" name="parentName" id="parentNameInput" value="" />
+
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+    <ul class="nav nav-tabs-minimal mb-4" id="langTab">
+      <li class="nav-item">
+        <button class="nav-link active" data-tab-target="#tab-en" type="button">
+          ENGLISH
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-tab-target="#tab-vi" type="button">
+          TIẾNG VIỆT
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-tab-target="#tab-zh" type="button">
+          中文 (ZH)
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content-minimal mb-5">
+      <div class="tab-pane-custom active" id="tab-en">
+        <div class="form-group-minimal mb-4">
+          <label>TITLE (EN)</label>
+          <input
+            type="text"
+            name="title_en"
+            id="title_en"
+            value="<%= group.title?.en || '' %>"
+            placeholder="Enter English title..."
+          />
+        </div>
+        <div class="form-group-minimal mb-4">
+          <label>SUBTITLE (EN)</label>
+          <input
+            type="text"
+            name="subtitle_en"
+            id="subtitle_en"
+            value="<%= group.subtitle?.en || '' %>"
+            placeholder="Enter English subtitle..."
+          />
+        </div>
+      </div>
+      <div class="tab-pane-custom" id="tab-vi">
+        <div class="form-group-minimal mb-4">
+          <label>TIÊU ĐỀ (VI)</label>
+          <input
+            type="text"
+            name="title_vi"
+            id="title_vi"
+            value="<%= group.title?.vi || '' %>"
+            placeholder="Nhập tiêu đề tiếng Việt..."
+          />
+        </div>
+        <div class="form-group-minimal mb-4">
+          <label>PHỤ ĐỀ (VI)</label>
+          <input
+            type="text"
+            name="subtitle_vi"
+            id="subtitle_vi"
+            value="<%= group.subtitle?.vi || '' %>"
+            placeholder="Nhập phụ đề tiếng Việt..."
+          />
+        </div>
+      </div>
+      <div class="tab-pane-custom" id="tab-zh">
+        <div class="form-group-minimal mb-4">
+          <label>标题 (ZH)</label>
+          <input
+            type="text"
+            name="title_zh"
+            id="title_zh"
+            value="<%= group.title?.zh || '' %>"
+            placeholder="输入中文标题..."
+          />
+        </div>
+        <div class="form-group-minimal mb-4">
+          <label>副标题 (ZH)</label>
+          <input
+            type="text"
+            name="subtitle_zh"
+            id="subtitle_zh"
+            value="<%= group.subtitle?.zh || '' %>"
+            placeholder="输入中文副标题..."
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="content-block border-top pt-4">
+      <div class="d-flex align-items-center gap-4 mb-4">
+        <div class="d-flex align-items-center gap-2">
+          <label for="orderInput" class="form-label mb-0 small">
+            Thứ tự:
+          </label>
+          <input
+            type="number"
+            name="order"
+            id="orderInput"
+            class="form-control form-control-sm text-center"
+            value="<%= group.order || 0 %>"
+            min="0"
+            style="width: 70px"
+          />
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="typeSelect" class="form-label mb-0 small">Loại:</label>
+          <select name="type" id="typeSelect" class="select-clean-sm">
+            <option value="html" <%= group.type === 'html' ? 'selected' : '' %>>HTML Block</option>
+            <option value="editor" <%= group.type === 'editor' ? 'selected' : '' %>>Rich Text Editor</option>
+          </select>
+        </div>
+        <label class="label-bronze mb-0 ms-auto">NỘI DUNG CHI TIẾT</label>
+      </div>
+
+      <div id="htmlBlock">
+        <textarea
+          name="content"
+          class="form-control-minimal code-font"
+          rows="10"
+          placeholder="<div>Your HTML here...</div>"
+        ><%= group.content || '' %></textarea>
+      </div>
+      <div id="editorBlock" class="d-none">
+        <textarea id="editor"><%= group.content || '' %></textarea>
+      </div>
+    </div>
+      </div>
     </div>
   </div>
 
-  <!-- LANGUAGE TABS -->
-  <ul class="nav nav-tabs mb-3" role="tablist">
-    <li class="nav-item">
-      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-en" type="button">
-        EN
-      </button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vi" type="button">
-        VI
-      </button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-zh" type="button">
-        ZH
-      </button>
-    </li>
-  </ul>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title text-navy mb-4">
+          <i class="fas fa-cogs me-2"></i>THIẾT LẬP
+        </h6>
 
-  <div class="tab-content">
-    <!-- EN -->
-    <div class="tab-pane fade show active" id="tab-en">
-      <input
-        class="form-control mb-2"
-        name="title_en"
-        value="<%= group.title?.en || '' %>"
-        placeholder="Title EN"
-      />
-      <input
-        class="form-control mb-3"
-        name="subtitle_en"
-        value="<%= group.subtitle?.en || '' %>"
-        placeholder="Subtitle EN"
-      />
-    </div>
+        <div class="form-group-minimal mb-4">
+          <label>LIÊN KẾT MENU CHA</label>
+          <select
+            name="listParents"
+            id="parentIdSelect"
+            class="form-select"
+            multiple
+            required
+          ></select>
+          <small class="text-muted mt-2 d-block">
+            Có thể chọn nhiều menu để hiển thị group này.
+          </small>
+        </div>
 
-    <!-- VI -->
-    <div class="tab-pane fade" id="tab-vi">
-      <input
-        class="form-control mb-2"
-        name="title_vi"
-        value="<%= group.title?.vi || '' %>"
-        placeholder="Title VI"
-      />
-      <input
-        class="form-control mb-3"
-        name="subtitle_vi"
-        value="<%= group.subtitle?.vi || '' %>"
-        placeholder="Subtitle VI"
-      />
-    </div>
+        <div class="form-group-minimal mb-4">
+          <label>ẢNH ĐẠI DIỆN</label>
+          <div class="custom-file-upload">
+            <input
+              type="file"
+              name="image"
+              id="imageInput"
+              accept="image/*"
+            />
+            <span class="upload-label">Chọn ảnh hoặc kéo thả vào đây</span>
+          </div>
+          <% if (group.image) { %>
+          <div class="mt-2">
+            <img
+              src="<%= group.image %>"
+              alt="Current image"
+              class="img-thumbnail"
+              style="max-width: 100px; max-height: 100px;"
+            />
+          </div>
+          <% } %>
+        </div>
 
-    <!-- ZH -->
-    <div class="tab-pane fade" id="tab-zh">
-      <input
-        class="form-control mb-2"
-        name="title_zh"
-        value="<%= group.title?.zh || '' %>"
-        placeholder="Title ZH"
-      />
-      <input
-        class="form-control mb-3"
-        name="subtitle_zh"
-        value="<%= group.subtitle?.zh || '' %>"
-        placeholder="Subtitle ZH"
-      />
+        <div class="form-group-minimal mb-4">
+          <label>TRẠNG THÁI</label>
+          <select name="status" id="statusSelect" class="select-clean">
+            <option value="active" <%= group.status === 'active' ? 'selected' : '' %>>Hoạt động</option>
+            <option value="inactive" <%= group.status === 'inactive' ? 'selected' : '' %>>Không hoạt động</option>
+          </select>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn-save-minimal">
+            <i class="fas fa-save me-2"></i>CẬP NHẬT
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-
-  <!-- HTML -->
-  <div id="htmlBlock" class="<%= group.type === 'html' ? '' : 'd-none' %>">
-    <label class="form-label text-danger">HTML</label>
-    <textarea
-      name="content"
-      class="form-control font-monospace"
-      rows="8"
-    ><%= group.content || '' %></textarea>
-  </div>
-
-  <!-- EDITOR -->
-  <div id="editorBlock" class="<%= group.type === 'editor' ? '' : 'd-none' %>">
-    <label class="form-label text-success">Editor</label>
-    <textarea id="editor"><%= group.content || '' %></textarea>
-  </div>
-
-  <button class="btn btn-success mt-3">Update</button>
-<a href="/groups?menuId=<%= group.parentId %>" class="btn btn-secondary mt-3 ms-2">Cancel</a>
-  <button class="btn btn-success mt-3" type="submit">Update</button>
 </form>
 
+<!-- inline script removed; logic re-inserted below after library includes -->
+
+<link
+  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+  rel="stylesheet"
+/>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+
 <script>
-  // Lấy danh sách menu cho select
-  // Lấy danh sách menu cho select (multi-parent)
-  fetch('/api/menus')
-    .then(res => res.json())
-    .then(data => {
-      const menus = data.data || [];
-      const select = document.getElementById('parentIdSelect');
-      const groupParents = Array.isArray(<%= JSON.stringify(group.listParents || []) %>) ? <%= JSON.stringify(group.listParents || []) %> : [];
-      menus.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m._id;
-        opt.textContent = m.title?.en || m.title || '-';
-        if (groupParents.some(p => p.parentId === m._id)) opt.selected = true;
-        select.appendChild(opt);
-      });
+  $(document).ready(function () {
+    const currentMenuId = '<%= currentMenuId || '' %>';
+    // TAB SWITCH (jQuery)
+    $('.nav-tabs-minimal .nav-link').on('click', function () {
+      const target = $(this).attr('data-tab-target');
+      $('.nav-tabs-minimal .nav-link').removeClass('active');
+      $('.tab-pane-custom').removeClass('active');
+      $(this).addClass('active');
+      $(target).addClass('active');
     });
 
-  // Submit form bằng fetch
-  document.getElementById('group-edit-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const form = e.target;
-    const formData = new FormData(form);
-    // Multi-parent
-    const parentSelect = document.getElementById('parentIdSelect');
-    const selectedParents = Array.from(parentSelect.selectedOptions).map(opt => ({ parentId: opt.value, parentName: opt.textContent }));
-    formData.delete('listParents');
-    formData.append('listParents', JSON.stringify(selectedParents));
-    // Multi-images
-    const imageInput = document.getElementById('imageInput');
-    if (imageInput && imageInput.files.length > 0) {
-      for (let i = 0; i < imageInput.files.length; i++) {
-        formData.append('images', imageInput.files[i]);
+    // TYPE / CKEDITOR TOGGLE
+    let editor;
+    function toggleType(type) {
+      $('#htmlBlock').toggleClass('d-none', type === 'editor');
+      $('#editorBlock').toggleClass('d-none', type === 'html');
+      if (type === 'editor' && !editor) {
+        ClassicEditor.create(document.getElementById('editor')).then((e) => {
+          editor = e;
+          editor.model.document.on('change:data', () => {
+            $('[name="content"]').val(editor.getData());
+          });
+        });
       }
     }
-    // Buttons
-    const buttonsInput = document.getElementById('buttonsInput');
-    if (buttonsInput && buttonsInput.value) {
-      formData.delete('listButtons');
-      formData.append('listButtons', buttonsInput.value);
-    }
-    fetch('/groups/<%= group._id %>/update', {
-      method: 'POST',
-      body: formData
-    })
-      .then(res => res.json())
-      .then(resp => {
-        if (resp.success) window.location.href = '/groups?menuId=' + (selectedParents[0]?.parentId || '');
-        else alert('Update failed');
+    $('#typeSelect').on('change', function () {
+      toggleType(this.value);
+    });
+
+    // PARENT SELECT: initialize Select2 and load grouped options
+    const parentSelect = $('#parentIdSelect');
+    parentSelect.select2({ placeholder: 'Tìm &amp; chọn menu cha...', width: '100%' });
+
+    fetch('/api/menus')
+      .then((res) => res.json())
+      .then((data) => {
+        const menus = data.data || [];
+        const groups = {
+          top: $('<optgroup label="Header"></optgroup>'),
+          bot: $('<optgroup label="Footer"></optgroup>'),
+          other: $('<optgroup label="Khác"></optgroup>'),
+        };
+
+        menus.forEach((m) => {
+          const opt = new Option(m.title?.en || m.title || '-', m._id);
+          $(opt).attr('data-title-en', m.title?.en || m.title || '-');
+          if (m.type === 'top') groups.top.append(opt);
+          else if (m.type === 'bot') groups.bot.append(opt);
+          else groups.other.append(opt);
+        });
+
+        if (groups.top.children().length) parentSelect.append(groups.top);
+        if (groups.bot.children().length) parentSelect.append(groups.bot);
+        if (groups.other.children().length) parentSelect.append(groups.other);
+        parentSelect.trigger('change');
+
+        // Pre-select based on existing group.listParents
+        const groupParents = Array.isArray(<%- JSON.stringify(group.listParents || []) %>) ? <%- JSON.stringify(group.listParents || []) %> : [];
+        const selectedIds = groupParents.map((p) => p.parentId);
+        if (selectedIds.length) parentSelect.val(selectedIds).trigger('change');
+
+        // Auto set order when parent changes (use first selected)
+        parentSelect.on('change', function () {
+          const selected = $(this).val();
+          if (selected && selected.length > 0) {
+            const menuId = selected[0];
+            fetch(`/groups/next-order/${menuId}`)
+              .then((res) => res.json())
+              .then((data) => {
+                $('#orderInput').val(data.nextOrder);
+              })
+              .catch(() => {});
+          }
+        });
       })
-      .catch(() => alert('Update failed'));
+      .catch(() => {});
+
+    // SUBMIT FORM
+    $('#group-edit-form').on('submit', function (e) {
+      e.preventDefault();
+      const form = this;
+      const formData = new FormData(form);
+
+      const selectedParents = (parentSelect.val() || []).map((id) => {
+        const text = parentSelect.find(`option[value='${id}']`).text();
+        return { parentId: id, parentName: text };
+      });
+      formData.set('listParents', JSON.stringify(selectedParents));
+
+      // images
+      const imageInput = document.getElementById('imageInput');
+      if (imageInput && imageInput.files.length > 0) {
+        for (let i = 0; i < imageInput.files.length; i++) formData.append('images', imageInput.files[i]);
+      }
+
+      // buttons (if any)
+      const buttonTitles = document.querySelectorAll('input[name="buttonTitle[]"]');
+      const buttonUrls = document.querySelectorAll('input[name="buttonUrl[]"]');
+      const buttons = [];
+      buttonTitles.forEach((titleInput, index) => {
+        const urlInput = buttonUrls[index];
+        if (titleInput.value && urlInput.value) buttons.push({ label: titleInput.value, action: urlInput.value });
+      });
+      if (buttons.length) formData.set('listButtons', JSON.stringify(buttons));
+
+      fetch('/groups/<%= group._id %>/update', { method: 'POST', body: formData })
+        .then((res) => res.json())
+        .then((resp) => {
+          console.log('group update response:', resp);
+          // Accept multiple server response shapes: { success: true }, object with _id, array, or { data: [...] }
+          const isArray = Array.isArray(resp);
+          const data = resp && resp.data ? resp.data : resp;
+          const isOk = (resp && (resp.success === true || resp.success === 'true')) || (resp && resp._id) || isArray || (Array.isArray(data) && data.length > 0) || (resp && resp.groups);
+          if (isOk) {
+            console.log('Update success detected, showing toast and redirecting...');
+            showToast('Cập nhật thành công');
+            setTimeout(() => {
+              console.log('Redirecting now...');
+              const menuId = currentMenuId;
+              const url = menuId ? '/dashboard/groups?menuId=' + menuId : '/dashboard/groups';
+              window.location.replace(url);
+            }, 500);
+          } else {
+            console.warn('Update considered failure, server responded:', resp);
+            showToast('Cập nhật thất bại', true);
+          }
+        })
+        .catch((err) => {
+          console.error('Fetch/update error', err);
+          showToast('Cập nhật thất bại — xem console', true);
+        });
+    });
   });
 </script>
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
-<script>
-    // Image preview (multi)
-    const imageInput = document.getElementById('imageInput');
-    const imagePreviewList = document.getElementById('imagePreviewList');
-    if (imageInput && imagePreviewList) {
-      imageInput.addEventListener('change', function(e) {
-        imagePreviewList.innerHTML = '';
-        Array.from(imageInput.files).forEach(file => {
-          const reader = new FileReader();
-          reader.onload = function(ev) {
-            const img = document.createElement('img');
-            img.src = ev.target.result;
-            img.className = 'img-thumbnail me-2 mb-2';
-            img.style.maxWidth = '120px';
-            imagePreviewList.appendChild(img);
-          };
-          reader.readAsDataURL(file);
-        });
-      });
-    }
-  const typeSelect = document.getElementById("typeSelect");
-  const htmlBlock = document.getElementById("htmlBlock");
-  const editorBlock = document.getElementById("editorBlock");
-  let editor;
 
-  function toggleType(type) {
-    htmlBlock.classList.toggle("d-none", type === "editor");
-    editorBlock.classList.toggle("d-none", type === "html");
 
-    if (type === "editor" && !editor) {
-      ClassicEditor.create(document.getElementById("editor")).then(e => {
-        editor = e;
-        editor.model.document.on("change:data", () => {
-          document.querySelector('[name="content"]').value = editor.getData();
-        });
-      });
-    }
-  }
-
-  toggleType(typeSelect.value);
-  typeSelect.addEventListener("change", e => toggleType(e.target.value));
-</script>

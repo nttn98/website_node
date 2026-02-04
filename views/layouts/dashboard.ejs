@@ -1,29 +1,76 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Dashboard</title>
+    <title>U&I Logistics - Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+    <link rel="stylesheet" href="/css/layouts/dashboard.css" />
+    <link rel="stylesheet" href="/css/toast.css" />
   </head>
   <body>
-    <nav class="navbar navbar-dark bg-dark px-3">
-      <span class="navbar-brand">User</span>
-      <a href="/user/logout" class="btn btn-outline-light btn-sm">Logout</a>
-    </nav>
+    <aside class="sidebar-wrapper"><%- include('../partials/sidebar') %></aside>
 
-    <div class="container-fluid">
-      <div class="row">
-        <aside class="col-md-3 col-lg-2 bg-light vh-100 p-0">
-          <%- include('../partials/sidebar') %>
-        </aside>
+    <div class="main-container">
+      <header class="top-header">
+        <button
+          id="sidebarToggle"
+          class="btn btn-sm btn-outline-secondary me-3"
+        >
+          <i class="bi bi-list"></i>
+        </button>
+        <span style="font-weight: 700; color: var(--ui-navy)">
+          HỆ THỐNG QUẢN TRỊ
+        </span>
+        <div class="d-flex align-items-center">
+          <span class="me-3 small text-muted fw-bold">ADMIN</span>
+          <a href="/user/logout" class="btn-logout">Logout</a>
+        </div>
+      </header>
 
-        <main class="col-md-9 col-lg-10 p-4"><%- body %></main>
-      </div>
+      <main><%- body %></main>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Sidebar Toggle
+      const sidebarToggle = document.getElementById("sidebarToggle");
+      const sidebar = document.querySelector(".sidebar-wrapper");
+      const main = document.querySelector(".main-container");
+
+      // Khôi phục trạng thái sidebar
+      if (
+        localStorage.getItem("sidebarHidden") === "true" &&
+        window.innerWidth > 768
+      ) {
+        sidebar.classList.add("sidebar-hidden");
+        main.classList.add("sidebar-hidden");
+      }
+
+      sidebarToggle.addEventListener("click", function () {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+          sidebar.classList.toggle("sidebar-show");
+        } else {
+          sidebar.classList.toggle("sidebar-hidden");
+          main.classList.toggle("sidebar-hidden");
+          localStorage.setItem(
+            "sidebarHidden",
+            sidebar.classList.contains("sidebar-hidden")
+          );
+        }
+      });
+    </script>
+    <script src="/js/toast.js"></script>
   </body>
 </html>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
