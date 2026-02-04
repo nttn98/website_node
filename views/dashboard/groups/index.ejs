@@ -5,12 +5,13 @@
 <div class="d-flex justify-content-between align-items-end mb-4">
   <div>
     <h4 class="fw-800 mb-1" style="color: var(--ui-navy); letter-spacing: -1px">
-      QUẢN LÝ NHÓM<% if (currentMenu) { %>: <%= currentMenu.title.en %><% } %>
+      GROUP MANAGEMENT<% if (currentMenu) { %>: <%= currentMenu.title.en %><% }
+      %>
     </h4>
     <div class="d-flex align-items-center gap-2">
       <p class="small text-muted mb-0">
-        <% if (currentMenu) { %>Nhóm thuộc menu "<%= currentMenu.title.en %>"<%
-        } else { %>Phân nhóm nội dung theo Menu<% } %>
+        <% if (currentMenu) { %>Groups in menu "<%= currentMenu.title.en %>"<% }
+        else { %>Content grouped by Menu<% } %>
       </p>
     </div>
   </div>
@@ -20,33 +21,35 @@
     class="btn-ui-main"
   >
     <span class="plus-symbol">+</span>
-    THÊM GROUP MỚI
+    ADD NEW GROUP
   </a>
 </div>
 
 <div id="group-list" class="table-container-minimal"></div>
 
 <script>
+  const currentMenuId = <%- JSON.stringify(currentMenuId || '') %>;
   function renderGroups(groups) {
     const listContainer = document.getElementById("group-list");
     if (!groups || !groups.length) {
-      listContainer.innerHTML = `<div class="p-5 text-center text-muted">Chưa có group nào.</div>`;
+      listContainer.innerHTML = `<div class="p-5 text-center text-muted">No groups yet.</div>`;
       return;
     }
 
+    const tableStyle = currentMenuId ? '--drag-w:56px;' : '--drag-w:0px;';
     let html = `
-   <table class="table-clean">
+     <table class="table-clean" style="${tableStyle}">
     <thead>
-     <tr>
-      <th width="30%">Thông tin chi tiết</th>
-      <th width="15%">Loại</th>
-      <th width="20%">Menu cha</th>
-      <th width="10%">Thứ tự</th>
-      <th width="10%" class="text-center">Trạng thái</th>
-      <th width="15%" class="text-end">Thao tác</th>
-     </tr>
+    <tr>
+     ${currentMenuId ? '<th class="text-center">&nbsp;</th>' : ''}
+     <th>Details</th>
+     <th>Type</th>
+     <th>Parent Menu(s)</th>
+     <th class="text-center">Status</th>
+     <th class="text-end">Actions</th>
+    </tr>
     </thead>
-    <tbody>`;
+    <tbody id="group-list-tbody">`;
 
     groups.forEach((group) => {
       const imgUrl =
@@ -55,7 +58,12 @@
         "https://placehold.co/100x75?text=No+Image";
 
       html += `
-      <tr>
+      <tr data-group-id="${group._id}">
+        ${currentMenuId ? `
+        <td class="text-center drag-cell">
+          <span class="drag-handle" title="Drag to reorder">≡</span>
+        </td>
+        ` : ''}
         <td>
           <div class="d-flex align-items-center">
             <img src="${imgUrl}" style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px; margin-right: 12px;" />
@@ -74,11 +82,8 @@
               .map(
                 (p) => `<span class="badge-minimal me-1">${p.parentName}</span>`
               )
-              .join("") || '<span class="text-muted small">Không có</span>'
+              .join("") || '<span class="text-muted small">None</span>'
           }
-        </td>
-        <td>
-          <span class="fw-bold">${group.order || 0}</span>
         </td>
         <td class="text-center">
           <span class="badge-minimal ${group.isStatus ? "badge-active" : ""}">
@@ -88,21 +93,21 @@
         <td class="text-end">
           <button class="action-circle" onclick="toggleGroupStatus('${
             group._id
-          }', this)" title="Trạng thái">
+          }', this)" title="Toggle status">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </button>
           <a href="/dashboard/groups/${
             group._id
-          }/edit<% if (currentMenuId) { %>?menuId=<%= currentMenuId %><% } %>" class="action-circle" title="Sửa">
+          }/edit<% if (currentMenuId) { %>?menuId=<%= currentMenuId %><% } %>" class="action-circle" title="Edit">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
           </a>
           <button onclick="deleteGroup('${
             group._id
-          }')" class="action-circle btn-del" title="Xóa">
+          }')" class="action-circle btn-del" title="Delete">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
@@ -123,7 +128,7 @@
   function fetchGroups() {
     const menuId = getMenuId();
     const url = menuId ? `/groups?menuId=${menuId}` : "/groups";
-    fetch(url)
+    return fetch(url)
       .then((res) => res.json())
       .then((data) => renderGroups(data.groups));
   }
@@ -147,5 +152,55 @@
       });
   }
 
-  fetchGroups();
+  // Ensure Sortable is available (load if missing)
+  function ensureSortable() {
+    return new Promise((resolve) => {
+      if (window.Sortable) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+      s.onload = () => resolve();
+      document.head.appendChild(s);
+    });
+  }
+
+  let sortableInstance = null;
+  function initSortable() {
+    const tbody = document.getElementById('group-list-tbody');
+    if (!tbody || !currentMenuId) return Promise.resolve();
+    if (sortableInstance) {
+      try { sortableInstance.destroy(); } catch (e) {}
+      sortableInstance = null;
+    }
+    return ensureSortable().then(() => {
+      sortableInstance = Sortable.create(tbody, {
+        handle: '.drag-handle',
+        onEnd: function (evt) {
+          const items = Array.from(tbody.children);
+          const updates = items.map((tr, index) => {
+            const groupId = tr.dataset.groupId;
+            return { groupId, order: index };
+          });
+          fetch('/groups/update-orders', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ updates, parentId: currentMenuId }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data && data.success) showToast('Sắp xếp thành công');
+              else showToast('Sắp xếp thất bại', true);
+              return fetchGroups();
+            })
+            .then(() => initSortable())
+            .catch(() => {
+              showToast('Sắp xếp thất bại', true);
+              return fetchGroups().then(() => initSortable());
+            });
+        },
+      });
+    });
+  }
+
+  // Initialize list and sortable
+  fetchGroups().then(() => initSortable());
 </script>

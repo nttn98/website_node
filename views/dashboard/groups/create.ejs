@@ -5,15 +5,15 @@
     class="d-flex justify-content-between align-items-center border-bottom pb-3"
   >
     <div>
-      <h4 class="fw-800 text-navy mb-0">TẠO GROUP MỚI</h4>
-      <p class="text-muted small mb-0">Cấu trúc nội dung theo menu hệ thống</p>
+      <h4 class="fw-800 text-navy mb-0">CREATE NEW GROUP</h4>
+      <p class="text-muted small mb-0">Content structure per site menu</p>
     </div>
     <button
       type="button"
       onclick="history.back()"
       class="btn-back text-decoration-none"
     >
-      QUAY LẠI
+      BACK
     </button>
   </div>
 </div>
@@ -46,20 +46,6 @@
     <div class="content-block border-top pt-4">
       <div class="d-flex align-items-center gap-4 mb-4">
         <div class="d-flex align-items-center gap-2">
-          <label for="orderInput" class="form-label mb-0 small">
-            Thứ tự:
-          </label>
-          <input
-            type="number"
-            name="order"
-            id="orderInput"
-            class="form-control form-control-sm text-center"
-            value="0"
-            min="0"
-            style="width: 70px"
-          />
-        </div>
-        <div class="d-flex align-items-center gap-2">
           <label for="typeSelect" class="form-label mb-0 small">Loại:</label>
           <select name="type" id="typeSelect" class="select-clean-sm">
             <option value="html">HTML Block</option>
@@ -89,7 +75,7 @@
     <div class="card shadow-sm">
       <div class="card-body">
     <div class="form-group-minimal mb-4">
-      <label>LIÊN KẾT MENU CHA</label>
+      <label>Linked Parent Menus</label>
       <select
         name="listParents"
         id="parentIdSelect"
@@ -98,12 +84,12 @@
         required
       ></select>
       <small class="text-muted mt-2 d-block">
-        Có thể chọn nhiều menu để hiển thị group này.
+        You can select multiple menus to display this group.
       </small>
     </div>
 
     <div class="form-group-minimal mb-4">
-      <label>HÌNH ẢNH HÀNH LANG (GALLERY)</label>
+      <label>Gallery Images</label>
       <div class="custom-file-upload">
         <input
           type="file"
@@ -112,13 +98,13 @@
           multiple
           accept="image/*"
         />
-        <span class="upload-label">Chọn ảnh hoặc kéo thả vào đây</span>
+        <span class="upload-label">Choose images or drag & drop here</span>
       </div>
       <div id="imagePreviewList" class="d-flex flex-wrap mt-3 gap-2"></div>
     </div>
 
     <div class="form-group-minimal mb-5">
-      <label>CẤU HÌNH NÚT</label>
+      <label>Button Configuration</label>
       <div id="buttonsContainer">
         <!-- Buttons will be added here -->
       </div>
@@ -127,11 +113,11 @@
         id="addButton"
         class="btn btn-sm btn-outline-primary"
       >
-        + Thêm nút
+        + Add button
       </button>
     </div>
 
-    <button type="submit" class="btn-save-minimal">HOÀN TẤT & LƯU GROUP</button>
+    <button type="submit" class="btn-save-minimal">SAVE GROUP</button>
   </div>
 </form>
 </div>
@@ -151,12 +137,12 @@
 
 <script>
   $(document).ready(function () {
-    const currentMenuId = '<%= currentMenuId || '' %>';
+    const currentMenuId = <%- JSON.stringify(currentMenuId || '') %>;
 
     // 1. SELECT2 INITIALIZATION
     const parentSelect = $("#parentIdSelect");
     parentSelect.select2({
-      placeholder: "Tìm & chọn menu cha...",
+      placeholder: "Search & select parent menu...",
       width: "100%",
     });
 
@@ -168,7 +154,7 @@
         const groups = {
           top: $('<optgroup label="Header"></optgroup>'),
           bot: $('<optgroup label="Footer"></optgroup>'),
-          other: $('<optgroup label="Khác"></optgroup>'),
+          other: $('<optgroup label="Other"></optgroup>'),
         };
 
         menus.forEach((m) => {
@@ -182,20 +168,6 @@
         if (groups.top.children().length) parentSelect.append(groups.top);
         if (groups.bot.children().length) parentSelect.append(groups.bot);
         parentSelect.trigger("change");
-
-        // 3. AUTO SET ORDER ON PARENT SELECT
-        parentSelect.on('change', function() {
-          const selected = $(this).val();
-          if (selected && selected.length > 0) {
-            const menuId = selected[0];
-            fetch(`/groups/next-order/${menuId}`)
-              .then(res => res.json())
-              .then(data => {
-                document.getElementById('orderInput').value = data.nextOrder;
-              })
-              .catch(err => console.error('Error fetching next order:', err));
-          }
-        });
 
         // 4. PRE-SELECT PARENT IF currentMenuId EXISTS
         const currentMenuId = "<%= currentMenuId %>";
@@ -255,7 +227,7 @@
             type="text"
             name="buttonTitle[]"
             class="form-control-minimal"
-            placeholder="Tiêu đề nút"
+            placeholder="Button title"
           />
         </div>
         <div class="col-md-5">
@@ -263,11 +235,11 @@
             type="text"
             name="buttonUrl[]"
             class="form-control-minimal"
-            placeholder="URL hành động"
+            placeholder="Action URL"
           />
         </div>
         <div class="col-md-2">
-          <button type="button" class="btn btn-sm btn-outline-danger remove-button">Xóa</button>
+          <button type="button" class="btn btn-sm btn-outline-danger remove-button">Remove</button>
         </div>
       `;
       buttonsContainer.appendChild(newRow);
@@ -282,14 +254,17 @@
     // 7. SUBMIT FORM
     document
       .getElementById("group-create-form")
-      .addEventListener("submit", function (e) {
+      .addEventListener("submit", async function (e) {
         e.preventDefault();
         const formData = new FormData(this);
 
-        const selectedParents = (parentSelect.val() || []).map((id) => {
+        const selectedIds = parentSelect.val() || [];
+        const selectedParents = await Promise.all(selectedIds.map(async (id) => {
           const text = parentSelect.find(`option[value='${id}']`).text();
-          return { parentId: id, parentName: text };
-        });
+          const res = await fetch(`/groups/next-order/${id}`);
+          const data = await res.json();
+          return { parentId: id, parentName: text, order: data.nextOrder };
+        }));
 
         formData.set("listParents", JSON.stringify(selectedParents));
 
@@ -314,13 +289,19 @@
           .then((res) => res.json())
           .then((resp) => {
             if (resp.success) {
-              showToast("Lưu thành công");
+              showToast("Saved successfully");
               setTimeout(() => {
                 const menuId = (selectedParents[0]?.parentId || '');
                 const url = menuId ? '/dashboard/groups?menuId=' + menuId : '/dashboard/groups';
                 window.location.replace(url);
               }, 500);
-            } else showToast("Lưu thất bại!", true);
+            } else {
+              showToast("Save failed!", true);
+            }
+          })
+          .catch((err) => {
+            console.error('Create error', err);
+            showToast('Save failed — see console', true);
           });
       });
   });

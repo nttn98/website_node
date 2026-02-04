@@ -3,10 +3,10 @@
 <div class="header-minimal mb-5">
   <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
     <div>
-      <h4 class="fw-800 text-navy mb-0">CHỈNH SỬA MENU</h4>
+      <h4 class="fw-800 text-navy mb-0">EDIT MENU</h4>
       <p class="text-muted small mb-0">ID: <span class="text-bronze"><%= menu._id %></span></p>
     </div>
-    <a href="/dashboard/menus" class="btn-back">QUAY LẠI</a>
+    <a href="/dashboard/menus" class="btn-back">BACK</a>
   </div>
 </div>
 
@@ -17,7 +17,7 @@
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#lang-en" type="button">ENGLISH</button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#lang-vi" type="button">TIẾNG VIỆT</button>
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#lang-vi" type="button">VIETNAMESE</button>
       </li>
       <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#lang-zh" type="button">中文 (ZH)</button>
@@ -46,14 +46,14 @@
     </div>
 
     <div class="form-group-minimal mb-4">
-      <label>ĐƯỜNG DẪN (ROUTE)</label>
+      <label>Route</label>
       <input type="text" name="route" value="<%= menu.route || '' %>" placeholder="/path-name" />
     </div>
 
     <div class="row">
       <div class="col-6">
         <div class="form-group-minimal mb-4">
-          <label>VỊ TRÍ</label>
+          <label>Position</label>
           <select name="type" id="typeSelect">
             <option value="top" <%= menu.type === 'top' ? 'selected' : '' %>>Header Menu</option>
             <option value="bot" <%= menu.type === 'bot' ? 'selected' : '' %>>Footer Menu</option>
@@ -62,7 +62,7 @@
       </div>
       <div class="col-6">
         <div class="form-group-minimal mb-4">
-          <label>THỨ TỰ</label>
+          <label>Order</label>
           <input type="number" name="order" value="<%= menu.order || 0 %>" />
         </div>
       </div>
@@ -71,9 +71,9 @@
 
   <div class="col-md-5 ps-md-5">
     <div class="form-group-minimal mb-4">
-      <label>DANH MỤC CHA</label>
+      <label>Parent Category</label>
       <select name="parentId" id="parentId">
-        <option value="">-- Menu gốc (Gốc) --</option>
+        <option value="">-- Root menu (none) --</option>
         <% if (menus && menus.length) { %>
           <% menus.forEach(function(m) { 
              if (!menu._id || m._id.toString() !== menu._id.toString()) { %>
@@ -89,7 +89,7 @@
     <div class="switch-card mb-5">
       <div class="d-flex justify-content-between align-items-center">
         <div>
-          <span class="fw-700 small text-navy d-block">HIỂN THỊ NÚT</span>
+          <span class="fw-700 small text-navy d-block">DISPLAY BUTTON</span>
           <small class="text-muted" style="font-size: 0.6rem;">Display as button</small>
         </div>
         <div class="form-check form-switch">
@@ -98,10 +98,7 @@
       </div>
     </div>
 
-    <button type="submit" class="btn-save-minimal">CẬP NHẬT THAY ĐỔI</button>
-    <p class="text-center mt-3">
-        <a href="/dashboard/menus" class="text-muted small fw-700 text-decoration-none" style="font-size: 0.65rem;">HỦY BỎ</a>
-    </p>
+    <button type="submit" class="btn-save-minimal">SAVE CHANGES</button>
   </div>
 </form>
 
@@ -171,14 +168,14 @@
     .then(res => res.json())
     .then(resp => {
       if (resp.success) {
-        window.location.href = '/dashboard/menus';
-      } else {
-        alert('Cập nhật thất bại: ' + (resp.message || 'Lỗi hệ thống'));
-      }
+          window.location.href = '/dashboard/menus';
+        } else {
+          alert('Update failed: ' + (resp.message || 'Server error'));
+        }
     })
     .catch(err => {
       console.error('Error:', err);
-      alert('Không thể kết nối với máy chủ');
+        alert('Cannot connect to server');
     });
   });
 </script>

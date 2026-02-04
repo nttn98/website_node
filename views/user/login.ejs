@@ -27,7 +27,8 @@
           <div>
             <h2 class="fw-bold mb-3">Connecting Global Trade.</h2>
             <p class="brand-tagline">
-              Đối tác tin cậy trong mọi giải pháp giao nhận và kho vận.
+              Your trusted partner for freight forwarding and warehousing
+              solutions.
             </p>
           </div>
           <div class="small opacity-50">
@@ -42,9 +43,7 @@
             </div>
 
             <h3 class="login-title">Welcome Back</h3>
-            <p class="login-subtitle">
-              Vui lòng đăng nhập vào hệ thống quản trị.
-            </p>
+            <p class="login-subtitle">Please sign in to the admin portal.</p>
 
             <% if (typeof error !== "undefined") { %>
             <div class="alert error-alert py-3 mb-4 d-flex align-items-center">
@@ -66,11 +65,11 @@
 
             <form method="POST" action="/user/login">
               <div class="mb-4">
-                <label class="form-label">Tên đăng nhập</label>
+                <label class="form-label">Username</label>
                 <input
                   name="username"
                   class="form-control"
-                  placeholder="Nhập username của bạn"
+                  placeholder="Enter your username"
                   value="admin"
                   required
                 />
@@ -78,13 +77,13 @@
 
               <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center">
-                  <label class="form-label mb-0">Mật khẩu</label>
+                  <label class="form-label mb-0">Password</label>
                   <a
                     href="#"
                     class="small text-decoration-none"
                     style="color: var(--ui-bronze)"
                   >
-                    Quên mật khẩu?
+                    Forgot password?
                   </a>
                 </div>
                 <input
@@ -97,9 +96,7 @@
                 />
               </div>
 
-              <button class="btn btn-premium w-100 mt-3">
-                Đăng nhập hệ thống
-              </button>
+              <button class="btn btn-premium w-100 mt-3">Sign In</button>
             </form>
           </div>
         </div>

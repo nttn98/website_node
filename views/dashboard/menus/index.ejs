@@ -3,16 +3,16 @@
 <div class="d-flex justify-content-between align-items-end mb-4">
   <div>
     <h4 class="fw-800 mb-1" style="color: var(--ui-navy); letter-spacing: -1px">
-      HỆ THỐNG MENU
+      MENU SYSTEM
     </h4>
     <div class="d-flex align-items-center gap-2">
-      <p class="small text-muted mb-0">Quản lý cấu trúc danh mục thông minh</p>
+      <p class="small text-muted mb-0">Manage site menu structure</p>
     </div>
   </div>
 
   <a href="/dashboard/menus/create" class="btn-ui-main">
     <span class="plus-symbol">+</span>
-    THÊM MENU
+    ADD MENU
   </a>
 </div>
 
@@ -37,16 +37,16 @@
     });
 
     let html = `
-   <table class="table-clean">
-    <thead>
-     <tr>
-      <th width="40%">Thông tin chi tiết</th>
-      <th width="20%">Danh mục cha</th>
-      <th width="20%" class="text-center">Trạng thái</th>
-      <th width="20%" class="text-end">Thao tác</th>
-     </tr>
-    </thead>
-    <tbody>`;
+  <table class="table-clean">
+   <thead>
+    <tr>
+    <th width="40%">Details</th>
+    <th width="20%">Parent</th>
+    <th width="20%" class="text-center">Status</th>
+    <th width="20%" class="text-end">Actions</th>
+    </tr>
+   </thead>
+   <tbody>`;
 
     structuredData.forEach((menu) => {
       const isParent = !menu.parentId;
@@ -70,7 +70,7 @@
       <span class="small fw-600 ${
         isParent ? "text-bronze" : "text-muted"
       }" style="font-size: 0.75rem;">
-       ${isParent ? "GỐC" : menu.parentName || "—"}
+       ${isParent ? "ROOT" : menu.parentName || "—"}
       </span>
      </td>
      <td class="text-center">
@@ -89,12 +89,12 @@
      <td class="text-end">
       <a href="/dashboard/menus/${
         menu._id
-      }/edit" class="action-circle" title="Sửa">
+      }/edit" class="action-circle" title="Edit">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
       </a>
       <button onclick="deleteMenu('${
         menu._id
-      }')" class="action-circle btn-del" title="Xóa">
+      }')" class="action-circle btn-del" title="Delete">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
       </button>
      </td>
@@ -122,7 +122,7 @@
   }
 
   function deleteMenu(id) {
-    if (!confirm("Xác nhận xóa menu này?")) return;
+    if (!confirm("Confirm delete this menu?")) return;
     fetch(`/api/menus/${id}`, { method: "DELETE" })
       .then((res) => res.json())
       .then((data) => {

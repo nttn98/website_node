@@ -34,6 +34,10 @@ const GroupSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        order: {
+          type: Number,
+          default: 0,
+        },
         _id: false,
       },
     ],
@@ -45,11 +49,6 @@ const GroupSchema = new mongoose.Schema(
         default: "",
       },
     ],
-
-    order: {
-      type: Number,
-      default: 0,
-    },
 
     listButtons: [
       {

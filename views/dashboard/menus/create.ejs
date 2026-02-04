@@ -5,29 +5,34 @@
     class="d-flex justify-content-between align-items-center border-bottom pb-3"
   >
     <div>
-      <h4 class="fw-800 text-navy mb-0">HỆ THỐNG MENU</h4>
-      <p class="text-muted small mb-0">Cấu trúc danh mục hệ thống</p>
+      <h4 class="fw-800 text-navy mb-0">MENU SYSTEM</h4>
+      <p class="text-muted small mb-0">Site menu structure</p>
     </div>
-    <a href="/dashboard/menus" class="btn-back">QUAY LẠI</a>
+    <a href="/dashboard/menus" class="btn-back">BACK</a>
   </div>
 </div>
 
 <form id="menu-create-form" class="row">
   <div class="col-md-7">
     <div class="form-group-minimal mb-4">
-      <label>TIÊU ĐỀ (EN)</label>
-      <input type="text" name="title" placeholder="Nhập tên menu..." required />
+      <label>TITLE (EN)</label>
+      <input
+        type="text"
+        name="title"
+        placeholder="Enter menu name..."
+        required
+      />
     </div>
 
     <div class="form-group-minimal mb-4">
-      <label>ĐƯỜNG DẪN (ROUTE)</label>
-      <input type="text" name="route" placeholder="/duong-dan" />
+      <label>ROUTE</label>
+      <input type="text" name="route" placeholder="/path-name" />
     </div>
 
     <div class="row">
       <div class="col-6">
         <div class="form-group-minimal mb-4">
-          <label>VỊ TRÍ</label>
+          <label>POSITION</label>
           <select name="type" id="typeSelect">
             <option value="top">Header Menu</option>
             <option value="bot">Footer Menu</option>
@@ -36,7 +41,7 @@
       </div>
       <div class="col-6">
         <div class="form-group-minimal mb-4">
-          <label>THỨ TỰ</label>
+          <label>Order</label>
           <input type="number" name="order" value="0" />
         </div>
       </div>
@@ -45,9 +50,9 @@
 
   <div class="col-md-5 ps-md-5">
     <div class="form-group-minimal mb-4">
-      <label>DANH MỤC CHA</label>
+      <label>Parent Menu</label>
       <select name="parentId" id="parentId">
-        <option value="">-- Menu gốc --</option>
+        <option value="">-- Root Menu --</option>
         <optgroup label="Top" id="topMenuGroup"></optgroup>
         <optgroup label="Footer" id="botMenuGroup"></optgroup>
       </select>
@@ -55,7 +60,7 @@
 
     <div class="switch-card mb-5">
       <div class="d-flex justify-content-between">
-        <span class="fw-700 small text-navy">HIỂN THỊ DẠNG NÚT</span>
+        <span class="fw-700 small text-navy">DISPLAY AS BUTTON</span>
         <div class="form-check form-switch">
           <input
             class="form-check-input"
@@ -67,7 +72,7 @@
       </div>
     </div>
 
-    <button type="submit" class="btn-save-minimal">LƯU CẤU HÌNH</button>
+    <button type="submit" class="btn-save-minimal">SAVE MENU</button>
   </div>
 </form>
 
@@ -102,9 +107,9 @@
         }
       });
 
-      console.log("Đã render danh mục cha thành công.");
+      console.log("Parent categories rendered.");
     })
-    .catch((err) => console.error("Lỗi khi load danh mục cha:", err));
+    .catch((err) => console.error("Failed to load parent categories:", err));
 
   // 2. Auto-logic cho Parent/Type (Giữ nguyên)
   document.getElementById("parentId").addEventListener("change", function () {
@@ -139,7 +144,11 @@
         .then((res) => res.json())
         .then((resp) => {
           if (resp.success) window.location.href = "/dashboard/menus";
-          else alert("Lưu thất bại!");
+          else alert("Save failed!");
+        })
+        .catch((err) => {
+          console.error("Create menu error", err);
+          alert("Save failed — see console");
         });
     });
 </script>

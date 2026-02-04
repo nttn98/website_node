@@ -77,6 +77,11 @@ exports.getGroupById = (id) => {
   return Group.findById(id).lean();
 };
 
+// Lấy group document (Mongoose document, not lean) để có thể .save()
+exports.getGroupDocById = (id) => {
+  return Group.findById(id);
+};
+
 // Cập nhật group
 exports.updateGroup = async (id, data) => {
   // Chuẩn hóa listParents

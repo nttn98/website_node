@@ -166,4 +166,65 @@ router.post("/:id/toggle", controller.toggleStatus);
  */
 router.get("/:menuId", controller.showGroupByMenu);
 
+/**
+ * @swagger
+ * /groups/{id}/order:
+ *   put:
+ *     summary: Cập nhật thứ tự của group trong menu
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               parentId:
+ *                 type: string
+ *               order:
+ *                 type: integer
+ *     tags:
+ *       - Group
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+router.put("/:id/order", controller.updateOrder);
+
+/**
+ * @swagger
+ * /groups/update-orders:
+ *   put:
+ *     summary: Cập nhật thứ tự nhiều groups
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               updates:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     groupId:
+ *                       type: string
+ *                     order:
+ *                       type: integer
+ *               parentId:
+ *                 type: string
+ *     tags:
+ *       - Group
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+router.put("/update-orders", controller.updateOrders);
+
 module.exports = router;

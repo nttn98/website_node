@@ -5,15 +5,15 @@
     class="d-flex justify-content-between align-items-center border-bottom pb-3"
   >
     <div>
-      <h4 class="fw-800 text-navy mb-0">CHỈNH SỬA GROUP</h4>
-      <p class="text-muted small mb-0">Cập nhật thông tin group</p>
+      <h4 class="fw-800 text-navy mb-0">EDIT GROUP</h4>
+      <p class="text-muted small mb-0">Update group information</p>
     </div>
     <button
       type="button"
       onclick="history.back()"
       class="btn-back text-decoration-none"
     >
-      QUAY LẠI
+      BACK
     </button>
   </div>
 </div>
@@ -32,7 +32,7 @@
       </li>
       <li class="nav-item">
         <button class="nav-link" data-tab-target="#tab-vi" type="button">
-          TIẾNG VIỆT
+          VIETNAMESE
         </button>
       </li>
       <li class="nav-item">
@@ -67,45 +67,45 @@
       </div>
       <div class="tab-pane-custom" id="tab-vi">
         <div class="form-group-minimal mb-4">
-          <label>TIÊU ĐỀ (VI)</label>
+          <label>TITLE (VI)</label>
           <input
             type="text"
             name="title_vi"
             id="title_vi"
             value="<%= group.title?.vi || '' %>"
-            placeholder="Nhập tiêu đề tiếng Việt..."
+            placeholder="Enter Vietnamese title..."
           />
         </div>
         <div class="form-group-minimal mb-4">
-          <label>PHỤ ĐỀ (VI)</label>
+          <label>SUBTITLE (VI)</label>
           <input
             type="text"
             name="subtitle_vi"
             id="subtitle_vi"
             value="<%= group.subtitle?.vi || '' %>"
-            placeholder="Nhập phụ đề tiếng Việt..."
+            placeholder="Enter Vietnamese subtitle..."
           />
         </div>
       </div>
       <div class="tab-pane-custom" id="tab-zh">
         <div class="form-group-minimal mb-4">
-          <label>标题 (ZH)</label>
+          <label>TITLE (ZH)</label>
           <input
             type="text"
             name="title_zh"
             id="title_zh"
             value="<%= group.title?.zh || '' %>"
-            placeholder="输入中文标题..."
+            placeholder="Enter Chinese title..."
           />
         </div>
         <div class="form-group-minimal mb-4">
-          <label>副标题 (ZH)</label>
+          <label>SUBTITLE (ZH)</label>
           <input
             type="text"
             name="subtitle_zh"
             id="subtitle_zh"
             value="<%= group.subtitle?.zh || '' %>"
-            placeholder="输入中文副标题..."
+            placeholder="Enter Chinese subtitle..."
           />
         </div>
       </div>
@@ -113,29 +113,15 @@
 
     <div class="content-block border-top pt-4">
       <div class="d-flex align-items-center gap-4 mb-4">
-        <div class="d-flex align-items-center gap-2">
-          <label for="orderInput" class="form-label mb-0 small">
-            Thứ tự:
-          </label>
-          <input
-            type="number"
-            name="order"
-            id="orderInput"
-            class="form-control form-control-sm text-center"
-            value="<%= group.order || 0 %>"
-            min="0"
-            style="width: 70px"
-          />
+          <div class="d-flex align-items-center gap-2">
+            <label for="typeSelect" class="form-label mb-0 small">Type:</label>
+            <select name="type" id="typeSelect" class="select-clean-sm">
+              <option value="html" <%= group.type === 'html' ? 'selected' : '' %>>HTML Block</option>
+              <option value="editor" <%= group.type === 'editor' ? 'selected' : '' %>>Rich Text Editor</option>
+            </select>
+          </div>
+          <label class="label-bronze mb-0 ms-auto">DETAIL CONTENT</label>
         </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="typeSelect" class="form-label mb-0 small">Loại:</label>
-          <select name="type" id="typeSelect" class="select-clean-sm">
-            <option value="html" <%= group.type === 'html' ? 'selected' : '' %>>HTML Block</option>
-            <option value="editor" <%= group.type === 'editor' ? 'selected' : '' %>>Rich Text Editor</option>
-          </select>
-        </div>
-        <label class="label-bronze mb-0 ms-auto">NỘI DUNG CHI TIẾT</label>
-      </div>
 
       <div id="htmlBlock">
         <textarea
@@ -157,11 +143,11 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <h6 class="card-title text-navy mb-4">
-          <i class="fas fa-cogs me-2"></i>THIẾT LẬP
+          <i class="fas fa-cogs me-2"></i>Settings
         </h6>
 
         <div class="form-group-minimal mb-4">
-          <label>LIÊN KẾT MENU CHA</label>
+          <label>Parent Menus</label>
           <select
             name="listParents"
             id="parentIdSelect"
@@ -170,12 +156,13 @@
             required
           ></select>
           <small class="text-muted mt-2 d-block">
-            Có thể chọn nhiều menu để hiển thị group này.
+            You can select multiple menus to display this group.
           </small>
+          <div id="selectedParentsList" class="mt-3"></div>
         </div>
 
         <div class="form-group-minimal mb-4">
-          <label>ẢNH ĐẠI DIỆN</label>
+          <label>FEATURE IMAGE</label>
           <div class="custom-file-upload">
             <input
               type="file"
@@ -183,7 +170,7 @@
               id="imageInput"
               accept="image/*"
             />
-            <span class="upload-label">Chọn ảnh hoặc kéo thả vào đây</span>
+            <span class="upload-label">Choose image or drag & drop here</span>
           </div>
           <% if (group.image) { %>
           <div class="mt-2">
@@ -198,16 +185,16 @@
         </div>
 
         <div class="form-group-minimal mb-4">
-          <label>TRẠNG THÁI</label>
+          <label>Status</label>
           <select name="status" id="statusSelect" class="select-clean">
-            <option value="active" <%= group.status === 'active' ? 'selected' : '' %>>Hoạt động</option>
-            <option value="inactive" <%= group.status === 'inactive' ? 'selected' : '' %>>Không hoạt động</option>
+            <option value="active" <%= group.status === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="inactive" <%= group.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
           </select>
         </div>
 
         <div class="d-grid gap-2">
           <button type="submit" class="btn-save-minimal">
-            <i class="fas fa-save me-2"></i>CẬP NHẬT
+            <i class="fas fa-save me-2"></i>UPDATE
           </button>
         </div>
       </div>
@@ -227,7 +214,8 @@
 
 <script>
   $(document).ready(function () {
-    const currentMenuId = '<%= currentMenuId || '' %>';
+    const currentMenuId = <%- JSON.stringify(currentMenuId || '') %>;
+    const existingParents = <%- JSON.stringify(group.listParents || []) %>;
     // TAB SWITCH (jQuery)
     $('.nav-tabs-minimal .nav-link').on('click', function () {
       const target = $(this).attr('data-tab-target');
@@ -257,7 +245,29 @@
 
     // PARENT SELECT: initialize Select2 and load grouped options
     const parentSelect = $('#parentIdSelect');
-    parentSelect.select2({ placeholder: 'Tìm &amp; chọn menu cha...', width: '100%' });
+    parentSelect.select2({ placeholder: 'Search & select parent menus...', width: '100%' });
+
+    function updateSelectedParentsList() {
+      const selectedIds = parentSelect.val() || [];
+      const listContainer = document.getElementById('selectedParentsList');
+      if (selectedIds.length === 0) {
+        listContainer.innerHTML = '';
+        return;
+      }
+      let html = '<div class="selected-parents-list">';
+      selectedIds.forEach(id => {
+        const text = parentSelect.find(`option[value='${id}']`).text();
+        html += `
+          <div class="d-flex align-items-center mb-2">
+            <span class="me-3">${text}</span>
+          </div>
+        `;
+      });
+      html += '</div>';
+      listContainer.innerHTML = html;
+    }
+
+    parentSelect.on('change', updateSelectedParentsList);
 
     fetch('/api/menus')
       .then((res) => res.json())
@@ -266,7 +276,7 @@
         const groups = {
           top: $('<optgroup label="Header"></optgroup>'),
           bot: $('<optgroup label="Footer"></optgroup>'),
-          other: $('<optgroup label="Khác"></optgroup>'),
+          other: $('<optgroup label="Other"></optgroup>'),
         };
 
         menus.forEach((m) => {
@@ -283,23 +293,9 @@
         parentSelect.trigger('change');
 
         // Pre-select based on existing group.listParents
-        const groupParents = Array.isArray(<%- JSON.stringify(group.listParents || []) %>) ? <%- JSON.stringify(group.listParents || []) %> : [];
-        const selectedIds = groupParents.map((p) => p.parentId);
+        const groupParents = Array.isArray(existingParents) ? existingParents : [];
+        const selectedIds = groupParents.map((p) => String(p.parentId));
         if (selectedIds.length) parentSelect.val(selectedIds).trigger('change');
-
-        // Auto set order when parent changes (use first selected)
-        parentSelect.on('change', function () {
-          const selected = $(this).val();
-          if (selected && selected.length > 0) {
-            const menuId = selected[0];
-            fetch(`/groups/next-order/${menuId}`)
-              .then((res) => res.json())
-              .then((data) => {
-                $('#orderInput').val(data.nextOrder);
-              })
-              .catch(() => {});
-          }
-        });
       })
       .catch(() => {});
 
@@ -309,9 +305,12 @@
       const form = this;
       const formData = new FormData(form);
 
-      const selectedParents = (parentSelect.val() || []).map((id) => {
+      const selectedIds = parentSelect.val() || [];
+      const selectedParents = selectedIds.map((id) => {
         const text = parentSelect.find(`option[value='${id}']`).text();
-        return { parentId: id, parentName: text };
+        const existing = (existingParents || []).find(p => String(p.parentId) === id) || {};
+        const order = existing.order || 0;
+        return { parentId: id, parentName: text, order };
       });
       formData.set('listParents', JSON.stringify(selectedParents));
 
@@ -341,7 +340,7 @@
           const isOk = (resp && (resp.success === true || resp.success === 'true')) || (resp && resp._id) || isArray || (Array.isArray(data) && data.length > 0) || (resp && resp.groups);
           if (isOk) {
             console.log('Update success detected, showing toast and redirecting...');
-            showToast('Cập nhật thành công');
+            showToast('Update successful');
             setTimeout(() => {
               console.log('Redirecting now...');
               const menuId = currentMenuId;
@@ -350,12 +349,12 @@
             }, 500);
           } else {
             console.warn('Update considered failure, server responded:', resp);
-            showToast('Cập nhật thất bại', true);
+            showToast('Update failed', true);
           }
         })
         .catch((err) => {
           console.error('Fetch/update error', err);
-          showToast('Cập nhật thất bại — xem console', true);
+          showToast('Update failed — check console', true);
         });
     });
   });

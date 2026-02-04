@@ -19,8 +19,14 @@ exports.index = async (req, res) => {
           (parent) => parent.parentId.toString() === menuId
         )
     );
-    // Sort by order
-    filteredGroups.sort((a, b) => (a.order || 0) - (b.order || 0));
+    // Sort by order in listParents
+    filteredGroups.sort((a, b) => {
+      const aOrder =
+        a.listParents.find((p) => p.parentId.toString() === menuId)?.order || 0;
+      const bOrder =
+        b.listParents.find((p) => p.parentId.toString() === menuId)?.order || 0;
+      return aOrder - bOrder;
+    });
     return res.json({ groups: filteredGroups });
   }
   res.json({ groups });
@@ -37,7 +43,13 @@ exports.getNextOrder = async (req, res) => {
   );
   const maxOrder =
     filteredGroups.length > 0
-      ? Math.max(...filteredGroups.map((g) => g.order || 0))
+      ? Math.max(
+          ...filteredGroups.map(
+            (g) =>
+              g.listParents.find((p) => p.parentId.toString() === menuId)
+                ?.order || 0
+          )
+        )
       : 0;
   res.json({ nextOrder: maxOrder + 1 });
 };
@@ -94,11 +106,15 @@ exports.create = async (req, res) => {
 
 /* ===== EDIT ===== */
 exports.editForm = async (req, res) => {
-  const group = await groupService.getGroupById(req.params.id);
+  const group = await groupService.getGroupDocById(req.params.id);
   const menus = await menuService.getAllMenus();
 
   res.locals.menus = menus;
-  res.locals.currentMenuId = group.parentId.toString();
+  // Set currentMenuId from first parent if available
+  res.locals.currentMenuId =
+    Array.isArray(group.listParents) && group.listParents.length
+      ? group.listParents[0].parentId.toString()
+      : undefined;
 
   res.render("dashboard/groups/edit", { group, menus });
 };
@@ -149,6 +165,38 @@ exports.update = async (req, res) => {
     req.files
   );
   res.json({ success: true, group: updated });
+};
+
+/* ===== UPDATE ORDER ===== */
+exports.updateOrder = async (req, res) => {
+  const { parentId, order } = req.body;
+  const group = await groupService.getGroupById(req.params.id);
+  const parent = group.listParents.find(
+    (p) => p.parentId.toString() === parentId
+  );
+  if (parent) {
+    parent.order = order;
+    await group.save();
+    res.json({ success: true });
+  } else {
+    res.status(400).json({ success: false, message: "Parent not found" });
+  }
+};
+
+/* ===== UPDATE ORDERS ===== */
+exports.updateOrders = async (req, res) => {
+  const { updates, parentId } = req.body;
+  for (const { groupId, order } of updates) {
+    const group = await groupService.getGroupDocById(groupId);
+    const parent = group.listParents.find(
+      (p) => p.parentId.toString() === parentId
+    );
+    if (parent) {
+      parent.order = order;
+      await group.save();
+    }
+  }
+  res.json({ success: true });
 };
 
 exports.showGroupByMenu = async (req, res) => {
