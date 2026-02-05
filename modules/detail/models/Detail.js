@@ -15,6 +15,13 @@ const DetailSchema = new mongoose.Schema(
       default: {},
     },
 
+    images: [
+      {
+        type: String,
+        default: "",
+      },
+    ],
+
     /* ===== CONTENT TYPE ===== */
     type: {
       type: String,

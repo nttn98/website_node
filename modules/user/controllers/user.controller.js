@@ -7,7 +7,11 @@ exports.login = async (req, res) => {
     req.session.user = { _id: user._id, username: user.username };
     res.redirect("/dashboard/menus");
   } catch (err) {
-    res.render("user/login", { error: err.message });
+    res.render(
+      "user/login",
+      { layout: false },
+      { error: "Please! Check your connection" }
+    );
   }
 };
 
