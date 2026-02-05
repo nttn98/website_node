@@ -41,6 +41,7 @@ router.get("/dashboard/menus/:id/edit", requireLoginView, async (req, res) => {
 
 router.get("/dashboard/groups/create", requireLoginView, async (req, res) => {
   res.locals.menus = await menuService.getAllMenus();
+  if (!req.query.menuId) res.locals.currentPage = "groups";
   if (req.query.menuId) res.locals.currentMenuId = req.query.menuId;
   res.render("dashboard/groups/create");
 });
@@ -51,6 +52,30 @@ router.get("/dashboard/groups/:id/edit", requireLoginView, async (req, res) => {
   if (req.query.menuId) res.locals.currentMenuId = req.query.menuId;
   res.render("dashboard/groups/edit", { id: req.params.id, group });
 });
+
+router.get("/dashboard/buttons", requireLoginView, async (req, res) => {
+  const buttonService = require("../modules/button/services/button.services");
+  res.locals.menus = await menuService.getAllMenus();
+  res.locals.currentPage = "buttons";
+  res.render("dashboard/buttons/index");
+});
+
+router.get("/dashboard/buttons/create", requireLoginView, async (req, res) => {
+  res.locals.menus = await menuService.getAllMenus();
+  res.locals.currentPage = "buttons";
+  res.render("dashboard/buttons/create");
+});
+
+router.get(
+  "/dashboard/buttons/:id/edit",
+  requireLoginView,
+  async (req, res) => {
+    const buttonService = require("../modules/button/services/button.services");
+    const button = await buttonService.getButtonById(req.params.id);
+    res.locals.menus = await menuService.getAllMenus();
+    res.render("dashboard/buttons/edit", { button });
+  }
+);
 
 router.get("/dashboard/details/create", requireLoginView, async (req, res) => {
   res.locals.menus = await menuService.getAllMenus();

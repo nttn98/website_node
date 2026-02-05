@@ -1,26 +1,26 @@
-const Button = require("../models/Button");
+const Form = require("../models/Form");
 const Group = require("../../group/models/Group");
 
-exports.getAllButtons = () => {
-  return Button.find({ isActive: true }).sort({ createdAt: -1 }).lean();
+exports.getAllForms = () => {
+  return Form.find({ isActive: true }).sort({ createdAt: -1 }).lean();
 };
 
-exports.getButtonById = (id) => {
-  return Button.findById(id).lean();
+exports.getFormById = (id) => {
+  return Form.findById(id).lean();
 };
 
-exports.getButtonDocById = (id) => {
-  return Button.findById(id);
+exports.getFormDocById = (id) => {
+  return Form.findById(id);
 };
 
-exports.createButton = async (data) => {
+exports.createForm = async (data) => {
   let parentName = null;
   let parentRoute = null;
   if (data.parentId) {
     const g = await Group.findById(data.parentId).lean();
     parentName = g ? g.title?.en || null : null;
   }
-  const button = await Button.create({
+  const Form = await Form.create({
     title: {
       en: data.title_en || data.title || "",
       vi: data.title_vi || "",
@@ -33,10 +33,10 @@ exports.createButton = async (data) => {
     isStatus: true,
     isActive: true,
   });
-  return button.toObject ? button.toObject() : button;
+  return Form.toObject ? Form.toObject() : Form;
 };
 
-exports.updateButton = async (id, data) => {
+exports.updateForm = async (id, data) => {
   let parentName = null;
   if (data.parentId) {
     const g = await Group.findById(data.parentId).lean();
@@ -52,17 +52,17 @@ exports.updateButton = async (id, data) => {
   if (data.title_vi) update["title.vi"] = data.title_vi;
   if (data.title_zh) update["title.zh"] = data.title_zh;
 
-  await Button.findByIdAndUpdate(id, update);
-  return Button.findById(id).lean();
+  await Form.findByIdAndUpdate(id, update);
+  return Form.findById(id).lean();
 };
 
-exports.deleteButton = async (id) => {
-  await Button.findByIdAndUpdate(id, { isActive: false, isStatus: false });
+exports.deleteForm = async (id) => {
+  await Form.findByIdAndUpdate(id, { isActive: false, isStatus: false });
   return { success: true };
 };
 
 exports.toggleStatus = async (id) => {
-  const b = await Button.findById(id);
+  const b = await Form.findById(id);
   if (!b) return null;
   b.isStatus = !b.isStatus;
   await b.save();

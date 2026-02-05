@@ -1,15 +1,14 @@
-const buttonService = require("../services/button.services");
-const groupService = require("../../group/services/group.services");
+const formService = require("../services/form.services");
 
 exports.index = async (req, res) => {
-  const buttons = await buttonService.getAllButtons();
-  res.json({ buttons });
+  const forms = await formService.getAllforms();
+  res.json({ forms });
 };
 
 exports.createForm = async (req, res) => {
   const groups = await groupService.getAllGroupsSorted();
   res.locals.groups = groups;
-  res.render("dashboard/buttons/create");
+  res.render("dashboard/forms/create");
 };
 
 exports.create = async (req, res) => {
@@ -20,10 +19,10 @@ exports.create = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "Title is required" });
-    const created = await buttonService.createButton(req.body);
-    res.status(201).json({ success: true, button: created });
+    const created = await formService.createform(req.body);
+    res.status(201).json({ success: true, form: created });
   } catch (err) {
-    console.error("Failed to create button", err);
+    console.error("Failed to create form", err);
     res
       .status(500)
       .json({ success: false, message: err.message || "Server error" });
@@ -31,10 +30,10 @@ exports.create = async (req, res) => {
 };
 
 exports.editForm = async (req, res) => {
-  const button = await buttonService.getButtonById(req.params.id);
+  const form = await formService.getformById(req.params.id);
   const groups = await groupService.getAllGroupsSorted();
   res.locals.groups = groups;
-  res.render("dashboard/buttons/edit", { button });
+  res.render("dashboard/forms/edit", { form });
 };
 
 exports.update = async (req, res) => {
@@ -45,10 +44,10 @@ exports.update = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "Title (EN) is required" });
-    const updated = await buttonService.updateButton(req.params.id, req.body);
-    res.json({ success: true, button: updated });
+    const updated = await formService.updateform(req.params.id, req.body);
+    res.json({ success: true, form: updated });
   } catch (err) {
-    console.error("Failed to update button", err);
+    console.error("Failed to update form", err);
     res
       .status(500)
       .json({ success: false, message: err.message || "Server error" });
@@ -56,11 +55,11 @@ exports.update = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
-  await buttonService.deleteButton(req.params.id);
+  await formService.deleteform(req.params.id);
   res.json({ success: true });
 };
 
 exports.toggleStatus = async (req, res) => {
-  const b = await buttonService.toggleStatus(req.params.id);
+  const b = await formService.toggleStatus(req.params.id);
   res.json({ success: true, isStatus: b ? b.isStatus : false });
 };

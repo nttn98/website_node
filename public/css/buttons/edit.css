@@ -1,0 +1,6 @@
+@import url("/css/groups/edit.css");
+
+/* Buttons edit/create reuse group edit styling; add small tweaks here if needed */
+.form-control-minimal {
+  min-height: 40px;
+}

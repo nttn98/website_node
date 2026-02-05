@@ -1,0 +1,72 @@
+<link rel="stylesheet" href="/css/buttons/edit.css" />
+
+<div class="header-minimal mb-5">
+  <div
+    class="d-flex justify-content-between align-items-center border-bottom pb-3"
+  >
+    <div>
+      <h4 class="fw-800 text-navy mb-0">CREATE BUTTON</h4>
+      <p class="text-muted small mb-0">Add a new action button</p>
+    </div>
+    <button type="button" onclick="history.back()" class="btn-back">
+      BACK
+    </button>
+  </div>
+</div>
+
+<form id="button-create-form" class="row g-4">
+  <div class="col-md-8">
+    <div class="form-group-minimal mb-4">
+      <label>TITLE (EN)</label>
+      <input
+        type="text"
+        name="title"
+        placeholder="Enter menu name..."
+        class="form-control-minimal"
+        required
+      />
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="form-group-minimal mb-4">
+          <label>Route / URL</label>
+          <input type="text" name="route" class="form-control-minimal" />
+        </div>
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn-save-minimal">SAVE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+  $("#button-create-form").on("submit", function (e) {
+    e.preventDefault();
+    const title = $(this).find('[name="title"]').val().trim();
+    if (!title) return showToast("Title is required", true);
+    const route = $(this).find('[name="route"]').val().trim();
+    const payload = { title, route, isStatus: true };
+
+    fetch("/buttons/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then((r) => r.json())
+      .then((resp) => {
+        console.log("Create response", resp);
+        if (resp.success) {
+          showToast("Saved successfully");
+          setTimeout(() => (location.href = "/dashboard/buttons"), 400);
+        } else showToast(resp.message || "Save failed", true);
+      })
+      .catch((err) => {
+        console.error("Create error", err);
+        showToast("Save failed", true);
+      });
+  });
+</script>

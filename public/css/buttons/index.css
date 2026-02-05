@@ -1,0 +1,11 @@
+@import url("/css/groups/index.css");
+
+/* Buttons index uses the same visual language as Groups index. Add any small button-specific tweaks below. */
+.btn-ui-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.action-circle {
+  margin-left: 6px;
+}

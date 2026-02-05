@@ -53,6 +53,7 @@ app.use("/api/menus", require("./modules/menu/routes/menu.routes"));
 app.use("/dashboard", require("./modules/dashboard/routes/dashboard.routes"));
 app.use("/groups", require("./modules/group/routes/group.routes"));
 app.use("/details", require("./modules/detail/routes/detail.routes"));
+app.use("/buttons", require("./modules/button/routes/button.routes"));
 
 // View routes (EJS render)
 app.use("/", require("./routes/view.routes"));

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const ButtonSchema = new mongoose.Schema(
+const FormSchema = new mongoose.Schema(
   {
     title: {
       type: Map,
@@ -8,22 +8,18 @@ const ButtonSchema = new mongoose.Schema(
       required: true,
     },
 
+    subTitle: {
+      type: Map,
+      of: String,
+      required: false,
+    },
+
     parentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Group",
+      ref: "Button",
       default: null,
     },
     parentName: {
-      type: String,
-      default: null,
-    },
-
-    parentRoute: {
-      type: String,
-      default: null,
-    },
-
-    route: {
       type: String,
       default: null,
     },
@@ -41,4 +37,4 @@ const ButtonSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Button", ButtonSchema);
+module.exports = mongoose.model("Button", FormSchema);

@@ -1,0 +1,126 @@
+<link rel="stylesheet" href="/css/buttons/edit.css" />
+
+<div class="header-minimal mb-5">
+  <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
+    <div>
+      <h4 class="fw-800 text-navy mb-0">EDIT BUTTON</h4>
+      <p class="text-muted small mb-0">Update button</p>
+    </div>
+    <button type="button" onclick="history.back()" class="btn-back">BACK</button>
+  </div>
+</div>
+
+<form id="button-edit-form" class="row g-4">
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="mb-4">
+          <ul class="nav nav-tabs-minimal mb-3">
+            <li class="nav-item"><button type="button" class="nav-link active" data-tab-target="#tab-en">EN</button></li>
+            <li class="nav-item"><button type="button" class="nav-link" data-tab-target="#tab-vi">VI</button></li>
+            <li class="nav-item"><button type="button" class="nav-link" data-tab-target="#tab-zh">ZH</button></li>
+          </ul>
+
+          <div id="tab-en" class="tab-pane-custom active mb-3">
+            <label>TITLE (EN)</label>
+            <input type="text" name="title_en" class="form-control-minimal" value="<%= button.title?.en || '' %>" required />
+          </div>
+
+          <div id="tab-vi" class="tab-pane-custom mb-3">
+            <label>TITLE (VI)</label>
+            <input type="text" name="title_vi" class="form-control-minimal" value="<%= button.title?.vi || '' %>" />
+          </div>
+
+          <div id="tab-zh" class="tab-pane-custom mb-3">
+            <label>TITLE (ZH)</label>
+            <input type="text" name="title_zh" class="form-control-minimal" value="<%= button.title?.zh || '' %>" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="form-group-minimal mb-4">
+          <label>Parent Group</label>
+          <select name="parentId" id="parentSelect" class="form-select">
+            <option value="">-</option>
+          </select>
+        </div>
+        <div class="form-group-minimal mb-4">
+          <label>Route / URL</label>
+          <input type="text" name="route" class="form-control-minimal" value="<%= button.route || '' %>" />
+        </div>
+        <div class="form-group-minimal mb-4">
+          <label>Status</label>
+          <select name="isStatus" class="select-clean">
+            <option value="on" <%= button.isStatus ? 'selected' : '' %>>Active</option>
+            <option value="off" <%= !button.isStatus ? 'selected' : '' %>>Inactive</option>
+          </select>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn-save-minimal">UPDATE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+  $(document).ready(function(){
+    $('.nav-tabs-minimal .nav-link').on('click', function(){
+      const target = $(this).attr('data-tab-target');
+      $('.nav-tabs-minimal .nav-link').removeClass('active');
+      $('.tab-pane-custom').removeClass('active');
+      $(this).addClass('active');
+      $(target).addClass('active');
+    });
+
+    // load groups with error handling
+    (async function loadGroups(){
+      try {
+        const r = await fetch('/groups');
+        if (!r.ok) throw new Error('Network response not ok');
+        const d = await r.json();
+        const groups = d.groups || [];
+        const sel = $('#parentSelect');
+        if (!groups.length) sel.append(new Option('No groups available',''));
+        else groups.forEach(g=> sel.append(new Option(g.title?.en || '', g._id)));
+        if ('<%= button.parentId %>') sel.val('<%= button.parentId %>');
+      } catch(err) {
+        console.error('Failed to load groups', err);
+        $('#parentSelect').append(new Option('Unable to load groups',''));
+      }
+    })();
+
+    $('#button-edit-form').on('submit', function(e){
+      e.preventDefault();
+      const title_en = $(this).find('[name="title_en"]').val().trim();
+      const title_vi = $(this).find('[name="title_vi"]').val().trim();
+      const title_zh = $(this).find('[name="title_zh"]').val().trim();
+      if (!title_en) return showToast('Title (EN) is required', true);
+      const route = $(this).find('[name="route"]').val().trim();
+      const parentId = $(this).find('#parentSelect').val() || null;
+      const isStatus = $(this).find('[name="isStatus"]').val() === 'on';
+      const payload = { title_en, title_vi, title_zh, route, parentId, isStatus };
+
+      fetch('/buttons/<%= button._id %>/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).then(r=>r.json()).then(resp=>{
+        console.log('Update response', resp);
+        if (resp.success) {
+          showToast('Updated');
+          setTimeout(()=> location.href='/dashboard/buttons', 400);
+        } else showToast(resp.message || 'Update failed', true);
+      }).catch((err)=> {
+        console.error('Update error', err);
+        showToast('Update failed', true);
+      });
+    });
+  });
+</script>
