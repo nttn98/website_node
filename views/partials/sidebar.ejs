@@ -47,11 +47,10 @@
 
   <div class="menu-divider">MENU SYSTEM</div>
 
-  <% /* LOGIC GỐC CỦA BẠN - ĐẢM BẢO LIST MENU HIỆN RA */ %> <% function
-  getChildren(parentId) { return menus.filter(function(m) { return (m.parentId ?
-  m.parentId.toString() : null) === (parentId ? parentId.toString() : null); });
-  } %> <% function renderTree(parentId, level) { var children =
-  getChildren(parentId); children.forEach(function(menu) { %>
+  <% function getChildren(parentId) { return menus.filter(function(m) { return
+  (m.parentId ? m.parentId.toString() : null) === (parentId ?
+  parentId.toString() : null); }); } %> <% function renderTree(parentId, level)
+  { var children = getChildren(parentId); children.forEach(function(menu) { %>
   <li class="nav-item" style="padding-left: <%= level * 16 %>px">
     <div class="d-flex align-items-center">
       <a
