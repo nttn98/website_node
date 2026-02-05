@@ -1,5 +1,5 @@
-const menuService = require("../../menu/services/menu.service");
-const groupService = require("../services/group.service");
+const menuService = require("../../menu/services/menu.services");
+const groupService = require("../services/group.services");
 
 exports.toggleStatus = async (req, res) => {
   const group = await groupService.toggleStatus(req.params.id);

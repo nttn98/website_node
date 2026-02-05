@@ -1,6 +1,6 @@
-const detailService = require("../services/detail.service");
-const groupService = require("../../group/services/group.service");
-const menuService = require("../../menu/services/menu.service");
+const detailService = require("../services/detail.services");
+const groupService = require("../../group/services/group.services");
+const menuService = require("../../menu/services/menu.services");
 
 exports.index = async (req, res) => {
   const details = await detailService.getAllArticles();

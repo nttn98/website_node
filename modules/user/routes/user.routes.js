@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controllers/user.controller");
+const controller = require("../controllers/user.controllers");
 const { requireLogin } = require("../../../middleware/auth");
 
 // Xử lý logout

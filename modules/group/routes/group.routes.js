@@ -1,5 +1,5 @@
 const express = require("express");
-const controller = require("../controllers/group.controller");
+const controller = require("../controllers/group.controllers");
 const upload = require("../../../middleware/upload");
 
 const router = express.Router();

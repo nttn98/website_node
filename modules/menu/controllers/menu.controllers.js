@@ -1,4 +1,4 @@
-const menuService = require("../services/menu.service");
+const menuService = require("../services/menu.services");
 
 exports.getAllMenus = async (req, res) => {
   const menus = await menuService.getAllMenus();

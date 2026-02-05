@@ -1,5 +1,5 @@
 const express = require("express");
-const menuService = require("../modules/menu/services/menu.service");
+const menuService = require("../modules/menu/services/menu.services");
 const router = express.Router();
 
 function requireLoginView(req, res, next) {
@@ -45,7 +45,7 @@ router.get("/dashboard/groups/create", requireLoginView, async (req, res) => {
   res.render("dashboard/groups/create");
 });
 router.get("/dashboard/groups/:id/edit", requireLoginView, async (req, res) => {
-  const groupService = require("../modules/group/services/group.service");
+  const groupService = require("../modules/group/services/group.services");
   const group = await groupService.getGroupById(req.params.id);
   res.locals.menus = await menuService.getAllMenus();
   if (req.query.menuId) res.locals.currentMenuId = req.query.menuId;

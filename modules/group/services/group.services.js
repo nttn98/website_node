@@ -160,5 +160,3 @@ exports.toggleStatus = async (id) => {
   return group;
 };
 
-// Các hàm chuẩn hóa, không trùng lặp
-// getAllGroupsSorted, getGroupsByParent, createGroup, getGroupById, updateGroup, deleteGroup, toggleStatus

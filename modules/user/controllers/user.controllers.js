@@ -1,4 +1,4 @@
-const userService = require("../services/user.service");
+const userService = require("../services/user.services");
 
 // Đăng nhập
 exports.login = async (req, res) => {

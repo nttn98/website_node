@@ -8,6 +8,16 @@ const ButtonSchema = new mongoose.Schema(
       required: true,
     },
 
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+      default: null,
+    },
+    parentName: {
+      type: String,
+      default: null,
+    },
+
     route: {
       type: String,
       default: null,
