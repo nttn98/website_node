@@ -45,8 +45,9 @@
      <th>Details</th>
      <th>Type</th>
      <th>Parent Menu(s)</th>
+    ${currentMenuId ? '<th class="text-center">Order</th>' : ''}
      <th class="text-center">Status</th>
-     <th class="text-end">Actions</th>
+     <th class="text-center">Actions</th>
     </tr>
     </thead>
     <tbody id="group-list-tbody">`;
@@ -67,9 +68,9 @@
         <td>
           <div class="d-flex align-items-center">
             <img src="${imgUrl}" style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px; margin-right: 12px;" />
-            <div>
-              <div class="fw-bold">${group.title?.en || "Group Name"}</div>
-              <div class="text-muted small">${group.subtitle?.en || ""}</div>
+            <div style="max-width: 600px">
+              <div class="fw-bold">${group.title?.en || "-"}</div>
+              <div class="text-muted small">${group.subtitle?.en || "-"}</div>
             </div>
           </div>
         </td>
@@ -82,15 +83,25 @@
               .map(
                 (p) => `<span class="badge-minimal me-1">${p.parentName}</span>`
               )
-              .join("") || '<span class="text-muted small">None</span>'
           }
         </td>
+        ${
+          currentMenuId
+            ? (() => {
+                const p = (group.listParents || []).find((pp) => String(pp.parentId) === String(currentMenuId));
+                return p
+                ?`<td class="text-center"><span class="badge-minimal">${p.order}</span></td>`
+                :"";
+              })()
+            :
+                ""
+        }
         <td class="text-center">
           <span class="badge-minimal ${group.isStatus ? "badge-active" : ""}">
             ${group.isStatus ? "ACTIVE" : "INACTIVE"}
           </span>
         </td>
-        <td class="text-end">
+        <td class="text-center">
           <button class="action-circle" onclick="toggleGroupStatus('${
             group._id
           }', this)" title="Toggle status">

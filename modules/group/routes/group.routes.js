@@ -8,12 +8,7 @@ const router = express.Router();
  * @swagger
  * /groups:
  *   get:
- *     summary: Lấy danh sách group theo menuId (query)
- *     parameters:
- *       - in: query
- *         name: menuId
- *         schema:
- *           type: string
+ *     summary: Lấy danh sách group
  *     tags:
  *       - Group
  *     responses:
@@ -21,7 +16,6 @@ const router = express.Router();
  *         description: Danh sách group
  */
 router.get("/", controller.index);
-router.get("/:menuId", controller.index);
 
 /**
  * @swagger
@@ -74,7 +68,7 @@ router.get("/next-order/:menuId", controller.getNextOrder);
  *       201:
  *         description: Tạo thành công
  */
-router.post("/create", upload.single("image"), controller.create);
+router.post("/create", upload.array("images"), controller.create);
 
 /**
  * @swagger
@@ -107,7 +101,14 @@ router.post("/create", upload.single("image"), controller.create);
  *       200:
  *         description: Cập nhật thành công
  */
-router.post("/:id/update", upload.single("image"), controller.update);
+router.post(
+  "/:id/update",
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "images", maxCount: 10 },
+  ]),
+  controller.update
+);
 
 /**
  * @swagger
@@ -149,7 +150,7 @@ router.post("/:id/toggle", controller.toggleStatus);
 
 /**
  * @swagger
- * /groups/{menuId}:
+ * /groups/menu/{menuId}:
  *   get:
  *     summary: Lấy group theo menuId (params)
  *     parameters:
@@ -158,13 +159,33 @@ router.post("/:id/toggle", controller.toggleStatus);
  *         required: true
  *         schema:
  *           type: string
+ *         description: ID của menu
  *     tags:
  *       - Group
  *     responses:
  *       200:
  *         description: Danh sách group
  */
-router.get("/:menuId", controller.showGroupByMenu);
+router.get("/menu/:menuId", controller.showGroupByMenu);
+
+/**
+ * @swagger
+ * /groups/{id}:
+ *   get:
+ *     summary: Lấy group theo ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     tags:
+ *       - Group
+ *     responses:
+ *       200:
+ *         description: Thông tin group
+ */
+router.get("/:id", controller.getById);
 
 /**
  * @swagger

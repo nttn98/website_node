@@ -1,5 +1,6 @@
 const menuService = require("../../menu/services/menu.services");
 const groupService = require("../services/group.services");
+const path = require("path");
 
 exports.toggleStatus = async (req, res) => {
   const group = await groupService.toggleStatus(req.params.id);
@@ -62,46 +63,73 @@ exports.createForm = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-  // Chỉ lấy listParents từ form (không cần menuId)
-  let listParents = [];
-  if (typeof req.body.listParents === "string") {
-    try {
-      listParents = JSON.parse(req.body.listParents);
-    } catch {
-      listParents = [];
+  try {
+    // Chỉ lấy listParents từ form (không cần menuId)
+    let listParents = [];
+    if (typeof req.body.listParents === "string") {
+      try {
+        listParents = JSON.parse(req.body.listParents);
+      } catch {
+        listParents = [];
+      }
+    } else if (Array.isArray(req.body.listParents)) {
+      listParents = req.body.listParents;
     }
-  } else if (Array.isArray(req.body.listParents)) {
-    listParents = req.body.listParents;
+    // Chuẩn hóa images
+    let images = [];
+    if (typeof req.body.images === "string") {
+      try {
+        images = JSON.parse(req.body.images);
+      } catch {
+        images = [];
+      }
+    } else if (Array.isArray(req.body.images)) images = req.body.images;
+    // Multer for create uses req.files (array), update uses req.files.images or req.files.image
+    else if (req.files && Array.isArray(req.files) && req.files.length) {
+      images = req.files.map(
+        (f) => "/uploads/groups/" + (f.filename || path.basename(f.path))
+      );
+    } else if (
+      req.files &&
+      req.files.images &&
+      Array.isArray(req.files.images) &&
+      req.files.images.length
+    ) {
+      images = req.files.images.map(
+        (f) => "/uploads/groups/" + (f.filename || path.basename(f.path))
+      );
+    } else if (req.file)
+      images = [
+        "/uploads/groups/" +
+          (req.file.filename || path.basename(req.file.path)),
+      ];
+    else if (req.body.image) images = [req.body.image];
+    // Chuẩn hóa listButtons
+    let listButtons = [];
+    if (typeof req.body.listButtons === "string") {
+      try {
+        listButtons = JSON.parse(req.body.listButtons);
+      } catch {
+        listButtons = [];
+      }
+    } else if (Array.isArray(req.body.listButtons)) {
+      listButtons = req.body.listButtons;
+    }
+    console.log("Group create - incoming listButtons:", listButtons);
+
+    const created = await groupService.createGroup({
+      ...req.body,
+      listParents,
+      images,
+      listButtons,
+    });
+    res.status(201).json({ success: true, group: created });
+  } catch (err) {
+    console.error("Group create failed", err);
+    res
+      .status(500)
+      .json({ success: false, message: err.message || "Server error" });
   }
-  // Chuẩn hóa images
-  let images = [];
-  if (typeof req.body.images === "string") {
-    try {
-      images = JSON.parse(req.body.images);
-    } catch {
-      images = [];
-    }
-  } else if (Array.isArray(req.body.images)) images = req.body.images;
-  else if (req.file) images = [`/uploads/groups/${req.file.filename}`];
-  else if (req.body.image) images = [req.body.image];
-  // Chuẩn hóa listButtons
-  let listButtons = [];
-  if (typeof req.body.listButtons === "string") {
-    try {
-      listButtons = JSON.parse(req.body.listButtons);
-    } catch {
-      listButtons = [];
-    }
-  } else if (Array.isArray(req.body.listButtons)) {
-    listButtons = req.body.listButtons;
-  }
-  const created = await groupService.createGroup({
-    ...req.body,
-    listParents,
-    images,
-    listButtons,
-  });
-  res.status(201).json({ success: true, group: created });
 };
 
 /* ===== EDIT ===== */
@@ -120,51 +148,103 @@ exports.editForm = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  // Chuẩn hóa listParents
-  let listParents = [];
-  if (Array.isArray(req.body.listParents)) {
-    listParents = req.body.listParents;
-  } else if (req.body.parentId && req.body.parentName) {
-    listParents = [
-      { parentId: req.body.parentId, parentName: req.body.parentName },
-    ];
-  } else if (req.body.parentId) {
-    const menu = await menuService.getMenuById(req.body.parentId);
-    listParents = [
-      { parentId: req.body.parentId, parentName: menu?.title?.en || "" },
-    ];
+  try {
+    // Chuẩn hóa listParents (only set if provided)
+    let listParents;
+    if (typeof req.body.listParents === "string") {
+      try {
+        listParents = JSON.parse(req.body.listParents);
+      } catch {
+        listParents = [];
+      }
+    } else if (Array.isArray(req.body.listParents)) {
+      listParents = req.body.listParents;
+    } else if (req.body.parentId && req.body.parentName) {
+      listParents = [
+        { parentId: req.body.parentId, parentName: req.body.parentName },
+      ];
+    } else if (req.body.parentId) {
+      const menu = await menuService.getMenuById(req.body.parentId);
+      listParents = [
+        { parentId: req.body.parentId, parentName: menu?.title?.en || "" },
+      ];
+    }
+    // Chuẩn hóa images (only set if provided)
+    let images;
+    if (typeof req.body.images === "string") {
+      try {
+        images = JSON.parse(req.body.images);
+      } catch {
+        images = [];
+      }
+    } else if (Array.isArray(req.body.images)) {
+      images = req.body.images;
+    } else if (
+      req.files &&
+      req.files.images &&
+      Array.isArray(req.files.images) &&
+      req.files.images.length
+    ) {
+      images = req.files.images.map(
+        (f) => "/uploads/groups/" + (f.filename || path.basename(f.path))
+      );
+    } else if (
+      req.files &&
+      req.files.image &&
+      Array.isArray(req.files.image) &&
+      req.files.image.length
+    ) {
+      images = [
+        "/" +
+          path
+            .relative(
+              path.join(__dirname, "../../../public"),
+              req.files.image[0].path
+            )
+            .replace(/\\/g, "/"),
+      ];
+    } else if (req.file)
+      images = [
+        "/" +
+          path
+            .relative(path.join(__dirname, "../../../public"), req.file.path)
+            .replace(/\\/g, "/"),
+      ];
+
+    // Chuẩn hóa listButtons (only include if provided)
+    let listButtons;
+    if (typeof req.body.listButtons === "string") {
+      try {
+        listButtons = JSON.parse(req.body.listButtons);
+      } catch {
+        listButtons = [];
+      }
+    } else if (Array.isArray(req.body.listButtons)) {
+      listButtons = req.body.listButtons;
+    } else {
+      listButtons = undefined; // not provided => do not change
+    }
+    console.log("Group update - incoming listButtons:", listButtons);
+
+    const payload = { ...req.body };
+    if (listParents !== undefined) payload.listParents = listParents;
+    if (images !== undefined) payload.images = images;
+    if (listButtons !== undefined) payload.listButtons = listButtons;
+
+    const updated = await groupService.updateGroup(req.params.id, payload);
+    res.json({ success: true, group: updated });
+  } catch (err) {
+    console.error("Group update failed", err);
+    res
+      .status(500)
+      .json({ success: false, message: err.message || "Server error" });
   }
-  // Chuẩn hóa images
-  let images = [];
-  if (Array.isArray(req.body.images)) images = req.body.images;
-  else if (req.file) images = [`/uploads/groups/${req.file.filename}`];
-  else if (req.body.image) images = [req.body.image];
-  // Chuẩn hóa listButtons
-  let listButtons = Array.isArray(req.body.listButtons)
-    ? req.body.listButtons
-    : [];
-  const updated = await groupService.updateGroup(req.params.id, {
-    ...req.body,
-    listParents,
-    images,
-    listButtons,
-  });
-  res.json({ success: true, group: updated });
 };
 
 /* ===== DELETE ===== */
 exports.delete = async (req, res) => {
   await groupService.deleteGroup(req.params.id);
   res.json({ success: true });
-};
-
-exports.update = async (req, res) => {
-  const updated = await groupService.updateGroup(
-    req.params.id,
-    req.body,
-    req.files
-  );
-  res.json({ success: true, group: updated });
 };
 
 /* ===== UPDATE ORDER ===== */
@@ -207,4 +287,15 @@ exports.showGroupByMenu = async (req, res) => {
   }
   const groups = await groupService.getGroupsByParent(menuId);
   res.json({ success: true, menuId, groups });
+};
+
+exports.getById = async (req, res) => {
+  const id = req.params.id;
+  if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+    return res.status(404).json({ success: false, message: "Not found" });
+  }
+  const group = await groupService.getGroupById(id);
+  if (!group)
+    return res.status(404).json({ success: false, message: "Not found" });
+  res.json({ success: true, group });
 };

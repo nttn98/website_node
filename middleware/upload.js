@@ -1,10 +1,25 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 // Set storage engine
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../public/uploads/groups"));
+    // Base uploads dir
+    const baseUploads = path.join(__dirname, "../public/uploads");
+    // Derive subdir from request path (e.g., 'groups' from '/groups/create')
+    const parts = (req.originalUrl || "").split("/").filter(Boolean);
+    const subdir = parts[0] || "others";
+    const uploadDir = path.join(baseUploads, subdir);
+    try {
+      if (!fs.existsSync(baseUploads))
+        fs.mkdirSync(baseUploads, { recursive: true });
+      if (!fs.existsSync(uploadDir))
+        fs.mkdirSync(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (err) {
+      cb(err);
+    }
   },
   filename: function (req, file, cb) {
     // Use title_en and id for filename if available
@@ -38,10 +53,12 @@ const storage = multer.diskStorage({
 
 // File filter (optional, only images)
 function fileFilter(req, file, cb) {
-  if (!file.mimetype.startsWith("image/")) {
-    return cb(new Error("Only image files are allowed!"), false);
-  }
-  cb(null, true);
+  const ext = path.extname(file.originalname).toLowerCase();
+  // Allow typical image mime types and SVG (image/svg+xml or .svg)
+  if (file.mimetype && file.mimetype.startsWith("image/"))
+    return cb(null, true);
+  if (ext === ".svg") return cb(null, true);
+  return cb(new Error("Only image files (including SVG) are allowed!"), false);
 }
 
 const upload = multer({ storage, fileFilter });

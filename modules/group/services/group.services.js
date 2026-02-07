@@ -1,4 +1,6 @@
 const Group = require("../models/Group");
+const Button = require("../../button/models/Button");
+const path = require("path");
 
 // Lấy tất cả group, sort theo order (dùng cho dashboard)
 exports.getAllGroupsSorted = () => {
@@ -39,6 +41,30 @@ exports.createGroup = async (data) => {
     }
   } else if (Array.isArray(data.images)) images = data.images;
   else if (data.image) images = [data.image];
+
+  // Normalize image paths to be relative URLs under /uploads
+  images = (images || [])
+    .map((img) => {
+      if (!img) return null;
+      // Ensure string and normalize slashes
+      if (typeof img !== "string") img = String(img);
+      img = img.replace(/\\/g, "/");
+      // Remove any leading slashes and ../ segments that may have been stored
+      img = img.replace(/^(?:\/+|(?:\.\.\/))+/g, "");
+      // If absolute filesystem path, make it relative to public
+      if (path.isAbsolute(img)) {
+        return (
+          "/" +
+          path
+            .relative(path.join(__dirname, "../../../public"), img)
+            .replace(/\\/g, "/")
+        );
+      }
+      // Normalize and prefix with single leading slash
+      return "/" + img.replace(/^\/+/, "");
+    })
+    .filter(Boolean);
+
   // Chuẩn hóa listButtons
   let listButtons = [];
   if (typeof data.listButtons === "string") {
@@ -50,9 +76,53 @@ exports.createGroup = async (data) => {
   } else if (Array.isArray(data.listButtons)) {
     listButtons = data.listButtons;
   }
+  // Resolve button ids to { buttonId, buttonName, buttonRoute }
+  const Button = require("../../button/models/Button");
+  const idsToResolve = (listButtons || [])
+    .filter((b) => typeof b === "string")
+    .map((s) => s);
+  let fetched = [];
+  if (idsToResolve.length) {
+    try {
+      fetched = await Button.find({ _id: { $in: idsToResolve } }).lean();
+    } catch (err) {
+      fetched = [];
+    }
+  }
+  listButtons = (listButtons || [])
+    .map((b) => {
+      if (!b) return null;
+      if (typeof b === "string") {
+        const fb = fetched.find((x) => String(x._id) === String(b));
+        return {
+          buttonId: b,
+          buttonName: fb ? fb.title?.en || fb.title || "" : "",
+          buttonRoute: fb ? fb.route || "" : "",
+        };
+      }
+      const id = b.buttonId || b.id || b._id || b.value || null;
+      if (id) {
+        const fb = fetched.find((x) => String(x._id) === String(id));
+        return {
+          buttonId: id,
+          buttonName:
+            b.buttonName ||
+            b.name ||
+            (fb ? fb.title?.en || fb.title || "" : ""),
+          buttonRoute:
+            b.buttonRoute || b.route || b.link || (fb ? fb.route || "" : ""),
+        };
+      }
+      return {
+        buttonId: b.buttonId || null,
+        buttonName: b.buttonName || b.label || b.title || "",
+        buttonRoute: b.buttonRoute || b.route || b.link || b.action || "",
+      };
+    })
+    .filter(Boolean);
   return Group.create({
     listParents,
-    type: data.type,
+    type: data.type || "-",
     content: data.content,
     title: {
       en: data.title_en,
@@ -84,64 +154,136 @@ exports.getGroupDocById = (id) => {
 
 // Cập nhật group
 exports.updateGroup = async (id, data) => {
-  // Chuẩn hóa listParents
-  let listParents = [];
-  if (typeof data.listParents === "string") {
-    try {
-      listParents = JSON.parse(data.listParents);
-    } catch {
-      listParents = [];
+  // Chuẩn hóa listParents (only when provided)
+  let listParents;
+  if (data.listParents !== undefined) {
+    if (typeof data.listParents === "string") {
+      try {
+        listParents = JSON.parse(data.listParents);
+      } catch {
+        listParents = [];
+      }
+    } else if (Array.isArray(data.listParents)) {
+      listParents = data.listParents;
     }
-  } else if (Array.isArray(data.listParents)) {
-    listParents = data.listParents;
   } else if (data.parentId && data.parentName) {
     listParents = [{ parentId: data.parentId, parentName: data.parentName }];
   }
-  // Chuẩn hóa images
-  let images = [];
-  if (typeof data.images === "string") {
-    try {
-      images = JSON.parse(data.images);
-    } catch {
-      images = [];
-    }
-  } else if (Array.isArray(data.images)) images = data.images;
-  else if (data.image) images = [data.image];
-  // Chuẩn hóa listButtons
-  let listButtons = [];
-  if (typeof data.listButtons === "string") {
-    try {
-      listButtons = JSON.parse(data.listButtons);
-    } catch {
-      listButtons = [];
-    }
-  } else if (Array.isArray(data.listButtons)) {
-    listButtons = data.listButtons;
+
+  // Chuẩn hóa images (only when provided)
+  let images;
+  if (data.images !== undefined) {
+    if (typeof data.images === "string") {
+      try {
+        images = JSON.parse(data.images);
+      } catch {
+        images = [];
+      }
+    } else if (Array.isArray(data.images)) images = data.images;
+    else if (data.image) images = [data.image];
+
+    // Normalize image paths
+    images = (images || [])
+      .map((img) => {
+        if (!img) return null;
+        if (typeof img !== "string") img = String(img);
+        // Normalize slashes and remove leading slashes and ../ segments
+        img = img.replace(/\\/g, "/");
+        img = img.replace(/^(?:\/+|(?:\.\.\/))+/g, "");
+        if (path.isAbsolute(img)) {
+          return (
+            "/" +
+            path
+              .relative(path.join(__dirname, "../../../public"), img)
+              .replace(/\\/g, "/")
+          );
+        }
+        // Normalize and prefix with single leading slash
+        return "/" + img.replace(/^\/+/, "");
+      })
+      .filter(Boolean);
   }
-  return Group.findByIdAndUpdate(
-    id,
-    {
-      listParents,
-      type: data.type,
-      content: data.content,
-      title: {
-        en: data.title_en,
-        vi: data.title_vi,
-        zh: data.title_zh,
-      },
-      subtitle: {
-        en: data.subtitle_en,
-        vi: data.subtitle_vi,
-        zh: data.subtitle_zh,
-      },
-      images,
-      listButtons,
-      order: Number(data.order) || 0,
-      isStatus: data.isStatus !== undefined ? data.isStatus : true,
-      isActive: data.isActive !== undefined ? data.isActive : true,
+
+  // Chuẩn hóa listButtons (only when provided)
+  let listButtons;
+  if (data.listButtons !== undefined) {
+    if (typeof data.listButtons === "string") {
+      try {
+        listButtons = JSON.parse(data.listButtons);
+      } catch {
+        listButtons = [];
+      }
+    } else if (Array.isArray(data.listButtons)) {
+      listButtons = data.listButtons;
+    }
+  }
+
+  const idsToResolve = (listButtons || [])
+    .filter((b) => typeof b === "string")
+    .map((s) => s);
+  let fetched = [];
+  if (idsToResolve.length) {
+    try {
+      fetched = await Button.find({ _id: { $in: idsToResolve } }).lean();
+    } catch (err) {
+      fetched = [];
+    }
+  }
+  listButtons = (listButtons || [])
+    .map((b) => {
+      if (!b) return null;
+      if (typeof b === "string") {
+        const fb = fetched.find((x) => String(x._id) === String(b));
+        return {
+          buttonId: b,
+          buttonName: fb ? fb.title?.en || fb.title || "" : "",
+          buttonRoute: fb ? fb.route || "" : "",
+        };
+      }
+      const id = b.buttonId || b.id || b._id || b.value || null;
+      if (id) {
+        const fb = fetched.find((x) => String(x._id) === String(id));
+        return {
+          buttonId: id,
+          buttonName:
+            b.buttonName ||
+            b.name ||
+            (fb ? fb.title?.en || fb.title || "" : ""),
+          buttonRoute:
+            b.buttonRoute || b.route || b.link || (fb ? fb.route || "" : ""),
+        };
+      }
+      return {
+        buttonId: b.buttonId || null,
+        buttonName: b.buttonName || b.label || b.title || "",
+        buttonRoute: b.buttonRoute || b.route || b.link || b.action || "",
+      };
+    })
+    .filter(Boolean);
+
+  const updateObj = {
+    content: data.content,
+    title: {
+      en: data.title_en,
+      vi: data.title_vi,
+      zh: data.title_zh,
     },
-    { new: true }
-  ).lean();
+    subtitle: {
+      en: data.subtitle_en,
+      vi: data.subtitle_vi,
+      zh: data.subtitle_zh,
+    },
+    order: Number(data.order) || 0,
+    isStatus: data.isStatus !== undefined ? data.isStatus : true,
+    isActive: data.isActive !== undefined ? data.isActive : true,
+  };
+
+  if (data.type !== undefined) updateObj.type = data.type || "-";
+  if (listParents !== undefined) updateObj.listParents = listParents;
+  if (images !== undefined) updateObj.images = images;
+  if (data.listButtons !== undefined) updateObj.listButtons = listButtons;
+
+  return Group.findByIdAndUpdate(id, updateObj, { new: true }).lean();
 };
 
 // Xóa group (ẩn)
@@ -159,4 +301,3 @@ exports.toggleStatus = async (id) => {
   await group.save();
   return group;
 };
-

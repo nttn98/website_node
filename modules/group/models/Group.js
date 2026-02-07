@@ -18,7 +18,8 @@ const GroupSchema = new mongoose.Schema(
     /* ===== CONTENT TYPE ===== */
     type: {
       type: String,
-      enum: ["html", "editor"],
+      enum: ["-", "html", "editor"],
+      default: "-",
       required: true,
     },
 
@@ -52,9 +53,20 @@ const GroupSchema = new mongoose.Schema(
 
     listButtons: [
       {
-        label: String,
-        link: String,
-        type: String,
+        buttonId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Button",
+          default: null,
+        },
+        buttonName: {
+          type: String,
+          default: "",
+        },
+        buttonRoute: {
+          type: String,
+          default: "",
+        },
+        _id: false,
       },
     ],
 
