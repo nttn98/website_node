@@ -11,8 +11,9 @@
       <td class="text-center"><span style="color: #ccc;">✚</span></td>
       <td>
         <div class="d-flex align-items-center">
-          <div class="icon-preview"><i class="fas fa-plus"></i></div>
+          <div class="icon-preview" onclick="openIconPicker(this, this.closest('tr'))"><i class="fas fa-plus"></i></div>
           <div style="max-width:600px">
+            <input type="hidden" name="iconClass" value="" />
             <input type="text" name="name[]" class="inline-input details-title" placeholder="Name" value="" />
             <input type="text" name="url[]" class="inline-input small details-sub" placeholder="URL" value="" />
           </div>
@@ -40,8 +41,8 @@
       items.forEach((it) => {
         const imgHtml = it.iconImage
           ? `<img src="${it.iconImage}" style="width:60px;height:45px;object-fit:cover;border-radius:4px;margin-right:12px"/>`
-          : `<div class="icon-preview"><i class="${
-              it.iconClass || ""
+          : `<div class="icon-preview" onclick="openIconPicker(this, this.closest('tr'))"><i class="${
+              it.iconClass || "fas fa-question"
             }"></i></div>`;
         html += `
         <tr data-id="${it._id}">
@@ -51,6 +52,9 @@
               ${imgHtml}
               <div style="max-width:600px">
                 <input type="hidden" name="id[]" value="${it._id}">
+                <input type="hidden" name="iconClass" value="${
+                  it.iconClass || ""
+                }">
                 <input type="text" name="name[]" class="inline-input details-title" value="${
                   it.name || ""
                 }" />
@@ -166,6 +170,8 @@
         btn.disabled = true;
         const name = tr.querySelector('input[name="name[]"]').value.trim();
         const url = tr.querySelector('input[name="url[]"]').value.trim();
+        const iconClass =
+          tr.querySelector('input[name="iconClass"]')?.value || "";
         const order =
           parseInt(tr.querySelector('input[name="order[]"]').value, 10) || 0;
         const isStatus =
@@ -177,7 +183,7 @@
           return;
         }
 
-        const payload = { items: [{ name, url, order, isStatus }] };
+        const payload = { items: [{ name, url, iconClass, order, isStatus }] };
         try {
           const r = await fetch("/api/socials", {
             method: "POST",
@@ -210,6 +216,11 @@
         tr.querySelectorAll('input[type="text"]').forEach(
           (inp) => (inp.value = "")
         );
+        // Reset iconClass
+        const iconClassInput = tr.querySelector('input[name="iconClass"]');
+        if (iconClassInput) iconClassInput.value = "";
+        const iconPreview = tr.querySelector(".icon-preview i");
+        if (iconPreview) iconPreview.className = "fas fa-plus";
         const statusBtn = tr.querySelector(".btn-status");
         const statusInput = tr.querySelector('input[name="isStatus[]"]');
         if (statusBtn && statusInput) {
@@ -228,11 +239,15 @@
       btn.disabled = true;
       const name = tr.querySelector('input[name="name[]"]').value.trim();
       const url = tr.querySelector('input[name="url[]"]').value.trim();
+      const iconClass =
+        tr.querySelector('input[name="iconClass"]')?.value || "";
       const order =
         parseInt(tr.querySelector('input[name="order[]"]').value, 10) || 0;
       const badge = tr.querySelector(".badge-minimal");
       const isStatus = badge ? badge.classList.contains("badge-active") : true;
-      const payload = { items: [{ _id: id, name, url, order, isStatus }] };
+      const payload = {
+        items: [{ _id: id, name, url, iconClass, order, isStatus }],
+      };
       try {
         const r = await fetch("/api/socials", {
           method: "POST",
@@ -268,6 +283,9 @@
   const items = await fetchItems();
   render(items);
   initSortable();
+
+  // Preload social icons for picker
+  loadSocialIcons();
 
   // focus the inline row for editing, fallback to edit page
   window.openEditModal = function (id, btn) {
@@ -362,5 +380,126 @@
     } finally {
       btn.disabled = false;
     }
+  };
+
+  // Icon Picker functionality
+  let socialIcons = [];
+  let currentIconTarget = null;
+
+  // Load social icons from CDN
+  async function loadSocialIcons() {
+    try {
+      const response = await fetch("/data/social-icons.json");
+      if (!response.ok) throw new Error("Failed to load icons");
+      socialIcons = await response.json();
+    } catch (error) {
+      console.error("Error loading social icons:", error);
+      // Fallback to minimal set if CDN fails
+      socialIcons = [
+        { class: "fab fa-facebook-f", name: "Facebook" },
+        { class: "fab fa-twitter", name: "Twitter" },
+        { class: "fab fa-instagram", name: "Instagram" },
+        { class: "fab fa-linkedin-in", name: "LinkedIn" },
+        { class: "fab fa-youtube", name: "YouTube" },
+      ];
+    }
+  }
+
+  // Open icon picker
+  window.openIconPicker = async function (element, rowElement) {
+    currentIconTarget = { element, rowElement };
+    const modal = document.getElementById("icon-picker-modal");
+    modal.style.display = "flex";
+
+    // Load icons if not already loaded
+    if (socialIcons.length === 0) {
+      await loadSocialIcons();
+    }
+
+    renderIconGrid(socialIcons);
+
+    // Focus search input
+    setTimeout(() => {
+      document.getElementById("icon-search").focus();
+    }, 100);
+  };
+
+  // Close icon picker
+  window.closeIconPicker = function () {
+    const modal = document.getElementById("icon-picker-modal");
+    modal.style.display = "none";
+    currentIconTarget = null;
+    document.getElementById("icon-search").value = "";
+  };
+
+  // Render icon grid
+  function renderIconGrid(icons) {
+    const grid = document.getElementById("icon-picker-grid");
+    grid.innerHTML = icons
+      .map(
+        (icon) => `
+      <div class="icon-picker-item" onclick="selectIcon('${icon.class}')">
+        <i class="${icon.class}"></i>
+        <span>${icon.name}</span>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  // Handle icon search
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("icon-search");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (!query) {
+          renderIconGrid(socialIcons);
+        } else {
+          const filtered = socialIcons.filter(
+            (icon) =>
+              icon.name.toLowerCase().includes(query) ||
+              icon.class.toLowerCase().includes(query)
+          );
+          renderIconGrid(filtered);
+        }
+      });
+    }
+
+    // Close modal when clicking overlay
+    const modal = document.getElementById("icon-picker-modal");
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          closeIconPicker();
+        }
+      });
+    }
+  });
+
+  // Select icon and update row
+  window.selectIcon = function (iconClass) {
+    if (!currentIconTarget) return;
+
+    const { element, rowElement } = currentIconTarget;
+
+    // Update the icon preview
+    const iconElement = element.querySelector("i");
+    if (iconElement) {
+      iconElement.className = iconClass;
+    }
+
+    // Update the hidden iconClass input
+    let iconInput = rowElement.querySelector('input[name="iconClass"]');
+    if (!iconInput) {
+      iconInput = document.createElement("input");
+      iconInput.type = "hidden";
+      iconInput.name = "iconClass";
+      rowElement.appendChild(iconInput);
+    }
+    iconInput.value = iconClass;
+
+    closeIconPicker();
+    showToast("Icon selected - click Save to apply");
   };
 })();

@@ -18,4 +18,18 @@
 
 <div id="social-list" class="table-container-minimal"></div>
 
+<!-- Icon Picker Modal -->
+<div id="icon-picker-modal" class="icon-picker-overlay" style="display: none">
+  <div class="icon-picker-container">
+    <div class="icon-picker-header">
+      <h5>Select Icon</h5>
+      <button class="icon-picker-close" onclick="closeIconPicker()">✕</button>
+    </div>
+    <div class="icon-picker-search">
+      <input type="text" id="icon-search" placeholder="Search icons..." />
+    </div>
+    <div class="icon-picker-grid" id="icon-picker-grid"></div>
+  </div>
+</div>
+
 <script src="/js/socials.index.js"></script>
