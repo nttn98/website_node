@@ -5,16 +5,19 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Menu API",
+      title: "U&I Logistics API",
       version: "1.0.0",
-      description: "API documentation for Menu management",
+      description:
+        "API documentation for U&I Logistics website management system",
     },
     tags: [
+      { name: "Homepage", description: "Homepage API for frontend" },
       { name: "Menu", description: "Menu management" },
       { name: "Group", description: "Group management" },
       { name: "Detail", description: "Detail management" },
       { name: "User", description: "User management" },
       { name: "Dashboard", description: "Dashboard" },
+      { name: "Social", description: "Social media links" },
     ],
   },
   apis: ["./modules/*/routes/*.js"], // Đường dẫn tới tất cả các file routes trong modules

@@ -74,13 +74,13 @@ exports.createForm = async (data) => {
   const created = await FormModel.create({
     title: {
       en: data.title_en || data.title || "",
-      vi: data.title_vi || "",
-      zh: data.title_zh || "",
+      vi: data.title_vi || data.title || "",
+      zh: data.title_zh || data.title || "",
     },
     subTitle: {
       en: data.subtitle_en || data.subtitle || "",
-      vi: data.subtitle_vi || "",
-      zh: data.subtitle_zh || "",
+      vi: data.subtitle_vi || data.subtitle || "",
+      zh: data.subtitle_zh || data.subtitle || "",
     },
     shortName: makeShortName(data.title_en || data.title || ""),
     route: data.route || null,

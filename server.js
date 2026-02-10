@@ -50,6 +50,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // API routes (JSON only)
 app.use("/user", require("./modules/user/routes/user.routes"));
 app.use("/api/menus", require("./modules/menu/routes/menu.routes"));
+app.use("/api/homepage", require("./modules/homepage/routes/homepage.routes"));
 app.use("/dashboard", require("./modules/dashboard/routes/dashboard.routes"));
 app.use("/groups", require("./modules/group/routes/group.routes"));
 app.use("/details", require("./modules/detail/routes/detail.routes"));

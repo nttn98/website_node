@@ -1,0 +1,87 @@
+const express = require("express");
+const router = express.Router();
+const homepageController = require("../controllers/homepage.controllers");
+
+/* ===== HOMEPAGE API ROUTES ===== */
+
+/**
+ * @swagger
+ * /api/homepage:
+ *   get:
+ *     summary: Get all homepage data in one call (recommended)
+ *     description: Returns all homepage data including menus, hero group, and socials. Optimized for single API call.
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: All homepage data
+ *       500:
+ *         description: Server error
+ */
+router.get("/", homepageController.getHomepageData);
+
+/**
+ * @swagger
+ * /api/homepage/top-menus:
+ *   get:
+ *     summary: Get top navigation menus
+ *     description: Returns root menus without parentId for top navigation bar
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: List of top menus
+ *       500:
+ *         description: Server error
+ */
+router.get("/top-menus", homepageController.getTopMenus);
+
+/**
+ * @swagger
+ * /api/homepage/bottom-menus:
+ *   get:
+ *     summary: Get bottom footer menus
+ *     description: Returns menus for footer navigation
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: List of bottom menus
+ *       500:
+ *         description: Server error
+ */
+router.get("/bottom-menus", homepageController.getBottomMenus);
+
+/**
+ * @swagger
+ * /api/homepage/hero:
+ *   get:
+ *     summary: Get hero section group
+ *     description: Returns the hero/banner group for homepage header section
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: Hero group data
+ *       500:
+ *         description: Server error
+ */
+router.get("/hero", homepageController.getHeroGroup);
+
+/**
+ * @swagger
+ * /api/homepage/socials:
+ *   get:
+ *     summary: Get social media links
+ *     description: Returns active social media links for homepage footer
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: List of social media links
+ *       500:
+ *         description: Server error
+ */
+router.get("/socials", homepageController.getSocials);
+
+module.exports = router;

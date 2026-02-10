@@ -29,9 +29,9 @@ exports.createMenu = async (data) => {
     ]),
     // subtitle support (subTitle)
     subTitle: new Map([
-      ["en", data.subtitle_en || ""],
-      ["vi", data.subtitle_vi || ""],
-      ["zh", data.subtitle_zh || ""],
+      ["en", data.subtitle_en || data.subtitle || ""],
+      ["vi", data.subtitle_vi || data.subtitle || ""],
+      ["zh", data.subtitle_zh || data.subtitle || ""],
     ]),
     route: data.route || null,
     parentId: data.parentId || null,

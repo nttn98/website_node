@@ -47,8 +47,8 @@ exports.createButton = async (data) => {
   const button = await Button.create({
     title: {
       en: data.title_en || data.title || "",
-      vi: data.title_vi || "",
-      zh: data.title_zh || "",
+      vi: data.title_vi || data.title || "",
+      zh: data.title_zh || data.title || "",
     },
     parents,
     route: buttonType === "form" ? null : data.route || null,
