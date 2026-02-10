@@ -85,3 +85,51 @@ Suggested dev flow:
 - Open /dashboard/\* for admin UI
 - Use /api/\* for frontend integration
 - Use /swagger for API reference
+
+## 5) Folder Structure
+
+Key folders:
+
+- modules/ (feature modules: models, services, controllers, routes)
+- views/ (EJS templates for dashboard UI)
+- public/ (static assets: CSS, JS, uploads)
+- routes/ (view routing)
+- middleware/ (auth, upload, etc.)
+
+Example structure:
+
+```
+modules/
+	menu/
+	group/
+	button/
+	form/
+	social/
+views/
+	dashboard/
+	layouts/
+	partials/
+public/
+	css/
+	js/
+	uploads/
+```
+
+## 6) Main API Endpoints
+
+Common endpoints used by FE:
+
+- GET /api/homepage (aggregate homepage data)
+- GET /api/homepage/top-menus
+- GET /api/homepage/bottom-menus
+- GET /api/homepage/menu-parents
+- GET /api/homepage/menus/:id/children-tree
+- GET /api/menus
+- GET /api/menus/:id/children
+- GET /api/menus/:id/children-tree
+- GET /api/forms
+- GET /api/socials
+
+Swagger reference:
+
+- /swagger
