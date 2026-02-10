@@ -54,6 +54,33 @@
     </a>
   </li>
 
+  <li class="nav-item">
+    <a
+      href="/dashboard/forms"
+      class="nav-link <%= locals.currentPage === 'forms' ? 'active fw-bold' : '' %>"
+    >
+      Manage Forms
+    </a>
+  </li>
+
+  <li class="nav-item">
+    <a
+      href="/dashboard/submissions"
+      class="nav-link <%= locals.currentPage === 'submissions' ? 'active fw-bold' : '' %>"
+    >
+      Manage Submissions
+    </a>
+  </li>
+
+  <li class="nav-item">
+    <a
+      href="/dashboard/socials"
+      class="nav-link <%= locals.currentPage === 'socials' ? 'active fw-bold' : '' %>"
+    >
+      Socials
+    </a>
+  </li>
+
   <div class="menu-divider">MENU SYSTEM</div>
 
   <% %> <% function getChildren(parentId) { return menus.filter(function(m) {

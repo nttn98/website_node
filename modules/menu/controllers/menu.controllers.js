@@ -1,8 +1,19 @@
 const menuService = require("../services/menu.services");
+const groupService = require("../../group/services/group.services");
 
 exports.getAllMenus = async (req, res) => {
   const menus = await menuService.getAllMenus();
   res.json({ success: true, data: menus });
+};
+
+// Get child menus by parent menu id
+exports.getChildren = async (req, res) => {
+  const parentId = req.params.id;
+  if (!/^[a-fA-F0-9]{24}$/.test(parentId)) {
+    return res.status(404).json({ success: false, message: "Not found" });
+  }
+  const children = await menuService.getMenuChildren(parentId);
+  res.json({ success: true, data: children });
 };
 
 exports.createMenu = async (req, res) => {

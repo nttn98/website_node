@@ -26,6 +26,27 @@ const controller = require("../controllers/menu.controllers");
  */
 router.get("/", controller.getAllMenus);
 
+// GET children groups by menu id
+/**
+ * @swagger
+ * /api/menus/{id}/children:
+ *   get:
+ *     summary: Lấy các group con theo menuId
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của menu
+ *     tags:
+ *       - Menu
+ *     responses:
+ *       200:
+ *         description: Danh sách group
+ */
+router.get("/:id/children", controller.getChildren);
+
 // ===== POST =====
 /**
  * @swagger

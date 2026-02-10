@@ -80,6 +80,14 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <div class="form-group-minimal mb-4">
+          <label>Type</label>
+          <select name="type" id="buttonTypeSelect" class="form-control-minimal">
+            <option value="route" <%= (button.type === 'route' || !button.type) ? 'selected' : '' %>>Route / URL</option>
+            <option value="form" <%= button.type === 'form' ? 'selected' : '' %>>Open Form</option>
+          </select>
+        </div>
+
+        <div id="routeField" class="form-group-minimal mb-4">
           <label>Route / URL</label>
           <input
             type="text"
@@ -87,6 +95,16 @@
             class="form-control-minimal"
             value="<%= button.route || '' %>"
           />
+        </div>
+
+        <div id="formField" class="form-group-minimal mb-4" style="display:none">
+          <label>Form</label>
+          <select name="formId" id="formSelect" class="form-control-minimal">
+            <option value="">-- Select a form --</option>
+            <% (forms || []).forEach(function(f){ %>
+              <option value="<%= f._id %>" <%= String(button.form?.id || '') === String(f._id) ? 'selected' : '' %>><%= f.title?.en || f.title %></option>
+            <% }) %>
+          </select>
         </div>
 
         <div class="d-grid gap-2">
@@ -107,24 +125,8 @@
       $(target).addClass("active");
     });
 
-    // load groups with error handling
-    (async function loadGroups() {
-      try {
-        const r = await fetch("/groups");
-        if (!r.ok) throw new Error("Network response not ok");
-        const d = await r.json();
-        const groups = d.groups || [];
-        const sel = $("#parentSelect");
-        if (!groups.length) sel.append(new Option("No groups available", ""));
-        else
-          groups.forEach((g) =>
-            sel.append(new Option(g.title?.en || "", g._id))
-          );
-      } catch (err) {
-        console.error("Failed to load groups", err);
-        $("#parentSelect").append(new Option("Unable to load groups", ""));
-      }
-    })();
+    // load groups is no longer needed since groups are passed from server
+    // but keep for backward compatibility if needed
 
     $("#button-edit-form").on("submit", function (e) {
       e.preventDefault();
@@ -132,8 +134,10 @@
       const title_vi = $(this).find('[name="title_vi"]').val().trim();
       const title_zh = $(this).find('[name="title_zh"]').val().trim();
       if (!title_en) return showToast("Title (EN) is required", true);
+      const type = $(this).find('[name="type"]').val();
       const route = $(this).find('[name="route"]').val().trim();
-      const payload = { title_en, title_vi, title_zh, route };
+      const formId = $(this).find('[name="formId"]').val() || null;
+       const payload = { title_en, title_vi, title_zh, route, type, formId };
 
       fetch("/buttons/<%= button._id %>/update", {
         method: "POST",
@@ -152,6 +156,29 @@
           console.error("Update error", err);
           showToast("Update failed", true);
         });
+    });
+
+    // toggle fields based on type
+    (function initTypeToggle() {
+      const t = $('#buttonTypeSelect').val();
+      if (t === 'form') {
+        $('#routeField').hide();
+        $('#formField').show();
+      } else {
+        $('#routeField').show();
+        $('#formField').hide();
+      }
+    })();
+
+    $(document).on('change', '#buttonTypeSelect', function() {
+      const t = $(this).val();
+      if (t === 'form') {
+        $('#routeField').hide();
+        $('#formField').show();
+      } else {
+        $('#routeField').show();
+        $('#formField').hide();
+      }
     });
   });
 </script>

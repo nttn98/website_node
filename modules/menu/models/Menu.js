@@ -8,6 +8,12 @@ const MenuSchema = new mongoose.Schema(
       required: true,
     },
 
+    subTitle: {
+      type: Map,
+      of: String, // en, vi, zh...
+      required: false,
+    },
+
     route: {
       type: String,
       default: null,

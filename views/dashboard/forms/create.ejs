@@ -1,0 +1,383 @@
+<link rel="stylesheet" href="/css/buttons/edit.css" />
+<link rel="stylesheet" href="/css/form-modal.css" />
+
+<div class="header-minimal mb-5">
+  <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
+    <div>
+      <h4 class="fw-800 text-navy mb-0">CREATE FORM</h4>
+      <p class="text-muted small mb-0">Add a new form</p>
+    </div>
+    <button type="button" onclick="history.back()" class="btn-back">BACK</button>
+  </div>
+</div>
+
+<form id="form-create-form" class="row g-4">
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <ul class="nav nav-tabs-minimal mb-4">
+          <li class="nav-item">
+            <button type="button" class="nav-link active" data-tab-target="#tab-en">EN</button>
+          </li>
+          <li class="nav-item">
+            <button type="button" class="nav-link" data-tab-target="#tab-vi">VI</button>
+          </li>
+        </ul>
+
+        <div class="tab-content-minimal">
+          <div id="tab-en" class="tab-pane-custom active">
+            <div class="form-group-minimal mb-4">
+              <label class="form-label">Title (EN) <span class="text-danger">*</span></label>
+              <input type="text" name="title_en" placeholder="Enter form title..." class="form-control-minimal" required />
+            </div>
+            <div class="form-group-minimal mb-4">
+              <label class="form-label">Subtitle (EN)</label>
+              <input type="text" name="subtitle_en" placeholder="Enter form subtitle..." class="form-control-minimal" />
+            </div>
+          </div>
+
+      
+        </div>
+
+        <div class="form-group-minimal mb-4 border-top pt-4 mt-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <label class="mb-0 text-dark fw-500">Form Fields</label>
+            <button type="button" id="add-field-btn" class="btn-ui-main">+ Add Field</button>
+          </div>
+          <div id="fields-list" class="mb-0"></div>
+        </div>
+
+        <div id="field-editor" style="display: none" class="bg-light p-3 rounded mt-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0 text-dark">Field Configuration</h6>
+            <button type="button" id="fe-cancel" class="btn-close" aria-label="Close"></button>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="form-group-minimal mb-3">
+                <label class="form-label small">Type</label>
+                <select id="fe-type" class="form-control-minimal">
+                  <option value="text">Text</option>
+                  <option value="textarea">Textarea</option>
+                  <option value="menuChildren">Select (menu children)</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div id="fe-name-wrap" class="form-group-minimal mb-3">
+                <label class="form-label small">Field Name <span class="text-danger">*</span></label>
+                <input id="fe-name" class="form-control-minimal" placeholder="e.g. email, phone" />
+              </div>
+            </div>
+            <div class="col-md-12">
+              <div id="fe-placeholder-wrap" class="form-group-minimal mb-3">
+                <label class="form-label small">Placeholder</label>
+                <input id="fe-placeholder" class="form-control-minimal" placeholder="Visible label for user" />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group-minimal mb-3">
+                <label class="d-flex align-items-center gap-2">
+                  <input type="checkbox" id="fe-required" />
+                  Required field
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6" id="fe-options-menu" style="display: none">
+              <div class="form-group-minimal mb-3">
+                <label class="form-label small">Menu Source</label>
+                <select id="fe-menu" class="form-control-minimal">
+                  <option value="">-- Select menu --</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="d-grid mt-3">
+            <button type="button" id="fe-save" class="btn-ui-main">Save Field</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="form-group-minimal mb-4">
+          <label class="form-label">Route / URL</label>
+          <input type="text" name="route" class="form-control-minimal" placeholder="e.g. /contact-us" />
+        </div>
+
+        <div class="d-grid gap-2 mb-3">
+          <button type="button" id="preview-form-btn" class="btn-ui-secondary">Preview Form</button>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn-ui-main">Save Form</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</form>
+
+<!-- form renderer (preview modal) -->
+<script src="/js/form.renderer.js"></script>
+
+<script>
+    // FORM FIELDS BUILDER
+    const fields = [];
+    let editingIdx = null;
+
+    function renderFieldsList() {
+      const container = $("#fields-list");
+      container.empty();
+      if (!fields.length)
+        return container.html(
+          '<div class="text-center py-4"><p class="text-muted mb-0 small"><i class="bi bi-info-circle me-1"></i>No fields yet. Click "Add Field" to get started.</p></div>'
+        );
+      fields.forEach((f, idx) => {
+        const title = f.label || f.placeholder || f.name || "Untitled";
+        const requiredBadge = f.required ? '<span class="badge bg-danger" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">Required</span>' : '';
+        const metaParts = [];
+        if (f.name) metaParts.push("<strong>Key:</strong> " + f.name);
+        const meta = metaParts.join(" • ");
+        const el = $(`
+        <div class="card mb-2 field-item" style="transition: all 0.2s;" onmouseover="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+          <div class="card-body py-2 px-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-grip-vertical text-black-50 me-2" style="cursor: grab; font-size: 0.875rem;"></i>
+                  <span class="text-dark me-2">${title}</span>
+                  ${requiredBadge}
+                  <span class="badge bg-light text-secondary border ms-2" style="font-size: 0.7rem; font-weight: 500;">${f.type}</span>
+                </div>
+                ${meta ? '<div class="text-muted small ms-4 mt-1">' + meta + '</div>' : ''}
+              </div>
+              <div class="d-flex gap-1 ms-3">
+                <button type="button" data-idx="${idx}" class="btn btn-sm btn-light edit-field" style="padding: 0.25rem 0.5rem;" title="Edit">
+                  <i class="bi bi-pencil" style="font-size: 0.875rem;"></i>
+                </button>
+                <button type="button" data-idx="${idx}" class="btn btn-sm btn-light text-danger del-field" style="padding: 0.25rem 0.5rem;" title="Delete">
+                  <i class="bi bi-trash" style="font-size: 0.875rem;"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>`);
+        container.append(el);
+      });
+    }
+
+    function resetEditor() {
+      $("#fe-type").val("text");
+      $("#fe-name").val("");
+      $("#fe-placeholder").val("");
+      $("#fe-required").prop("checked", false);
+      $("#fe-options").val("");
+      $("#fe-menu").val("");
+      $("#fe-options-menu").hide();
+      // show name input by default; label removed (placeholder used instead)
+      $("#fe-name-wrap").show();
+      $("#fe-placeholder-wrap").show();
+      editingIdx = null;
+    }
+
+    $(document).on("change", "#fe-type", function () {
+      const t = $(this).val();
+      $("#fe-options-menu").toggle(t === "menuChildren");
+      // keep name visible for consistent editor; label removed
+      $("#fe-name-wrap").show();
+      $("#fe-placeholder-wrap").show();
+    });
+
+    $(document).on("click", "#add-field-btn", async function () {
+      resetEditor();
+      // Hide empty message if visible
+      $("#fields-list").empty();
+      // load root menus only for menuChildren select
+      const sel = $("#fe-menu");
+      sel.empty().append(new Option("-- Select menu --", ""));
+      try {
+        const r = await fetch("/api/menus");
+        const d = await r.json();
+        const menus = (d && d.data) || d || [];
+        // Filter to show only root menus (no parentId)
+        menus.filter(m => !m.parentId).forEach((m) =>
+          sel.append(new Option(m.title?.en || m.title || "Untitled", m._id))
+        );
+      } catch (err) {}
+      $("#field-editor").show();
+    });
+
+$(document).on("click", "#fe-cancel, .btn-close", function () {
+      $("#field-editor").hide();
+      resetEditor();
+      renderFieldsList();
+    });
+
+    $(document).on("click", "#fe-save", function () {
+      const t = $("#fe-type").val();
+      const placeholder = $("#fe-placeholder").val().trim();
+      const label = placeholder;
+      const name = $("#fe-name").val().trim();
+      const required = $("#fe-required").is(":checked");
+      const idx = editingIdx;
+
+      // VALIDATION
+      if (!name) {
+        showToast("Field name is required", true);
+        $("#fe-name").focus();
+        return;
+      }
+      // Check for duplicate name (excluding current editing)
+      const duplicate = fields.find((f, i) => f.name === name && i !== idx);
+      if (duplicate) {
+        showToast("Field name already exists. Please use a unique name.", true);
+        $("#fe-name").focus();
+        return;
+      }
+      // Validate name format (alphanumeric and underscore only)
+      if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+        showToast("Field name can only contain letters, numbers, and underscores", true);
+        $("#fe-name").focus();
+        return;
+      }
+
+      const field = {
+        type: t,
+        label,
+        name,
+        placeholder,
+        required,
+        order: idx !== null ? idx : fields.length,
+      };
+      if (t === "menuChildren") {
+        const menuId = $("#fe-menu").val() || null;
+        if (!menuId) {
+          showToast("Please select a menu source", true);
+          return;
+        }
+        field.optionsSource = { type: "menuChildren", menuId };
+      }
+      if (idx !== null) {
+        fields[idx] = field;
+        showToast("Field updated successfully");
+      } else {
+        fields.push(field);
+        showToast("Field added successfully");
+      }
+      $("#field-editor").hide();
+      resetEditor();
+      renderFieldsList();
+    });
+
+    // Edit & delete handlers
+    $(document).on("click", ".del-field", function () {
+      const idx = Number($(this).attr("data-idx"));
+      fields.splice(idx, 1);
+      renderFieldsList();
+    });
+    $(document).on("click", ".edit-field", function () {
+      const idx = Number($(this).attr("data-idx"));
+      const f = fields[idx];
+      if (!f) return;
+      $("#fe-type").val(f.type).trigger("change");
+      // label removed — populate placeholder from existing placeholder or label
+      $("#fe-name").val(f.name);
+      $("#fe-placeholder").val(f.placeholder || f.label || "");
+      $("#fe-required").prop("checked", !!f.required);
+      if (f.type === "select" && f.options)
+        $("#fe-options").val(
+          f.options.map((o) => `${o.value}|${o.label}`).join("\n")
+        );
+      if (f.type === "menuChildren")
+        $("#fe-menu").val(f.optionsSource && f.optionsSource.menuId);
+      // ensure name input visible for editing (label removed)
+      $("#fe-name-wrap").show();
+      editingIdx = idx;
+      $("#field-editor").show();
+    });
+
+    // On submit include fields
+    $("#form-create-form").on("submit", function (e) {
+      e.preventDefault();
+      const title = $(this).find('[name="title_en"]').val().trim();
+      if (!title) return showToast("Title (EN) is required", true);
+      const payload = {
+        title_en: title,
+        subtitle_en: ($(this).find('[name="subtitle_en"]').val() || "").trim(),
+        route: ($(this).find('[name="route"]').val() || "").trim(),
+        isStatus: true,
+        fields: JSON.stringify(fields || []),
+      };
+
+      fetch("/forms/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then((r) => r.json())
+        .then((resp) => {
+          if (resp.success) {
+            showToast("Saved successfully");
+            setTimeout(() => (location.href = "/dashboard/forms"), 400);
+          } else showToast(resp.message || "Save failed", true);
+        })
+        .catch((err) => {
+          console.error("Create error", err);
+          showToast("Save failed", true);
+        });
+    });
+
+    // init
+    renderFieldsList();
+
+    // Nav-tabs handler (replaces lang-tab)
+    $(document).on("click", ".nav-tabs-minimal .nav-link", function () {
+      const target = $(this).data("tab-target");
+      if (!target) return;
+      // Update active states
+      $(this).closest(".nav-tabs-minimal").find(".nav-link").removeClass("active");
+      $(this).addClass("active");
+      // Show target pane, hide others
+      $(this).closest(".card-body").find(".tab-pane-custom").removeClass("active");
+      $(target).addClass("active");
+    });
+  </script>
+
+  <script>
+    // Preview current form (before save) — safe wrapper waits for renderer
+    function _openPreviewWithRetry(formObj, opts = {}) {
+      if (window.openFormModal) return window.openFormModal(formObj, opts);
+      let tries = 0;
+      const t = setInterval(() => {
+        if (window.openFormModal) {
+          clearInterval(t);
+          window.openFormModal(formObj, opts);
+        } else if (++tries > 20) {
+          clearInterval(t);
+          showToast("Preview not available", true);
+        }
+      }, 100);
+    }
+
+    $(document).on("click", "#preview-form-btn", function () {
+      const title = $("#form-create-form")
+        .find('[name="title_en"]')
+        .val()
+        .trim();
+      if (!title) return showToast("Title (EN) is required", true);
+      const tempForm = {
+        title: { en: title },
+        subTitle: {
+          en: $("#form-create-form").find('[name="subtitle_en"]').val().trim(),
+        },
+        route: $("#form-create-form").find('[name="route"]').val().trim(),
+        fields: fields || [],
+      };
+      _openPreviewWithRetry(tempForm, { submitText: "Submit" });
+    });
+  </script>
+</div>

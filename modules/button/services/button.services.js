@@ -1,12 +1,20 @@
 const Button = require("../models/Button");
 const Group = require("../../group/models/Group");
+const Form = require("../../form/models/Form");
 
 exports.getAllButtons = () => {
-  return Button.find({ isActive: true }).sort({ createdAt: -1 }).lean();
+  return Button.find({ isActive: true })
+    .populate("parents", "title")
+    .populate("form.id", "title")
+    .sort({ createdAt: -1 })
+    .lean();
 };
 
 exports.getButtonById = (id) => {
-  return Button.findById(id).lean();
+  return Button.findById(id)
+    .populate("parents", "title")
+    .populate("form.id", "title")
+    .lean();
 };
 
 exports.getButtonDocById = (id) => {
@@ -14,22 +22,38 @@ exports.getButtonDocById = (id) => {
 };
 
 exports.createButton = async (data) => {
-  let parentName = null;
-  let parentRoute = null;
-  if (data.parentId) {
-    const g = await Group.findById(data.parentId).lean();
-    parentName = g ? g.title?.en || null : null;
+  const buttonType = data.type || "route";
+  // prepare small form object when button links to a form
+  let formObj = { id: null, shortName: "" };
+  if (buttonType === "form" && data.formId) {
+    try {
+      const f = await Form.findById(data.formId).lean();
+      formObj = {
+        id: f ? f._id : data.formId,
+        shortName: f ? f.shortName || "" : "",
+      };
+    } catch (err) {}
   }
+
+  // Handle parents array
+  let parents = [];
+  if (data.parents && Array.isArray(data.parents)) {
+    parents = data.parents.filter(Boolean);
+  } else if (data.parentId) {
+    // backward compatibility
+    parents = [data.parentId];
+  }
+
   const button = await Button.create({
     title: {
       en: data.title_en || data.title || "",
       vi: data.title_vi || "",
       zh: data.title_zh || "",
     },
-    parentId: data.parentId || null,
-    parentRoute,
-    parentName,
-    route: data.route || null,
+    parents,
+    route: buttonType === "form" ? null : data.route || null,
+    type: buttonType,
+    form: formObj,
     isStatus: true,
     isActive: true,
   });
@@ -37,23 +61,45 @@ exports.createButton = async (data) => {
 };
 
 exports.updateButton = async (id, data) => {
-  let parentName = null;
-  if (data.parentId) {
-    const g = await Group.findById(data.parentId).lean();
-    parentName = g ? g.title?.en || null : null;
+  const buttonType = data.type || "route";
+
+  // Handle parents array
+  let parents = [];
+  if (data.parents && Array.isArray(data.parents)) {
+    parents = data.parents.filter(Boolean);
+  } else if (data.parentId) {
+    // backward compatibility
+    parents = [data.parentId];
   }
+
   const update = {
-    parentId: data.parentId || null,
-    parentName,
-    route: data.route || null,
-    isStatus: data.isStatus === "on" || data.isStatus === true,
+    parents,
+    route: buttonType === "form" ? null : data.route || null,
+    type: buttonType,
   };
+  // populate form object for quick access
+  if (buttonType === "form" && data.formId) {
+    try {
+      const f = await Form.findById(data.formId).lean();
+      update.form = {
+        id: f ? f._id : data.formId,
+        shortName: f ? f.shortName || "" : "",
+      };
+    } catch (err) {
+      update.form = { id: data.formId || null, shortName: "" };
+    }
+  } else {
+    update.form = { id: null, shortName: "" };
+  }
   if (data.title_en) update["title.en"] = data.title_en;
   if (data.title_vi) update["title.vi"] = data.title_vi;
   if (data.title_zh) update["title.zh"] = data.title_zh;
 
   await Button.findByIdAndUpdate(id, update);
-  return Button.findById(id).lean();
+  return Button.findById(id)
+    .populate("parents", "title")
+    .populate("form.id", "title")
+    .lean();
 };
 
 exports.deleteButton = async (id) => {

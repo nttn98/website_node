@@ -32,9 +32,36 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <div class="form-group-minimal mb-4">
+          <label>Type</label>
+          <select
+            name="type"
+            id="buttonTypeSelect"
+            class="form-control-minimal"
+          >
+            <option value="route">Route / URL</option>
+            <option value="form">Open Form</option>
+          </select>
+        </div>
+
+        <div id="routeField" class="form-group-minimal mb-4">
           <label>Route / URL</label>
           <input type="text" name="route" class="form-control-minimal" />
         </div>
+
+        <div
+          id="formField"
+          class="form-group-minimal mb-4"
+          style="display: none"
+        >
+          <label>Form</label>
+          <select name="formId" id="formSelect" class="form-control-minimal">
+            <option value="">-- Select a form --</option>
+            <% (forms || []).forEach(function(f){ %>
+            <option value="<%= f._id %>"><%= f.title?.en || f.title %></option>
+            <% }) %>
+          </select>
+        </div>
+
         <div class="d-grid gap-2">
           <button type="submit" class="btn-save-minimal">SAVE</button>
         </div>
@@ -48,8 +75,10 @@
     e.preventDefault();
     const title = $(this).find('[name="title"]').val().trim();
     if (!title) return showToast("Title is required", true);
+    const type = $(this).find('[name="type"]').val();
     const route = $(this).find('[name="route"]').val().trim();
-    const payload = { title, route, isStatus: true };
+    const formId = $(this).find('[name="formId"]').val() || null;
+    const payload = { title, type, route, formId, isStatus: true };
 
     fetch("/buttons/create", {
       method: "POST",
@@ -68,5 +97,17 @@
         console.error("Create error", err);
         showToast("Save failed", true);
       });
+  });
+
+  // toggle fields based on type
+  $(document).on("change", "#buttonTypeSelect", function () {
+    const t = $(this).val();
+    if (t === "form") {
+      $("#routeField").hide();
+      $("#formField").show();
+    } else {
+      $("#routeField").show();
+      $("#formField").hide();
+    }
   });
 </script>

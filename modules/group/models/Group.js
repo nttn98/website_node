@@ -66,6 +66,16 @@ const GroupSchema = new mongoose.Schema(
           type: String,
           default: "",
         },
+        // New: store button type ('route' or 'form') and optional linked form id
+        buttonType: {
+          type: String,
+          default: 'route',
+        },
+        buttonFormId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Form',
+          default: null,
+        },
         _id: false,
       },
     ],

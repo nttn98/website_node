@@ -163,3 +163,54 @@ main {
     background: var(--ui-navy);
   }
 }
+
+/* Forms modal and card-list styles */
+.custom-form-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.custom-form-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+.custom-form-dialog {
+  position: relative;
+  background: #fff;
+  border-radius: 8px;
+  max-width: 720px;
+  width: 100%;
+  padding: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  z-index: 2001;
+}
+.custom-form-title {
+  margin: 0 0 8px;
+}
+.custom-form-body .form-field {
+  margin-bottom: 12px;
+}
+.form-actions {
+  margin-top: 16px;
+  text-align: right;
+}
+.custom-form-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+.card-list .card {
+  border: 1px solid #eee;
+  border-radius: 6px;
+}
+.card-list .card .card-body h5 {
+  margin: 0 0 4px;
+}

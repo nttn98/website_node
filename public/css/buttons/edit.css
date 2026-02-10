@@ -4,3 +4,50 @@
 .form-control-minimal {
   min-height: 40px;
 }
+
+.btn-ui-main {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--ui-navy);
+  color: var(--ui-bronze);
+  padding: 10px 24px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  border: none;
+  text-decoration: none;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(15, 36, 68, 0.2);
+  width: 100%;
+}
+
+.btn-ui-main:hover {
+  background: var(--ui-bronze);
+  color: var(--ui-navy);
+  transform: translateY(-2px);
+}
+
+.btn-ui-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--ui-navy);
+  padding: 10px 24px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  border: 2px solid var(--ui-navy);
+  text-decoration: none;
+  transition: 0.3s;
+  width: 100%;
+}
+
+.btn-ui-secondary:hover {
+  background: var(--ui-navy);
+  color: var(--ui-bronze);
+  transform: translateY(-2px);
+}

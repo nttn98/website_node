@@ -30,17 +30,29 @@
           <label>TITLE (EN)</label>
           <input type="text" name="title_en" value="<%= menu.title?.en || '' %>" required />
         </div>
+        <div class="form-group-minimal mb-4">
+          <label>SUBTITLE (EN)</label>
+          <input type="text" name="subtitle_en" value="<%= menu.subTitle?.en || '' %>" />
+        </div>
       </div>
       <div class="tab-pane fade" id="lang-vi">
         <div class="form-group-minimal mb-4">
-          <label>TIÊU ĐỀ (VI)</label>
+          <label>TITLE (VI)</label>
           <input type="text" name="title_vi" value="<%= menu.title?.vi || '' %>" />
+        </div>
+        <div class="form-group-minimal mb-4">
+          <label>SUBTITLE (VI)</label>
+          <input type="text" name="subtitle_vi" value="<%= menu.subTitle?.vi || '' %>" />
         </div>
       </div>
       <div class="tab-pane fade" id="lang-zh">
         <div class="form-group-minimal mb-4">
           <label>标题 (ZH)</label>
           <input type="text" name="title_zh" value="<%= menu.title?.zh || '' %>" />
+        </div>
+        <div class="form-group-minimal mb-4">
+          <label>SUBTITLE (ZH)</label>
+          <input type="text" name="subtitle_zh" value="<%= menu.subTitle?.zh || '' %>" />
         </div>
       </div>
     </div>

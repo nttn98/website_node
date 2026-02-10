@@ -236,6 +236,8 @@
           const title = b.title?.en || b.title || '-';
           const opt = new Option(title, b._id);
           $(opt).attr('data-route', b.route || '');
+          $(opt).attr('data-type', b.type || 'route');
+          $(opt).attr('data-form-id', b.formId || '');
           buttonIdSelect.append(opt);
         });
         buttonIdSelect.trigger('change');
@@ -269,7 +271,9 @@
           const opt = buttonIdSelect.find(`option[value='${id}']`);
           const label = opt.text();
           const action = opt.data('route') || '';
-          if (label) buttons.push({ buttonId: id, buttonName: label, buttonRoute: action });
+          const type = opt.data('type') || 'route';
+          const formId = opt.data('form-id') || null;
+          if (label) buttons.push({ buttonId: id, buttonName: label, buttonRoute: action, buttonType: type, buttonFormId: formId });
         });
         if (buttons.length > 0) {
           formData.set("listButtons", JSON.stringify(buttons));

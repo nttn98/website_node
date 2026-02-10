@@ -1,6 +1,6 @@
 const Group = require("../models/Group");
 const Button = require("../../button/models/Button");
-const path = require("path");
+path = require("path");
 
 // Lấy tất cả group, sort theo order (dùng cho dashboard)
 exports.getAllGroupsSorted = () => {
@@ -12,6 +12,13 @@ exports.getAllGroupsSorted = () => {
 // Lấy tất cả group có parentId (theo listParents)
 exports.getGroupsByParent = (parentId) => {
   return Group.find({ "listParents.parentId": parentId, isActive: true })
+    .sort({ order: 1, createdAt: -1 })
+    .lean();
+};
+
+// Lấy tất cả group có parentName theo tên (ví dụ: 'Solutions')
+exports.getGroupsByParentName = (name) => {
+  return Group.find({ "listParents.parentName": name, isActive: true })
     .sort({ order: 1, createdAt: -1 })
     .lean();
 };
@@ -76,8 +83,7 @@ exports.createGroup = async (data) => {
   } else if (Array.isArray(data.listButtons)) {
     listButtons = data.listButtons;
   }
-  // Resolve button ids to { buttonId, buttonName, buttonRoute }
-  const Button = require("../../button/models/Button");
+  // Resolve button ids to { buttonId, buttonName, buttonRoute, buttonType, buttonFormId }
   const idsToResolve = (listButtons || [])
     .filter((b) => typeof b === "string")
     .map((s) => s);
@@ -98,6 +104,8 @@ exports.createGroup = async (data) => {
           buttonId: b,
           buttonName: fb ? fb.title?.en || fb.title || "" : "",
           buttonRoute: fb ? fb.route || "" : "",
+          buttonType: fb ? fb.type || "route" : "route",
+          buttonFormId: fb ? fb.formId || null : null,
         };
       }
       const id = b.buttonId || b.id || b._id || b.value || null;
@@ -111,12 +119,18 @@ exports.createGroup = async (data) => {
             (fb ? fb.title?.en || fb.title || "" : ""),
           buttonRoute:
             b.buttonRoute || b.route || b.link || (fb ? fb.route || "" : ""),
+          buttonType:
+            b.buttonType || b.type || (fb ? fb.type || "route" : "route"),
+          buttonFormId:
+            b.buttonFormId || b.formId || (fb ? fb.formId || null : null),
         };
       }
       return {
         buttonId: b.buttonId || null,
         buttonName: b.buttonName || b.label || b.title || "",
         buttonRoute: b.buttonRoute || b.route || b.link || b.action || "",
+        buttonType: b.buttonType || b.type || "route",
+        buttonFormId: b.buttonFormId || b.formId || null,
       };
     })
     .filter(Boolean);

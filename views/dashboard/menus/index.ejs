@@ -59,7 +59,8 @@
        ${!isParent ? '<div class="indent-guide"></div>' : ""}
        <div>
         <div class="menu-info-primary">
-         ${menu.title?.en || "-"} 
+         ${menu.title?.en || "-"}
+         <div class="small text-muted">${menu.subTitle?.en || ''}</div>
          <span class="type-tag ml-2">${menu.type || "Link"}</span>
         </div>
         <div class="menu-info-secondary">${menu.route || "/"}</div>

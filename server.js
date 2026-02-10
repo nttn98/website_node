@@ -54,6 +54,9 @@ app.use("/dashboard", require("./modules/dashboard/routes/dashboard.routes"));
 app.use("/groups", require("./modules/group/routes/group.routes"));
 app.use("/details", require("./modules/detail/routes/detail.routes"));
 app.use("/buttons", require("./modules/button/routes/button.routes"));
+app.use("/forms", require("./modules/form/routes/form.routes"));
+app.use("/api/forms", require("./modules/form/routes/submission.routes"));
+app.use("/api/socials", require("./modules/social/routes/social.routes"));
 
 // View routes (EJS render)
 app.use("/", require("./routes/view.routes"));

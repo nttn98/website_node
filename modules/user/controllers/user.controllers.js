@@ -5,14 +5,54 @@ exports.login = async (req, res) => {
   try {
     const user = await userService.login(req.body.username, req.body.password);
     req.session.user = { _id: user._id, username: user.username };
+
+    const wantsJSON =
+      req.xhr ||
+      (req.headers.accept &&
+        req.headers.accept.indexOf("application/json") !== -1) ||
+      req.is("application/json");
+    if (wantsJSON) {
+      return res.json({
+        success: true,
+        data: { _id: user._id, username: user.username },
+      });
+    }
+
     res.redirect("/dashboard/menus");
   } catch (err) {
-    res.render(
-      "user/login",
-      { layout: false },
-      { error: "Please! Check your connection" }
-    );
+    const wantsJSON =
+      req.xhr ||
+      (req.headers.accept &&
+        req.headers.accept.indexOf("application/json") !== -1) ||
+      req.is("application/json");
+    if (wantsJSON) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          message: err.message || "Authentication failed",
+        });
+    }
+
+    res.render("user/login", {
+      layout: false,
+      error: "Please! Check your connection",
+    });
   }
+};
+
+// Logout (destroy session) — returns JSON when requested
+exports.logout = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) console.error("Logout failed", err);
+    const wantsJSON =
+      req.xhr ||
+      (req.headers.accept &&
+        req.headers.accept.indexOf("application/json") !== -1) ||
+      req.is("application/json");
+    if (wantsJSON) return res.json({ success: true });
+    res.redirect("/user/login");
+  });
 };
 
 // Lấy tất cả user

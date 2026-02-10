@@ -360,6 +360,8 @@
               const title = b.title?.en || b.title || '-';
               const opt = new Option(title, b._id);
               $(opt).attr('data-route', b.route || '');
+              $(opt).attr('data-type', b.type || 'route');
+              $(opt).attr('data-form-id', b.formId || '');
               buttonIdSelect.append(opt);
               if (b.route) idByRoute[b.route] = b._id;
               if (title) idByTitle[title] = b._id;
@@ -418,7 +420,9 @@
         const opt = buttonIdSelect.find(`option[value='${id}']`);
         const label = opt.text();
         const action = opt.data('route') || '';
-        if (label) buttons.push({ buttonId: id, buttonName: label, buttonRoute: action });
+        const type = opt.data('type') || 'route';
+        const formId = opt.data('form-id') || null;
+        if (label) buttons.push({ buttonId: id, buttonName: label, buttonRoute: action, buttonType: type, buttonFormId: formId });
       });
       if (buttons.length) formData.set('listButtons', JSON.stringify(buttons));
 

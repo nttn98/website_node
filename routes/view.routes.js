@@ -1,5 +1,7 @@
 const express = require("express");
 const menuService = require("../modules/menu/services/menu.services");
+const formService = require("../modules/form/services/form.services");
+const groupService = require("../modules/group/services/group.services");
 const router = express.Router();
 
 function requireLoginView(req, res, next) {
@@ -61,9 +63,19 @@ router.get("/dashboard/buttons", requireLoginView, async (req, res) => {
   res.render("dashboard/buttons/index");
 });
 
+//#region Socials
+router.get("/dashboard/socials", requireLoginView, async (req, res) => {
+  res.locals.menus = await menuService.getAllMenus();
+  res.locals.currentPage = "socials";
+  res.render("dashboard/socials/index");
+});
+
 router.get("/dashboard/buttons/create", requireLoginView, async (req, res) => {
   res.locals.menus = await menuService.getAllMenus();
   res.locals.currentPage = "buttons";
+  // Provide available forms and groups for selector in create view
+  res.locals.forms = await formService.getAllForms();
+  res.locals.groups = await groupService.getAllGroupsSorted();
   res.render("dashboard/buttons/create");
 });
 
@@ -74,6 +86,10 @@ router.get(
     const buttonService = require("../modules/button/services/button.services");
     const button = await buttonService.getButtonById(req.params.id);
     res.locals.menus = await menuService.getAllMenus();
+    res.locals.currentPage = "buttons";
+    // Provide available forms and groups for selector in edit view
+    res.locals.forms = await formService.getAllForms();
+    res.locals.groups = await groupService.getAllGroupsSorted();
     res.render("dashboard/buttons/edit", { button });
   }
 );
@@ -95,6 +111,47 @@ router.get(
 router.get("/dashboard/details", requireLoginView, async (req, res) => {
   res.locals.menus = await menuService.getAllMenus();
   res.render("dashboard/details/index");
+});
+//#endregion
+
+//#region Forms
+router.get("/dashboard/forms", requireLoginView, async (req, res) => {
+  const formService = require("../modules/form/services/form.services");
+  res.locals.menus = await menuService.getAllMenus();
+  res.locals.currentPage = "forms";
+  const forms = await formService.getAllForms();
+  res.render("dashboard/forms/index", { forms });
+});
+router.get("/dashboard/forms/create", requireLoginView, async (req, res) => {
+  res.locals.menus = await menuService.getAllMenus();
+  res.locals.currentPage = "forms";
+  res.render("dashboard/forms/create");
+});
+router.get("/dashboard/forms/:id/edit", requireLoginView, async (req, res) => {
+  const formService = require("../modules/form/services/form.services");
+  const form = await formService.getFormById(req.params.id);
+  res.locals.menus = await menuService.getAllMenus();
+  res.locals.currentPage = "forms";
+  res.render("dashboard/forms/edit", { form });
+});
+
+router.get(
+  "/dashboard/forms/submissions",
+  requireLoginView,
+  async (req, res) => {
+    res.locals.menus = await menuService.getAllMenus();
+    res.locals.currentPage = "forms";
+    res.render("dashboard/forms/submissions/index");
+  }
+);
+//#endregion
+
+//#region Submissions
+router.get("/dashboard/submissions", requireLoginView, async (req, res) => {
+  const submissionService = require("../modules/form/services/submission.services");
+  res.locals.menus = await menuService.getAllMenus();
+  res.locals.currentPage = "submissions";
+  res.render("dashboard/forms/submissions/index");
 });
 //#endregion
 

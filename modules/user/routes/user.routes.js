@@ -3,13 +3,44 @@ const router = express.Router();
 const controller = require("../controllers/user.controllers");
 const { requireLogin } = require("../../../middleware/auth");
 
+/**
+ * @swagger
+ * /user/logout:
+ *   get:
+ *     summary: Đăng xuất user
+ *     tags:
+ *       - User
+ *     responses:
+ *       200:
+ *         description: Đăng xuất thành công (trả về JSON nếu được yêu cầu)
+ */
 // Xử lý logout
-router.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/user/login");
-  });
-});
+router.get("/logout", controller.logout);
 
+/**
+ * @swagger
+ * /user/login:
+ *   post:
+ *     summary: Đăng nhập user
+ *     tags:
+ *       - User
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Đăng nhập thành công (redirect hoặc JSON)
+ *       401:
+ *         description: Đăng nhập thất bại
+ */
 // Xử lý đăng nhập
 router.post("/login", controller.login);
 

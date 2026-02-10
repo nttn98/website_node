@@ -19,7 +19,7 @@
     <thead>
       <tr>
         <th>Title</th>
-        <th>Group</th>
+        <th>Groups</th>
         <th>Route</th>
         <th>Status</th>
         <th></th>
@@ -36,13 +36,22 @@
     const tbody = document.getElementById("button-list-body");
     tbody.innerHTML = "";
     (data.buttons || []).forEach((b) => {
+      const parentsNames =
+        (b.parents || [])
+          .map((p) => p.title?.en || p.title || "")
+          .filter(Boolean)
+          .join(", ") || "-";
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${b.title?.en || ""}</td>
-        <td>${b.parentName || "-"}</td>
-        <td>${b.route || ""}</td>
+        <td>${parentsNames}</td>
+        <td>${
+          b.type === "form"
+            ? b.form?.id?.title?.en || b.form?.id?.title || "Form"
+            : b.route || ""
+        }</td>
         <td><span class="badge-minimal ${b.isStatus ? "badge-active" : ""}">${
-        b.isStatus ? "ACTIVE" : "INACTIVE"
+        b.isStatus ? "SHOW" : "HIDE"
       }</span></td>
         <td class="text-end">
           <button class="action-circle" onclick="toggleButtonStatus('${

@@ -1,0 +1,255 @@
+@import url("/css/groups/index.css");
+@import url("/css/groups/edit.css");
+
+/* Socials table adjustments to match dashboard styles */
+.table-container-minimal {
+  margin-top: 8px;
+}
+
+.table-clean {
+  width: 100%;
+  border-collapse: separate;
+  /* match groups spacing */
+  border-spacing: 0 4px;
+}
+.table-clean thead th {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 800;
+  padding: 12px 10px;
+  text-align: left;
+}
+/* Card-like rows */
+.table-clean tbody tr {
+  background: #fff;
+  border-radius: 12px;
+  transition: 0.25s ease;
+  box-shadow: 0 10px 30px rgba(15, 36, 68, 0.03);
+}
+.table-clean tbody tr:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 44px rgba(15, 36, 68, 0.06);
+}
+.table-clean tbody td {
+  padding: 16px 18px;
+  vertical-align: middle;
+  border: none;
+}
+.table-clean tbody td:first-child {
+  width: 48px;
+}
+.table-clean tbody td:last-child {
+  text-align: right;
+}
+.table-clean .handle {
+  cursor: grab;
+  width: 36px;
+  text-align: center;
+  color: #999;
+  font-size: 1.1rem;
+}
+
+/* Drag handle styles */
+.drag-handle {
+  cursor: grab;
+  width: 36px;
+  text-align: center;
+  color: #999;
+  font-size: 1.1rem;
+  user-select: none;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Details preview */
+.details-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.icon-preview {
+  width: 60px;
+  height: 45px;
+  border-radius: 4px;
+  background: #fbfbfc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--ui-navy);
+  border: 1px solid #f1f1f1;
+  overflow: hidden;
+}
+.details-title {
+  font-weight: 800;
+  color: var(--ui-navy);
+  margin: 0;
+  font-size: 1rem;
+}
+.details-sub {
+  font-size: 0.85rem;
+  color: #8a8a8a;
+  margin-top: 6px;
+}
+
+/* Inline input to look like plain text until focused */
+.inline-input {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-weight: 800;
+  color: var(--ui-navy);
+  outline: none;
+}
+.inline-input.small {
+  font-weight: 600;
+  color: #8a8a8a;
+  font-size: 0.85rem;
+}
+.inline-input:focus {
+  border-bottom: 1px solid var(--ui-navy);
+  padding-bottom: 2px;
+}
+
+/* Make order input compact and badge-like */
+input[name="order[]"] {
+  width: 68px;
+  text-align: center;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #f1f1f1;
+  background: #fbfbfc;
+}
+
+/* Action circles consistent size and look like Buttons index */
+.action-circle {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f8f9fa;
+  color: #888;
+  border: none;
+  transition: 0.2s;
+}
+.action-circle:hover {
+  background: var(--ui-navy);
+  color: var(--ui-bronze);
+}
+
+/* Removed row style */
+.table-clean tbody tr.removed {
+  opacity: 0.8;
+  filter: grayscale(0.6);
+}
+.table-clean tbody tr.removed td {
+  background: transparent;
+}
+.table-clean .btn-remove {
+  background: transparent;
+  border: 1px solid #eee;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  color: #999;
+  border-radius: 4px;
+}
+.table-clean .btn-remove:hover {
+  background: #f8f9fa;
+  color: var(--ui-navy);
+  border-color: #ddd;
+}
+
+/* Make inputs smaller to match other edit pages */
+.form-control-minimal {
+  padding: 10px;
+  min-height: 40px;
+}
+
+/* Responsive: horizontal scroll on small screens */
+@media (max-width: 768px) {
+  .table-clean {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+/* Confirm modal */
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.confirm-modal.d-none {
+  display: none;
+}
+.confirm-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+.confirm-modal-dialog {
+  position: relative;
+  background: #fff;
+  padding: 18px;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 360px;
+  max-width: 90%;
+}
+.confirm-modal-body p {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ui-navy);
+}
+
+/* highlight when focusing an inline edit via 'Edit' button */
+.inline-input.highlight-edit,
+.highlight-edit {
+  box-shadow: 0 6px 18px rgba(233, 150, 0, 0.18);
+  border-bottom: 2px solid var(--ui-bronze);
+  transition: box-shadow 0.2s ease;
+}
+
+/* New item row styling */
+.new-item-row {
+  background: #f8fffe !important;
+  border: 2px dashed var(--ui-bronze) !important;
+}
+.new-item-row .inline-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+.new-item-row .icon-preview {
+  background: linear-gradient(135deg, #f0f9ff, #e6f3ff);
+  border: 1px dashed var(--ui-bronze);
+}
+
+/* Status button styles */
+.btn-status {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+.btn-status.active {
+  background: #d4edda;
+  color: #155724;
+}
+.btn-status.inactive {
+  background: #f8d7da;
+  color: #721c24;
+}
+.btn-status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

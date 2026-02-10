@@ -1,0 +1,248 @@
+/* Form Preview Modal Styling - Modern & Clean */
+
+.custom-form-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.custom-form-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.custom-form-dialog {
+  position: relative;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 520px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 40px;
+  z-index: 10000;
+  animation: slideUp 0.15s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.custom-form-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #f8f9fa;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #6c757d;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  z-index: 1;
+}
+
+.custom-form-close:hover {
+  background: #dee2e6;
+  color: #495057;
+}
+
+.custom-form-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.custom-form-subtitle {
+  font-size: 15px;
+  color: #6c757d;
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.custom-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: none; /* Hide empty labels */
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #1a1a1a;
+  background: #ffffff;
+  transition: border-color 0.15s;
+  outline: none;
+  font-family: inherit;
+  text-align: center;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder,
+.form-field select::placeholder {
+  color: #adb5bd;
+  text-align: left;
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+  border-color: #0d6efd;
+}
+
+.form-field textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-field select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23495057' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 16px) center;
+  padding-right: 40px;
+  padding-left: 40px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.form-actions button[type="submit"] {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ui-navy);
+  color: var(--ui-bronze);
+  padding: 10px 24px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  border: none;
+  text-decoration: none;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(15, 36, 68, 0.2);
+  cursor: pointer;
+  width: 100%;
+}
+
+.form-actions button[type="submit"]:hover {
+  background: var(--ui-bronze);
+  color: var(--ui-navy);
+  transform: translateY(-2px);
+}
+
+/* Scrollbar styling */
+.custom-form-dialog::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-form-dialog::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-form-dialog::-webkit-scrollbar-thumb {
+  background: #dee2e6;
+  border-radius: 4px;
+}
+
+.custom-form-dialog::-webkit-scrollbar-thumb:hover {
+  background: #ced4da;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .custom-form-dialog {
+    padding: 30px 24px;
+    max-width: 95%;
+    border-radius: 12px;
+  }
+
+  .custom-form-title {
+    font-size: 24px;
+  }
+
+  .custom-form-subtitle {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .custom-form-body {
+    gap: 16px;
+  }
+
+  .form-field input,
+  .form-field textarea,
+  .form-field select {
+    padding: 12px 14px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .form-field input::placeholder,
+  .form-field textarea::placeholder,
+  .form-field select::placeholder {
+    text-align: left;
+  }
+}

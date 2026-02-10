@@ -8,24 +8,35 @@ const ButtonSchema = new mongoose.Schema(
       required: true,
     },
 
-    parentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Group",
-      default: null,
-    },
-    parentName: {
-      type: String,
-      default: null,
-    },
-
-    parentRoute: {
-      type: String,
-      default: null,
-    },
+    parents: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Group",
+      },
+    ],
 
     route: {
       type: String,
       default: null,
+    },
+
+    // Type of button: 'route' (link) or 'form' (open a form)
+    type: {
+      type: String,
+      default: "route",
+    },
+
+    // store a small form object for quick access
+    form: {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Form",
+        default: null,
+      },
+      shortName: {
+        type: String,
+        default: "",
+      },
     },
 
     isStatus: {
