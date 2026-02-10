@@ -14,6 +14,7 @@ const options = {
       { name: "Homepage", description: "Homepage API for frontend" },
       { name: "Menu", description: "Menu management" },
       { name: "Group", description: "Group management" },
+      { name: "Buttons", description: "Button management" },
       { name: "Detail", description: "Detail management" },
       { name: "User", description: "User management" },
       { name: "Dashboard", description: "Dashboard" },

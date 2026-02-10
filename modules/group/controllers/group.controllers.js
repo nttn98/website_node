@@ -75,7 +75,7 @@ exports.create = async (req, res) => {
     } else if (Array.isArray(req.body.listParents)) {
       listParents = req.body.listParents;
     }
-    // Chuẩn hóa images
+    // images
     let images = [];
     if (typeof req.body.images === "string") {
       try {
@@ -104,7 +104,7 @@ exports.create = async (req, res) => {
           (req.file.filename || path.basename(req.file.path)),
       ];
     else if (req.body.image) images = [req.body.image];
-    // Chuẩn hóa listButtons
+    // listButtons
     let listButtons = [];
     if (typeof req.body.listButtons === "string") {
       try {
@@ -115,7 +115,6 @@ exports.create = async (req, res) => {
     } else if (Array.isArray(req.body.listButtons)) {
       listButtons = req.body.listButtons;
     }
-    console.log("Group create - incoming listButtons:", listButtons);
 
     const created = await groupService.createGroup({
       ...req.body,
@@ -125,7 +124,6 @@ exports.create = async (req, res) => {
     });
     res.status(201).json({ success: true, group: created });
   } catch (err) {
-    console.error("Group create failed", err);
     res
       .status(500)
       .json({ success: false, message: err.message || "Server error" });
@@ -149,7 +147,7 @@ exports.editForm = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    // Chuẩn hóa listParents (only set if provided)
+    // listParents (only set if provided)
     let listParents;
     if (typeof req.body.listParents === "string") {
       try {
@@ -169,7 +167,7 @@ exports.update = async (req, res) => {
         { parentId: req.body.parentId, parentName: menu?.title?.en || "" },
       ];
     }
-    // Chuẩn hóa images (only set if provided)
+    // images (only set if provided)
     let images;
     if (typeof req.body.images === "string") {
       try {
@@ -211,7 +209,7 @@ exports.update = async (req, res) => {
             .replace(/\\/g, "/"),
       ];
 
-    // Chuẩn hóa listButtons (only include if provided)
+    // listButtons (only include if provided)
     let listButtons;
     if (typeof req.body.listButtons === "string") {
       try {

@@ -8,13 +8,6 @@ const ButtonSchema = new mongoose.Schema(
       required: true,
     },
 
-    parents: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Group",
-      },
-    ],
-
     route: {
       type: String,
       default: null,
@@ -37,6 +30,7 @@ const ButtonSchema = new mongoose.Schema(
         type: String,
         default: "",
       },
+      _id: false,
     },
 
     isStatus: {

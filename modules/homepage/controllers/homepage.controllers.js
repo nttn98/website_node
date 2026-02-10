@@ -17,9 +17,6 @@ exports.getHomepageData = async (req, res) => {
       homepageService.getTopMenus(),
       homepageService.getBottomMenus(),
       homepageService.getHeroGroup(),
-      homepageService.getSolutionsMenus(),
-      homepageService.getIndustryMenus(),
-      homepageService.getInsightsMenus(),
       homepageService.getSocials(),
     ]);
 
@@ -159,6 +156,44 @@ exports.getSocials = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch socials",
+    });
+  }
+};
+
+// Get root menu parents
+exports.getMenuParents = async (req, res) => {
+  try {
+    const menus = await homepageService.getMenuParents();
+    res.json({
+      success: true,
+      data: menus,
+    });
+  } catch (error) {
+    console.error("Error fetching menu parents:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch menu parents",
+    });
+  }
+};
+
+// Get menu children tree by parentId
+exports.getMenuChildrenTree = async (req, res) => {
+  const parentId = req.params.id;
+  if (!/^[a-fA-F0-9]{24}$/.test(parentId)) {
+    return res.status(404).json({ success: false, message: "Not found" });
+  }
+  try {
+    const menus = await homepageService.getMenuChildrenTree(parentId);
+    res.json({
+      success: true,
+      data: menus,
+    });
+  } catch (error) {
+    console.error("Error fetching menu children tree:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch menu children tree",
     });
   }
 };

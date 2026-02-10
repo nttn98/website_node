@@ -31,4 +31,4 @@ build/
 coverage/
 
 package-lock.json
-public/uploads/
+public/uploads/groups

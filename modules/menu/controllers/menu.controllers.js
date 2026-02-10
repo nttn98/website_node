@@ -16,6 +16,16 @@ exports.getChildren = async (req, res) => {
   res.json({ success: true, data: children });
 };
 
+// Get full child tree by parent menu id
+exports.getChildrenTree = async (req, res) => {
+  const parentId = req.params.id;
+  if (!/^[a-fA-F0-9]{24}$/.test(parentId)) {
+    return res.status(404).json({ success: false, message: "Not found" });
+  }
+  const children = await menuService.getMenuChildrenTree(parentId);
+  res.json({ success: true, data: children });
+};
+
 exports.createMenu = async (req, res) => {
   let data = { ...req.body };
   if (!data.parentId) data.parentId = null;

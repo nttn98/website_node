@@ -51,16 +51,38 @@
     structuredData.forEach((menu) => {
       const isParent = !menu.parentId;
       const rowClass = isParent ? "row-parent" : "row-child";
+      const hasChildren =
+        isParent &&
+        menus.some(
+          (m) => m.parentId && m.parentId.toString() === menu._id.toString()
+        );
 
       html += `
-    <tr class="${rowClass}">
+    <tr class="${rowClass}" data-menu-id="${menu._id}" ${
+        !isParent
+          ? `data-parent-id="${menu.parentId}" style="display: none;"`
+          : ""
+      }>
      <td>
       <div class="indent-wrapper">
+       ${
+         isParent && hasChildren
+           ? `
+         <button class="toggle-children" onclick="toggleChildren('${menu._id}', this)" title="Expand/Collapse">
+           <svg class="toggle-icon" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+             <path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+           </svg>
+         </button>
+       `
+           : isParent
+           ? '<span style="width: 24px; display: inline-block;"></span>'
+           : ""
+       }
        ${!isParent ? '<div class="indent-guide"></div>' : ""}
        <div>
         <div class="menu-info-primary">
          ${menu.title?.en || "-"}
-         <div class="small text-muted">${menu.subTitle?.en || ''}</div>
+         <div class="small text-muted">${menu.subTitle?.en || ""}</div>
          <span class="type-tag ml-2">${menu.type || "Link"}</span>
         </div>
         <div class="menu-info-secondary">${menu.route || "/"}</div>
@@ -129,5 +151,29 @@
       .then((data) => {
         if (data.success) location.reload();
       });
+  }
+
+  function toggleChildren(parentId, btn) {
+    const children = document.querySelectorAll(
+      `tr[data-parent-id="${parentId}"]`
+    );
+    const icon = btn.querySelector(".toggle-icon");
+    const isExpanded = btn.classList.contains("expanded");
+
+    children.forEach((child) => {
+      if (isExpanded) {
+        child.style.display = "none";
+      } else {
+        child.style.display = "";
+      }
+    });
+
+    if (isExpanded) {
+      btn.classList.remove("expanded");
+      icon.style.transform = "rotate(0deg)";
+    } else {
+      btn.classList.add("expanded");
+      icon.style.transform = "rotate(180deg)";
+    }
   }
 </script>

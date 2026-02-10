@@ -10,6 +10,28 @@ exports.getMenuChildren = (parentId) => {
   return Menu.find({ parentId, isActive: true }).sort({ order: 1 }).lean();
 };
 
+// Get full descendants tree by parentId
+exports.getMenuChildrenTree = async (parentId) => {
+  const menus = await Menu.find({ isActive: true }).sort({ order: 1 }).lean();
+  const byParent = new Map();
+  menus.forEach((m) => {
+    const key = m.parentId ? String(m.parentId) : "root";
+    if (!byParent.has(key)) byParent.set(key, []);
+    byParent.get(key).push(m);
+  });
+
+  const build = (pid) => {
+    const key = pid ? String(pid) : "root";
+    const items = byParent.get(key) || [];
+    return items.map((item) => ({
+      ...item,
+      children: build(item._id),
+    }));
+  };
+
+  return build(parentId);
+};
+
 exports.getMenuById = (id) => {
   return Menu.findById(id).lean();
 };

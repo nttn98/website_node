@@ -82,7 +82,6 @@
         id="parentIdSelect"
         class="form-select"
         multiple
-        required
       ></select>
       <small class="text-muted mt-2 d-block">
         You can select multiple menus to display this group.
@@ -237,7 +236,7 @@
           const opt = new Option(title, b._id);
           $(opt).attr('data-route', b.route || '');
           $(opt).attr('data-type', b.type || 'route');
-          $(opt).attr('data-form-id', b.formId || '');
+          $(opt).attr('data-form-id', (b.form && b.form.id && b.form.id._id) ? b.form.id._id : '');
           buttonIdSelect.append(opt);
         });
         buttonIdSelect.trigger('change');

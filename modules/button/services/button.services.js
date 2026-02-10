@@ -4,17 +4,13 @@ const Form = require("../../form/models/Form");
 
 exports.getAllButtons = () => {
   return Button.find({ isActive: true })
-    .populate("parents", "title")
-    .populate("form.id", "title")
+    .populate("form.id", "_id title shortName")
     .sort({ createdAt: -1 })
     .lean();
 };
 
 exports.getButtonById = (id) => {
-  return Button.findById(id)
-    .populate("parents", "title")
-    .populate("form.id", "title")
-    .lean();
+  return Button.findById(id).populate("form.id", "_id title shortName").lean();
 };
 
 exports.getButtonDocById = (id) => {
@@ -25,6 +21,8 @@ exports.createButton = async (data) => {
   const buttonType = data.type || "route";
   // prepare small form object when button links to a form
   let formObj = { id: null, shortName: "" };
+  let buttonRoute = data.route || null;
+
   if (buttonType === "form" && data.formId) {
     try {
       const f = await Form.findById(data.formId).lean();
@@ -32,16 +30,9 @@ exports.createButton = async (data) => {
         id: f ? f._id : data.formId,
         shortName: f ? f.shortName || "" : "",
       };
+      // Set route to #shortName when type is form
+      buttonRoute = formObj.shortName ? `#${formObj.shortName}` : null;
     } catch (err) {}
-  }
-
-  // Handle parents array
-  let parents = [];
-  if (data.parents && Array.isArray(data.parents)) {
-    parents = data.parents.filter(Boolean);
-  } else if (data.parentId) {
-    // backward compatibility
-    parents = [data.parentId];
   }
 
   const button = await Button.create({
@@ -50,56 +41,49 @@ exports.createButton = async (data) => {
       vi: data.title_vi || data.title || "",
       zh: data.title_zh || data.title || "",
     },
-    parents,
-    route: buttonType === "form" ? null : data.route || null,
+    route: buttonRoute,
     type: buttonType,
     form: formObj,
     isStatus: true,
     isActive: true,
   });
+  // Populate form.id to ensure full object is returned
+  await button.populate("form.id", "_id title shortName");
   return button.toObject ? button.toObject() : button;
 };
 
 exports.updateButton = async (id, data) => {
   const buttonType = data.type || "route";
 
-  // Handle parents array
-  let parents = [];
-  if (data.parents && Array.isArray(data.parents)) {
-    parents = data.parents.filter(Boolean);
-  } else if (data.parentId) {
-    // backward compatibility
-    parents = [data.parentId];
-  }
-
   const update = {
-    parents,
-    route: buttonType === "form" ? null : data.route || null,
     type: buttonType,
   };
+
   // populate form object for quick access
   if (buttonType === "form" && data.formId) {
     try {
       const f = await Form.findById(data.formId).lean();
+      const formShortName = f ? f.shortName || "" : "";
       update.form = {
         id: f ? f._id : data.formId,
-        shortName: f ? f.shortName || "" : "",
+        shortName: formShortName,
       };
+      // Set route to #shortName when type is form
+      update.route = formShortName ? `#${formShortName}` : null;
     } catch (err) {
       update.form = { id: data.formId || null, shortName: "" };
+      update.route = null;
     }
   } else {
     update.form = { id: null, shortName: "" };
+    update.route = data.route || null;
   }
   if (data.title_en) update["title.en"] = data.title_en;
   if (data.title_vi) update["title.vi"] = data.title_vi;
   if (data.title_zh) update["title.zh"] = data.title_zh;
 
   await Button.findByIdAndUpdate(id, update);
-  return Button.findById(id)
-    .populate("parents", "title")
-    .populate("form.id", "title")
-    .lean();
+  return Button.findById(id).populate("form.id", "_id title shortName").lean();
 };
 
 exports.deleteButton = async (id) => {

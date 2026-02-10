@@ -45,26 +45,30 @@
           it.isStatus ? "badge-active" : ""
         }">${it.isStatus ? "SHOW" : "HIDE"}</span></td>
         <td class="text-end">
-          <a href="/dashboard/forms/${
-            it._id
-          }/edit" class="action-circle btn-edit" title="Edit">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-          </a>
+         <button class="action-circle btn-preview" data-id="${
+           it._id
+         }" title="Preview">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+
           <button class="action-circle btn-toggle" data-id="${
             it._id
           }" title="Toggle status">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           </button>
-          <button class="action-circle btn-preview" data-id="${
+         
+          <a href="/dashboard/forms/${
             it._id
-          }" title="Preview">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7S3.732 16.057 2.458 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-          </button>
+          }/edit" class="action-circle btn-edit" title="Edit">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          </a>
+        
           <button class="action-circle btn-delete" data-id="${
             it._id
           }" title="Delete">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
           </button>
+
         </td>
       </tr>`;
     });

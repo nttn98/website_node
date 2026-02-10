@@ -1,6 +1,8 @@
 <div class="sidebar-brand p-4">
-  <div class="brand-text">U&I</div>
-  <div class="brand-sub">Logistics Corporation</div>
+  <a href="/" style="text-decoration: none">
+    <div class="brand-text">U&I</div>
+    <div class="brand-sub">Logistics Corporation</div>
+  </a>
 </div>
 
 <style>
@@ -35,6 +37,39 @@
       Home
     </a>
   </li>
+
+  <div class="menu-divider">MENU SYSTEM</div>
+
+  <% %> <% function getChildren(parentId) { return menus.filter(function(m) {
+  return (m.parentId ? m.parentId.toString() : null) === (parentId ?
+  parentId.toString() : null); }); } %> <% function renderTree(parentId, level)
+  { var children = getChildren(parentId); children.forEach(function(menu) { %>
+  <li class="nav-item" style="padding-left: <%= level * 16 %>px">
+    <div class="d-flex align-items-center">
+      <a
+        href="/dashboard/groups?menuId=<%= menu._id %>"
+        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> flex-grow-1"
+      >
+        <%= menu.title.en %>
+      </a>
+      <% if (getChildren(menu._id).length) { %>
+      <span class="toggle-btn ms-2" data-target="children-<%= menu._id %>">
+        <i class="bi bi-chevron-right"></i>
+      </span>
+      <% } %>
+    </div>
+    <% if (getChildren(menu._id).length) { %>
+    <ul
+      class="nav flex-column ms-2 children-list d-none"
+      id="children-<%= menu._id %>"
+    >
+      <% renderTree(menu._id, level + 1); %>
+    </ul>
+    <% } %>
+  </li>
+  <% }); } %> <% renderTree(null, 0); %>
+
+  <div class="menu-divider">SETTING</div>
 
   <li class="nav-item">
     <a
@@ -80,37 +115,6 @@
       Socials
     </a>
   </li>
-
-  <div class="menu-divider">MENU SYSTEM</div>
-
-  <% %> <% function getChildren(parentId) { return menus.filter(function(m) {
-  return (m.parentId ? m.parentId.toString() : null) === (parentId ?
-  parentId.toString() : null); }); } %> <% function renderTree(parentId, level)
-  { var children = getChildren(parentId); children.forEach(function(menu) { %>
-  <li class="nav-item" style="padding-left: <%= level * 16 %>px">
-    <div class="d-flex align-items-center">
-      <a
-        href="/dashboard/groups?menuId=<%= menu._id %>"
-        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> flex-grow-1"
-      >
-        <%= menu.title.en %>
-      </a>
-      <% if (getChildren(menu._id).length) { %>
-      <span class="toggle-btn ms-2" data-target="children-<%= menu._id %>">
-        <i class="bi bi-chevron-right"></i>
-      </span>
-      <% } %>
-    </div>
-    <% if (getChildren(menu._id).length) { %>
-    <ul
-      class="nav flex-column ms-2 children-list d-none"
-      id="children-<%= menu._id %>"
-    >
-      <% renderTree(menu._id, level + 1); %>
-    </ul>
-    <% } %>
-  </li>
-  <% }); } %> <% renderTree(null, 0); %>
 </ul>
 
 <script>

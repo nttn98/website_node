@@ -122,6 +122,7 @@
     Sortable.create(tbody, {
       handle: ".drag-handle",
       filter: ".new-item-row", // exclude the create row from dragging
+      preventOnFilter: false,
       onEnd: async () => {
         const rows = Array.from(tbody.children).filter(
           (tr) => tr.dataset.id !== "new"

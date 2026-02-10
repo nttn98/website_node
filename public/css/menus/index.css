@@ -94,6 +94,38 @@
   border-bottom-left-radius: 4px;
 }
 
+/* Toggle button for parent menus */
+.toggle-children {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--ui-navy);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.toggle-children:hover {
+  background: rgba(15, 36, 68, 0.1);
+}
+
+.toggle-icon {
+  transition: transform 0.3s ease;
+}
+
+/* Child rows can be hidden */
+tr[data-parent-id] {
+  transition: opacity 0.2s ease;
+}
+
+tr[data-parent-id][style*="display: none"] {
+  opacity: 0;
+}
+
 .type-tag {
   font-size: 0.6rem;
   padding: 2px 8px;

@@ -84,4 +84,44 @@ router.get("/hero", homepageController.getHeroGroup);
  */
 router.get("/socials", homepageController.getSocials);
 
+/**
+ * @swagger
+ * /api/homepage/menu-parents:
+ *   get:
+ *     summary: Get root menu parents (for homepage)
+ *     description: Returns menus with parentId null
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: List of root menus
+ *       500:
+ *         description: Server error
+ */
+router.get("/menu-parents", homepageController.getMenuParents);
+
+/**
+ * @swagger
+ * /api/homepage/menus/{id}/children-tree:
+ *   get:
+ *     summary: Get menu children tree by parentId (for homepage)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của menu cha
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: Menu tree
+ *       404:
+ *         description: Not found
+ *       500:
+ *         description: Server error
+ */
+router.get("/menus/:id/children-tree", homepageController.getMenuChildrenTree);
+
 module.exports = router;

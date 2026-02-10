@@ -25,7 +25,7 @@ exports.getGroupsByParentName = (name) => {
 
 // Tạo group mới
 exports.createGroup = async (data) => {
-  // Chuẩn hóa listParents
+  // listParents
   let listParents = [];
   if (typeof data.listParents === "string") {
     try {
@@ -38,7 +38,7 @@ exports.createGroup = async (data) => {
   } else if (data.parentId && data.parentName) {
     listParents = [{ parentId: data.parentId, parentName: data.parentName }];
   }
-  // Chuẩn hóa images
+  // images
   let images = [];
   if (typeof data.images === "string") {
     try {
@@ -72,7 +72,7 @@ exports.createGroup = async (data) => {
     })
     .filter(Boolean);
 
-  // Chuẩn hóa listButtons
+  // listButtons
   let listButtons = [];
   if (typeof data.listButtons === "string") {
     try {
@@ -90,7 +90,9 @@ exports.createGroup = async (data) => {
   let fetched = [];
   if (idsToResolve.length) {
     try {
-      fetched = await Button.find({ _id: { $in: idsToResolve } }).lean();
+      fetched = await Button.find({ _id: { $in: idsToResolve } })
+        .populate("form.id", "_id title shortName")
+        .lean();
     } catch (err) {
       fetched = [];
     }
@@ -100,29 +102,52 @@ exports.createGroup = async (data) => {
       if (!b) return null;
       if (typeof b === "string") {
         const fb = fetched.find((x) => String(x._id) === String(b));
+        const buttonType = fb ? fb.type || "route" : "route";
+        const formId =
+          fb && fb.form && fb.form.id && fb.form.id._id
+            ? String(fb.form.id._id)
+            : null;
+        const formShortName =
+          fb && fb.form && fb.form.id ? fb.form.id.shortName : "";
+        const buttonRoute =
+          buttonType === "form" && formShortName
+            ? `#${formShortName}`
+            : fb
+            ? fb.route || ""
+            : "";
         return {
           buttonId: b,
           buttonName: fb ? fb.title?.en || fb.title || "" : "",
-          buttonRoute: fb ? fb.route || "" : "",
-          buttonType: fb ? fb.type || "route" : "route",
-          buttonFormId: fb ? fb.formId || null : null,
+          buttonRoute,
+          buttonType,
+          buttonFormId: formId,
         };
       }
       const id = b.buttonId || b.id || b._id || b.value || null;
       if (id) {
         const fb = fetched.find((x) => String(x._id) === String(id));
+        const buttonType =
+          b.buttonType || b.type || (fb ? fb.type || "route" : "route");
+        const formId =
+          b.buttonFormId ||
+          b.formId ||
+          (fb && fb.form && fb.form.id && fb.form.id._id
+            ? String(fb.form.id._id)
+            : null);
+        const formShortName = fb && fb.form ? fb.form.shortName : "";
+        const buttonRoute =
+          buttonType === "form" && formShortName
+            ? `#${formShortName}`
+            : b.buttonRoute || b.route || b.link || (fb ? fb.route || "" : "");
         return {
           buttonId: id,
           buttonName:
             b.buttonName ||
             b.name ||
             (fb ? fb.title?.en || fb.title || "" : ""),
-          buttonRoute:
-            b.buttonRoute || b.route || b.link || (fb ? fb.route || "" : ""),
-          buttonType:
-            b.buttonType || b.type || (fb ? fb.type || "route" : "route"),
-          buttonFormId:
-            b.buttonFormId || b.formId || (fb ? fb.formId || null : null),
+          buttonRoute,
+          buttonType,
+          buttonFormId: formId,
         };
       }
       return {
@@ -168,7 +193,7 @@ exports.getGroupDocById = (id) => {
 
 // Cập nhật group
 exports.updateGroup = async (id, data) => {
-  // Chuẩn hóa listParents (only when provided)
+  // listParents (only when provided)
   let listParents;
   if (data.listParents !== undefined) {
     if (typeof data.listParents === "string") {
@@ -184,7 +209,7 @@ exports.updateGroup = async (id, data) => {
     listParents = [{ parentId: data.parentId, parentName: data.parentName }];
   }
 
-  // Chuẩn hóa images (only when provided)
+  // images (only when provided)
   let images;
   if (data.images !== undefined) {
     if (typeof data.images === "string") {
@@ -218,7 +243,7 @@ exports.updateGroup = async (id, data) => {
       .filter(Boolean);
   }
 
-  // Chuẩn hóa listButtons (only when provided)
+  // listButtons (only when provided)
   let listButtons;
   if (data.listButtons !== undefined) {
     if (typeof data.listButtons === "string") {
@@ -238,7 +263,9 @@ exports.updateGroup = async (id, data) => {
   let fetched = [];
   if (idsToResolve.length) {
     try {
-      fetched = await Button.find({ _id: { $in: idsToResolve } }).lean();
+      fetched = await Button.find({ _id: { $in: idsToResolve } })
+        .populate("form.id", "_id title shortName")
+        .lean();
     } catch (err) {
       fetched = [];
     }
@@ -248,29 +275,61 @@ exports.updateGroup = async (id, data) => {
       if (!b) return null;
       if (typeof b === "string") {
         const fb = fetched.find((x) => String(x._id) === String(b));
+        const buttonType = fb ? fb.type || "route" : "route";
+        const formId =
+          fb && fb.form && fb.form.id && fb.form.id._id
+            ? String(fb.form.id._id)
+            : null;
+        const formShortName =
+          fb && fb.form && fb.form.id ? fb.form.id.shortName : "";
+        const buttonRoute =
+          buttonType === "form" && formShortName
+            ? `#${formShortName}`
+            : fb
+            ? fb.route || ""
+            : "";
         return {
           buttonId: b,
           buttonName: fb ? fb.title?.en || fb.title || "" : "",
-          buttonRoute: fb ? fb.route || "" : "",
+          buttonRoute,
+          buttonType,
+          buttonFormId: formId,
         };
       }
       const id = b.buttonId || b.id || b._id || b.value || null;
       if (id) {
         const fb = fetched.find((x) => String(x._id) === String(id));
+        const buttonType =
+          b.buttonType || b.type || (fb ? fb.type || "route" : "route");
+        const formId =
+          b.buttonFormId ||
+          b.formId ||
+          (fb && fb.form && fb.form.id && fb.form.id._id
+            ? String(fb.form.id._id)
+            : null);
+        const formShortName =
+          fb && fb.form && fb.form.id ? fb.form.id.shortName : "";
+        const buttonRoute =
+          buttonType === "form" && formShortName
+            ? `#${formShortName}`
+            : b.buttonRoute || b.route || b.link || (fb ? fb.route || "" : "");
         return {
           buttonId: id,
           buttonName:
             b.buttonName ||
             b.name ||
             (fb ? fb.title?.en || fb.title || "" : ""),
-          buttonRoute:
-            b.buttonRoute || b.route || b.link || (fb ? fb.route || "" : ""),
+          buttonRoute,
+          buttonType,
+          buttonFormId: formId,
         };
       }
       return {
         buttonId: b.buttonId || null,
         buttonName: b.buttonName || b.label || b.title || "",
         buttonRoute: b.buttonRoute || b.route || b.link || b.action || "",
+        buttonType: b.buttonType || b.type || "route",
+        buttonFormId: b.buttonFormId || b.formId || null,
       };
     })
     .filter(Boolean);
@@ -292,7 +351,12 @@ exports.updateGroup = async (id, data) => {
     isActive: data.isActive !== undefined ? data.isActive : true,
   };
 
-  if (data.type !== undefined) updateObj.type = data.type || "-";
+  if (data.type !== undefined) {
+    updateObj.type = data.type || "-";
+    if (updateObj.type === "-") {
+      updateObj.content = "";
+    }
+  }
   if (listParents !== undefined) updateObj.listParents = listParents;
   if (images !== undefined) updateObj.images = images;
   if (data.listButtons !== undefined) updateObj.listButtons = listButtons;

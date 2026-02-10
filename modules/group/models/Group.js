@@ -23,6 +23,12 @@ const GroupSchema = new mongoose.Schema(
       required: true,
     },
 
+    /* ===== CONTENT ===== */
+    content: {
+      type: String,
+      default: "",
+    },
+
     /* ===== RELATION ===== */
     listParents: [
       {
@@ -69,11 +75,11 @@ const GroupSchema = new mongoose.Schema(
         // New: store button type ('route' or 'form') and optional linked form id
         buttonType: {
           type: String,
-          default: 'route',
+          default: "route",
         },
         buttonFormId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: 'Form',
+          ref: "Form",
           default: null,
         },
         _id: false,

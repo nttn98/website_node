@@ -102,7 +102,7 @@
           <select name="formId" id="formSelect" class="form-control-minimal">
             <option value="">-- Select a form --</option>
             <% (forms || []).forEach(function(f){ %>
-              <option value="<%= f._id %>" <%= String(button.form?.id || '') === String(f._id) ? 'selected' : '' %>><%= f.title?.en || f.title %></option>
+              <option value="<%= f._id %>" <%= String(button.form?.id?._id || button.form?.id || '') === String(f._id) ? 'selected' : '' %>><%= f.title?.en || f.title %></option>
             <% }) %>
           </select>
         </div>

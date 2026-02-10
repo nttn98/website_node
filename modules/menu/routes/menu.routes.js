@@ -47,6 +47,27 @@ router.get("/", controller.getAllMenus);
  */
 router.get("/:id/children", controller.getChildren);
 
+// GET children tree by menu id
+/**
+ * @swagger
+ * /api/menus/{id}/children-tree:
+ *   get:
+ *     summary: Lấy cây menu con theo menuId
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của menu
+ *     tags:
+ *       - Menu
+ *     responses:
+ *       200:
+ *         description: Cây menu con
+ */
+router.get("/:id/children-tree", controller.getChildrenTree);
+
 // ===== POST =====
 /**
  * @swagger

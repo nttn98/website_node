@@ -152,7 +152,6 @@
             id="parentIdSelect"
             class="form-select"
             multiple
-            required
           ></select>
           <small class="text-muted mt-2 d-block">
             You can select multiple menus to display this group.
@@ -361,7 +360,7 @@
               const opt = new Option(title, b._id);
               $(opt).attr('data-route', b.route || '');
               $(opt).attr('data-type', b.type || 'route');
-              $(opt).attr('data-form-id', b.formId || '');
+              $(opt).attr('data-form-id', (b.form && b.form.id && b.form.id._id) ? b.form.id._id : '');
               buttonIdSelect.append(opt);
               if (b.route) idByRoute[b.route] = b._id;
               if (title) idByTitle[title] = b._id;
@@ -424,7 +423,7 @@
         const formId = opt.data('form-id') || null;
         if (label) buttons.push({ buttonId: id, buttonName: label, buttonRoute: action, buttonType: type, buttonFormId: formId });
       });
-      if (buttons.length) formData.set('listButtons', JSON.stringify(buttons));
+      formData.set('listButtons', JSON.stringify(buttons)); // Always set, even if empty
 
       fetch('/groups/<%= group._id %>/update', { method: 'POST', body: formData })
         .then((res) => res.json())

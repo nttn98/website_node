@@ -94,7 +94,25 @@ window.openFormModal = async function (formOrId, opts = {}) {
         }
       } else {
         input = document.createElement("input");
-        input.type = "text";
+        // Set appropriate input type based on field type
+        if (f.type === "email") {
+          input.type = "email";
+        } else if (f.type === "phone") {
+          input.type = "tel";
+          // Restrict phone input to numbers and common formatting characters
+          input.addEventListener("input", function (e) {
+            const value = e.target.value;
+            // Allow only numbers, +, -, (, ), and spaces
+            const filtered = value.replace(/[^0-9+\-() ]/g, "");
+            if (value !== filtered) {
+              e.target.value = filtered;
+            }
+          });
+          // Add pattern for validation
+          input.pattern = "[0-9+\\-() ]+";
+        } else {
+          input.type = "text";
+        }
         input.placeholder = f.placeholder || "";
       }
 
@@ -129,6 +147,32 @@ window.openFormModal = async function (formOrId, opts = {}) {
     // Submit handler
     formEl.addEventListener("submit", async (e) => {
       e.preventDefault();
+
+      // Validate required dropdown fields
+      const selects = formEl.querySelectorAll("select[required]");
+      for (const select of selects) {
+        if (!select.value || select.value === "") {
+          const fieldName = select.name || "field";
+          showToast(`Please select a valid option for ${fieldName}`, true);
+          select.style.borderColor = "#ef4444";
+          select.focus();
+          select.addEventListener(
+            "change",
+            function () {
+              select.style.borderColor = "";
+            },
+            { once: true }
+          );
+          return;
+        }
+      }
+
+      // Trigger HTML5 validation
+      if (!formEl.checkValidity()) {
+        formEl.reportValidity();
+        return;
+      }
+
       const fd = new FormData(formEl);
       const dataObj = {};
       for (const [k, v] of fd.entries()) dataObj[k] = v;

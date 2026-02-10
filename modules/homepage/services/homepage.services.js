@@ -32,6 +32,8 @@ exports.getBottomMenus = () => {
 exports.getHeroGroup = async () => {
   // Try to find group with specific criteria for hero section
   const group = await Group.findOne({
+    parentId: null,
+    parentName: null,
     isActive: true,
     isStatus: true,
   })
@@ -75,4 +77,39 @@ exports.getSocials = () => {
   })
     .sort({ order: 1 })
     .lean();
+};
+
+// Get root menus (parents) for homepage
+exports.getMenuParents = () => {
+  return Menu.find({
+    parentId: null,
+    isActive: true,
+    isStatus: true,
+  })
+    .sort({ order: 1 })
+    .lean();
+};
+
+// Get full menu tree for a given parentId
+exports.getMenuChildrenTree = async (parentId) => {
+  const menus = await Menu.find({ isActive: true, isStatus: true })
+    .sort({ order: 1 })
+    .lean();
+  const byParent = new Map();
+  menus.forEach((m) => {
+    const key = m.parentId ? String(m.parentId) : "root";
+    if (!byParent.has(key)) byParent.set(key, []);
+    byParent.get(key).push(m);
+  });
+
+  const build = (pid) => {
+    const key = pid ? String(pid) : "root";
+    const items = byParent.get(key) || [];
+    return items.map((item) => ({
+      ...item,
+      children: build(item._id),
+    }));
+  };
+
+  return build(parentId);
 };

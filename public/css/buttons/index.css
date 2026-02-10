@@ -9,3 +9,18 @@
 .action-circle {
   margin-left: 6px;
 }
+
+/* Status indicator dots */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot-active {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+.dot-hidden {
+  background: #d1d5db;
+}

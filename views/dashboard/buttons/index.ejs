@@ -19,7 +19,6 @@
     <thead>
       <tr>
         <th>Title</th>
-        <th>Groups</th>
         <th>Route</th>
         <th>Status</th>
         <th></th>
@@ -36,15 +35,9 @@
     const tbody = document.getElementById("button-list-body");
     tbody.innerHTML = "";
     (data.buttons || []).forEach((b) => {
-      const parentsNames =
-        (b.parents || [])
-          .map((p) => p.title?.en || p.title || "")
-          .filter(Boolean)
-          .join(", ") || "-";
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${b.title?.en || ""}</td>
-        <td>${parentsNames}</td>
         <td>${
           b.type === "form"
             ? b.form?.id?.title?.en || b.form?.id?.title || "Form"
