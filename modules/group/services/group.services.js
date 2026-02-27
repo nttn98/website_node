@@ -361,7 +361,9 @@ exports.updateGroup = async (id, data) => {
   if (images !== undefined) updateObj.images = images;
   if (data.listButtons !== undefined) updateObj.listButtons = listButtons;
 
-  return Group.findByIdAndUpdate(id, updateObj, { new: true }).lean();
+  return Group.findByIdAndUpdate(id, updateObj, {
+    returnDocument: "after",
+  }).lean();
 };
 
 // Xóa group (ẩn)

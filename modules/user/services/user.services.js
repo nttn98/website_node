@@ -33,7 +33,7 @@ exports.updateUser = async (id, data) => {
   if (data.username) update.username = data.username;
   if (data.password) update.password = await bcrypt.hash(data.password, 10);
   const user = await User.findByIdAndUpdate(id, update, {
-    new: true,
+    returnDocument: "after",
     fields: "_id username",
   });
   return user;

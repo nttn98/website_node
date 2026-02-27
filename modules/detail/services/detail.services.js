@@ -46,7 +46,7 @@ exports.updateArticle = async (id, data) => {
   await Detail.findByIdAndUpdate(
     id,
     { $set: update },
-    { new: true, runValidators: true }
+    { returnDocument: "after", runValidators: true }
   );
   return Detail.findById(id).lean();
 };

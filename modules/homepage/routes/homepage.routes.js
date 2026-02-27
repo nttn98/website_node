@@ -124,4 +124,52 @@ router.get("/menu-parents", homepageController.getMenuParents);
  */
 router.get("/menus/:id/children-tree", homepageController.getMenuChildrenTree);
 
+/**
+ * @swagger
+ * /api/homepage/solutions:
+ *   get:
+ *     summary: "Get Solutions menu tree (ID: 697c0c9e7d88fcfff27bfb46)"
+ *     description: Returns the menu tree for Solutions section
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: Solutions menu tree
+ *       500:
+ *         description: Server error
+ */
+router.get("/solutions", homepageController.getSolutionsMenus);
+
+/**
+ * @swagger
+ * /api/homepage/insights:
+ *   get:
+ *     summary: "Get Insights menu tree (ID: 698191a46ea27a5d8ccbf724)"
+ *     description: Returns the menu tree for Insights section
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: Insights menu tree
+ *       500:
+ *         description: Server error
+ */
+router.get("/insights", homepageController.getInsightsMenus);
+
+/**
+ * @swagger
+ * /api/homepage/industry:
+ *   get:
+ *     summary: "Get Industry menu tree (ID: 698aa02d84b05fe995a079a7)"
+ *     description: Returns the menu tree for Industry section
+ *     tags:
+ *       - Homepage
+ *     responses:
+ *       200:
+ *         description: Industry menu tree
+ *       500:
+ *         description: Server error
+ */
+router.get("/industry", homepageController.getIndustryMenus);
+
 module.exports = router;

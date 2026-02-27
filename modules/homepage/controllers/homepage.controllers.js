@@ -92,10 +92,10 @@ exports.getHeroGroup = async (req, res) => {
   }
 };
 
-// Get Solutions menus
+// Get Solutions menus (ID: 697c0c9e7d88fcfff27bfb46)
 exports.getSolutionsMenus = async (req, res) => {
   try {
-    const menus = await homepageService.getSolutionsMenus();
+    const menus = await homepageService.getMenuChildrenTree("697c0c9e7d88fcfff27bfb46");
     res.json({
       success: true,
       data: menus,
@@ -109,10 +109,10 @@ exports.getSolutionsMenus = async (req, res) => {
   }
 };
 
-// Get Industry menus
+// Get Industry menus (ID: 698aa02d84b05fe995a079a7)
 exports.getIndustryMenus = async (req, res) => {
   try {
-    const menus = await homepageService.getIndustryMenus();
+    const menus = await homepageService.getMenuChildrenTree("698aa02d84b05fe995a079a7");
     res.json({
       success: true,
       data: menus,
@@ -126,10 +126,10 @@ exports.getIndustryMenus = async (req, res) => {
   }
 };
 
-// Get Insights menus
+// Get Insights menus (ID: 698191a46ea27a5d8ccbf724)
 exports.getInsightsMenus = async (req, res) => {
   try {
-    const menus = await homepageService.getInsightsMenus();
+    const menus = await homepageService.getMenuChildrenTree("698191a46ea27a5d8ccbf724");
     res.json({
       success: true,
       data: menus,

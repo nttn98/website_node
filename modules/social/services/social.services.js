@@ -66,7 +66,7 @@ exports.update = async (payload) => {
         updateData.isActive = Boolean(item.isActive);
 
       const updated = await Social.findByIdAndUpdate(item._id, updateData, {
-        new: true,
+        returnDocument: "after",
       });
       if (updated) results.push(updated);
     } else {
@@ -88,7 +88,11 @@ exports.update = async (payload) => {
 
 // Delete item by setting isActive to false
 exports.deleteItem = async (id) => {
-  return await Social.findByIdAndUpdate(id, { isActive: false }, { new: true });
+  return await Social.findByIdAndUpdate(
+    id,
+    { isActive: false },
+    { returnDocument: "after" }
+  );
 };
 
 // Toggle status of item
