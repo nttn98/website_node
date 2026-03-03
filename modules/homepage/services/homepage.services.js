@@ -92,24 +92,43 @@ exports.getMenuParents = () => {
 
 // Get full menu tree for a given parentId
 exports.getMenuChildrenTree = async (parentId) => {
-  const menus = await Menu.find({ isActive: true, isStatus: true })
-    .sort({ order: 1 })
-    .lean();
-  const byParent = new Map();
-  menus.forEach((m) => {
-    const key = m.parentId ? String(m.parentId) : "root";
-    if (!byParent.has(key)) byParent.set(key, []);
-    byParent.get(key).push(m);
-  });
+  const groups = await Group.find({ isActive: true, isStatus: true }).lean();
 
-  const build = (pid) => {
-    const key = pid ? String(pid) : "root";
-    const items = byParent.get(key) || [];
-    return items.map((item) => ({
-      ...item,
-      children: build(item._id),
-    }));
-  };
+  // Filter and map groups that have this parentId in their listParents
+  const filteredGroups = groups
+    .filter((g) => {
+      if (g.listParents && Array.isArray(g.listParents)) {
+        return g.listParents.some(
+          (parent) => String(parent.parentId) === String(parentId)
+        );
+      }
+      return false;
+    })
+    .map((g) => {
+      // Find the matching parent entry to get order and parentName
+      const parentEntry = g.listParents.find(
+        (p) => String(p.parentId) === String(parentId)
+      );
 
-  return build(parentId);
+      return {
+        _id: g._id,
+        title: g.title,
+        subTitle: g.subtitle,
+        route: null,
+        parentId: parentId,
+        parentName: parentEntry?.parentName || "",
+        order: parentEntry?.order || 0,
+        type: g.type,
+        isButton: g.listButtons && g.listButtons.length > 0,
+        isStatus: g.isStatus,
+        isActive: g.isActive,
+        createdAt: g.createdAt,
+        updatedAt: g.updatedAt,
+        __v: g.__v,
+        children: [],
+      };
+    })
+    .sort((a, b) => a.order - b.order);
+
+  return filteredGroups;
 };

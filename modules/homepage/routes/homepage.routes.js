@@ -172,4 +172,58 @@ router.get("/insights", homepageController.getInsightsMenus);
  */
 router.get("/industry", homepageController.getIndustryMenus);
 
+/**
+ * @swagger
+ * /api/homepage/submit:
+ *   post:
+ *     summary: Submit homepage form (Talk to Expert, Get Quote, etc.)
+ *     description: Public endpoint for submitting homepage forms without requiring formId. Uses formType to categorize submission.
+ *     tags:
+ *       - Homepage
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - data
+ *             properties:
+ *               formType:
+ *                 type: string
+ *                 description: Form type/route (e.g., talk_to_expert, get_a_quote, contact)
+ *               data:
+ *                 type: object
+ *                 description: Form submission data with field key-value pairs
+ *                 example:
+ *                   name: "John Doe"
+ *                   email: "john@example.com"
+ *                   phone: "+84123456789"
+ *                   message: "I need more information"
+ *               email:
+ *                 type: string
+ *                 description: Submitter email
+ *               phone:
+ *                 type: string
+ *                 description: Submitter phone number
+ *     responses:
+ *       200:
+ *         description: Form submission successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 submission:
+ *                   type: object
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Server error
+ */
+const formSubmissionController = require("../../form/controllers/submission.controllers");
+router.post("/submit", formSubmissionController.submit);
+
 module.exports = router;
