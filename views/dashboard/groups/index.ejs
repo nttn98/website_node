@@ -189,7 +189,7 @@
           const items = Array.from(tbody.children);
           const updates = items.map((tr, index) => {
             const groupId = tr.dataset.groupId;
-            return { groupId, order: index };
+            return { groupId, order: index + 1 };
           });
           fetch('/groups/update-orders', {
             method: 'PUT',
@@ -198,13 +198,13 @@
           })
             .then((res) => res.json())
             .then((data) => {
-              if (data && data.success) showToast('Sắp xếp thành công');
-              else showToast('Sắp xếp thất bại', true);
+              if (data && data.success) showToast('Order saved');
+              else showToast('Order save failed', true);
               return fetchGroups();
             })
             .then(() => initSortable())
             .catch(() => {
-              showToast('Sắp xếp thất bại', true);
+              showToast('Order save failed', true);
               return fetchGroups().then(() => initSortable());
             });
         },

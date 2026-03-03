@@ -120,6 +120,9 @@ input[name="order[]"] {
   border-radius: 6px;
   border: 1px solid #f1f1f1;
   background: #fbfbfc;
+  font-weight: 700;
+  color: var(--ui-navy);
+  font-size: 0.85rem;
 }
 
 /* Action circles consistent size and look like Buttons index */

@@ -19,6 +19,7 @@ const options = {
       { name: "User", description: "User management" },
       { name: "Dashboard", description: "Dashboard" },
       { name: "Social", description: "Social media links" },
+      { name: "Forms", description: "Form management and submission" },
     ],
   },
   apis: ["./modules/*/routes/*.js"], // Đường dẫn tới tất cả các file routes trong modules

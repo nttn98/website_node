@@ -20,7 +20,7 @@
         </div>
       </td>
       <td><input type="number" name="order[]" class="form-control-minimal order-input" value="${
-        (items && items.length) || 0
+        items && items.length ? items.length + 1 : 1
       }" style="width:72px;text-align:center"/></td>
       <td class="text-center">
         <span class="badge-minimal badge-active">SHOW</span>
@@ -65,7 +65,7 @@
             </div>
           </td>
           <td><input type="number" name="order[]" class="form-control-minimal order-input" value="${
-            it.order || 0
+            it.order || 1
           }" style="width:72px;text-align:center"/></td>
           <td class="text-center">
             <span class="badge-minimal ${it.isStatus ? "badge-active" : ""}">${
@@ -129,12 +129,12 @@
         );
         const items = rows.map((tr, idx) => ({
           _id: tr.dataset.id,
-          order: idx,
+          order: idx + 1,
         }));
         // update order input values in DOM
         rows.forEach((tr, idx) => {
           const orderInput = tr.querySelector(".order-input");
-          if (orderInput) orderInput.value = idx;
+          if (orderInput) orderInput.value = idx + 1;
         });
         // update via POST to /api/socials
         try {
@@ -174,7 +174,7 @@
         const iconClass =
           tr.querySelector('input[name="iconClass"]')?.value || "";
         const order =
-          parseInt(tr.querySelector('input[name="order[]"]').value, 10) || 0;
+          parseInt(tr.querySelector('input[name="order[]"]').value, 10) || 1;
         const isStatus =
           tr.querySelector('input[name="isStatus[]"]').value === "true";
 
@@ -243,7 +243,7 @@
       const iconClass =
         tr.querySelector('input[name="iconClass"]')?.value || "";
       const order =
-        parseInt(tr.querySelector('input[name="order[]"]').value, 10) || 0;
+        parseInt(tr.querySelector('input[name="order[]"]').value, 10) || 1;
       const badge = tr.querySelector(".badge-minimal");
       const isStatus = badge ? badge.classList.contains("badge-active") : true;
       const payload = {

@@ -68,16 +68,34 @@
 
 /* Badge */
 .badge-minimal {
-  font-size: 0.6rem;
-  padding: 3px 8px;
-  background: #f8f9fa;
+  font-size: 0.65rem;
+  padding: 4px 9px;
+  background: #f0f0f0;
   color: #666;
   border-radius: 4px;
-  font-weight: 600;
+  font-weight: 700;
+  display: inline-block;
+  line-height: 1;
 }
 .badge-active {
   background: var(--ui-bronze);
   color: var(--ui-navy);
+  font-weight: 700;
+}
+
+/* Order Badge Table */
+.badge-minimal[class*="order"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  width: 28px;
+  background: rgba(184, 155, 94, 0.15);
+  color: var(--ui-bronze);
+  padding: 0;
+  font-weight: 700;
+  font-size: 0.75rem;
 }
 
 /* Action Buttons */

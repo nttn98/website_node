@@ -165,13 +165,13 @@ exports.createGroup = async (data) => {
     content: data.content,
     title: {
       en: data.title_en,
-      vi: data.title_vi,
-      zh: data.title_zh,
+      vi: data.title_vi || data.title_en,
+      zh: data.title_zh || data.title_en,
     },
     subtitle: {
       en: data.subtitle_en,
-      vi: data.subtitle_vi,
-      zh: data.subtitle_zh,
+      vi: data.subtitle_vi || data.subtitle_en,
+      zh: data.subtitle_zh || data.subtitle_en,
     },
     images,
     listButtons,

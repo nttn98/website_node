@@ -6,25 +6,90 @@
 </div>
 
 <style>
+  :root {
+    --ui-navy: #0f2444;
+    --ui-bronze: #b89b5e;
+  }
+
+  /* Menu section labels */
+  .menu-section-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: rgba(184, 155, 94, 0.7);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    padding: 0 16px;
+    display: block;
+  }
+
+  /* Toggle button styling */
   .toggle-btn {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #adb5bd;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--ui-bronze);
     transition: all 0.2s ease;
-    font-size: 14px;
+    font-size: 12px;
+    padding: 0;
+    border: none;
+    flex-shrink: 0;
   }
   .toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #6c757d;
+    background: rgba(184, 155, 94, 0.15);
+    color: var(--ui-bronze);
   }
+  .toggle-btn.open {
+    transform: rotate(90deg);
+  }
+
+  /* Child menu styling */
+  .nav-child-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 16px;
+    font-size: 0.9rem;
+  }
+  .nav-child-item[data-nav-level="1"] {
+    padding-left: 28px;
+  }
+  .nav-child-item[data-nav-level="2"] {
+    padding-left: 40px;
+  }
+  .nav-child-item[data-nav-level="3"] {
+    padding-left: 52px;
+  }
+
+  /* Indent marker */
+  .indent-marker {
+    color: rgba(184, 155, 94, 0.5);
+    font-size: 0.75rem;
+    margin-right: 2px;
+  }
+
+  /* Parent menu styling */
+  .nav-parent-text {
+    flex-grow: 1;
+    font-weight: 500;
+  }
+  .nav-parent-text.active {
+    font-weight: 700;
+    color: var(--ui-bronze);
+  }
+
+  /* Children list */
   .children-list {
     transition: all 0.3s ease;
+  }
+  .children-list.d-none {
+    display: none !important;
   }
 </style>
 
@@ -42,20 +107,28 @@
 
   <% %> <% function getChildren(parentId) { return menus.filter(function(m) {
   return (m.parentId ? m.parentId.toString() : null) === (parentId ?
-  parentId.toString() : null); }); } %> <% function renderTree(parentId, level)
-  { var children = getChildren(parentId); children.forEach(function(menu) { %>
-  <li class="nav-item" style="padding-left: <%= level * 16 %>px">
-    <div class="d-flex align-items-center">
+  parentId.toString() : null); }).sort(function(a, b) { return (a.order || 0) - (b.order || 0); }); } %> 
+
+  <% function renderTree(parentId, level, isChild) { var children = getChildren(parentId); children.forEach(function(menu) { %>
+  <li class="nav-item">
+    <div class="d-flex align-items-center" <%= isChild ? 'class="nav-child-item" data-nav-level="' + level + '"' : '' %>>
+      <% if (isChild) { %>
+        <span class="indent-marker">↳</span>
+      <% } %>
       <a
         href="/dashboard/groups?menuId=<%= menu._id %>"
-        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> flex-grow-1"
+        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> nav-parent-text flex-grow-1"
       >
         <%= menu.title.en %>
       </a>
       <% if (getChildren(menu._id).length) { %>
-      <span class="toggle-btn ms-2" data-target="children-<%= menu._id %>">
-        <i class="bi bi-chevron-right"></i>
-      </span>
+      <button class="toggle-btn" data-target="children-<%= menu._id %>" type="button" title="Expand/Collapse">
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8.5 6.5a.5.5 0 0 0-.707 0l-3 3a.5.5 0 0 0 .707.707L8 7.207l2.646 2.647a.5.5 0 0 0 .707-.707l-3-3z"/>
+        </svg>
+      </button>
+      <% } else { %>
+      <span style="width: 14px;"></span>
       <% } %>
     </div>
     <% if (getChildren(menu._id).length) { %>
@@ -63,11 +136,75 @@
       class="nav flex-column ms-2 children-list d-none"
       id="children-<%= menu._id %>"
     >
-      <% renderTree(menu._id, level + 1); %>
+      <% renderTree(menu._id, level + 1, true); %>
     </ul>
     <% } %>
   </li>
-  <% }); } %> <% renderTree(null, 0); %>
+  <% }); } %> 
+
+  <!-- TOP MENUS -->
+  <% var topMenus = menus.filter(function(m) { return !m.parentId && m.type === 'top'; }).sort(function(a, b) { return (a.order || 0) - (b.order || 0); }); %>
+  <div class="menu-section-label">TOP MENUS</div>
+  <% topMenus.forEach(function(menu) { %>
+  <li class="nav-item">
+    <div class="d-flex align-items-center">
+      <a
+        href="/dashboard/groups?menuId=<%= menu._id %>"
+        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> nav-parent-text flex-grow-1"
+      >
+        <%= menu.title.en %>
+      </a>
+      <% if (getChildren(menu._id).length) { %>
+      <button class="toggle-btn" data-target="children-<%= menu._id %>" type="button" title="Expand/Collapse">
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8.5 6.5a.5.5 0 0 0-.707 0l-3 3a.5.5 0 0 0 .707.707L8 7.207l2.646 2.647a.5.5 0 0 0 .707-.707l-3-3z"/>
+        </svg>
+      </button>
+      <% } %>
+    </div>
+    <% if (getChildren(menu._id).length) { %>
+    <ul
+      class="nav flex-column ms-2 children-list d-none"
+      id="children-<%= menu._id %>"
+    >
+      <% renderTree(menu._id, 1, true); %>
+    </ul>
+    <% } %>
+  </li>
+  <% }); %>
+
+  <!-- FOOTER MENUS -->
+  <% var footerMenus = menus.filter(function(m) { return !m.parentId && m.type === 'bot'; }).sort(function(a, b) { return (a.order || 0) - (b.order || 0); }); %>
+  <% if (footerMenus.length) { %>
+  <div class="menu-section-label">FOOTER MENUS</div>
+  <% footerMenus.forEach(function(menu) { %>
+  <li class="nav-item">
+    <div class="d-flex align-items-center">
+      <a
+        href="/dashboard/groups?menuId=<%= menu._id %>"
+        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> nav-parent-text flex-grow-1"
+      >
+        <%= menu.title.en %>
+      </a>
+       <% if (getChildren(menu._id).length) { %>
+      <button class="toggle-btn" data-target="children-<%= menu._id %>" type="button" title="Expand/Collapse">
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8.5 6.5a.5.5 0 0 0-.707 0l-3 3a.5.5 0 0 0 .707.707L8 7.207l2.646 2.647a.5.5 0 0 0 .707-.707l-3-3z"/>
+        </svg>
+      </button>
+      <% } %>
+    </div>
+    <% if (getChildren(menu._id).length) { %>
+    <ul
+      class="nav flex-column ms-2 children-list d-none"
+      id="children-<%= menu._id %>"
+    >
+      <% renderTree(menu._id, 1, true); %>
+    </ul>
+    <% } %>
+  </li>
+  <% }); %>
+  <% } %>
 
   <div class="menu-divider">SETTING</div>
 
@@ -119,29 +256,36 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Khôi phục trạng thái toggle từ localStorage
+    // Restore toggle states from localStorage
     document.querySelectorAll(".toggle-btn").forEach((btn) => {
       const targetId = btn.getAttribute("data-target");
-      if (localStorage.getItem(targetId) === "open") {
-        const targetUl = document.getElementById(targetId);
+      const targetUl = document.getElementById(targetId);
+      const savedState = localStorage.getItem(targetId);
+
+      if (savedState === "open") {
         targetUl.classList.remove("d-none");
-        btn.innerHTML = '<i class="bi bi-chevron-down"></i>';
+        btn.classList.add("open");
+      } else {
+        targetUl.classList.add("d-none");
+        btn.classList.remove("open");
       }
     });
 
-    // Xử lý click toggle
+    // Handle toggle click
     document.querySelectorAll(".toggle-btn").forEach((btn) => {
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
         const targetId = this.getAttribute("data-target");
         const targetUl = document.getElementById(targetId);
         const isHidden = targetUl.classList.contains("d-none");
+
         if (isHidden) {
           targetUl.classList.remove("d-none");
-          this.innerHTML = '<i class="bi bi-chevron-down"></i>';
+          this.classList.add("open");
           localStorage.setItem(targetId, "open");
         } else {
           targetUl.classList.add("d-none");
-          this.innerHTML = '<i class="bi bi-chevron-right"></i>';
+          this.classList.remove("open");
           localStorage.setItem(targetId, "closed");
         }
       });

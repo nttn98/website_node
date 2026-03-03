@@ -24,123 +24,187 @@
     if (!menus || !menus.length) {
       listContainer.innerHTML = `<div class="p-5 text-center text-muted">No data available</div>`;
       return;
-    } // Sắp xếp dữ liệu theo cấu trúc Cha -> Con
+    }
 
-    const structuredData = [];
-    const parents = menus.filter((m) => !m.parentId);
-    parents.forEach((parent) => {
-      structuredData.push(parent);
-      const children = menus.filter(
-        (c) => c.parentId && c.parentId.toString() === parent._id.toString()
-      );
-      children.forEach((child) => structuredData.push(child));
-    });
+    // Tách menu theo type (top/footer) và sắp xếp theo order
+    const topMenus = menus
+      .filter((m) => !m.parentId && m.type === "top")
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    const botMenus = menus
+      .filter((m) => !m.parentId && m.type === "bot")
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-    let html = `
-  <table class="table-clean">
-   <thead>
-    <tr>
-    <th width="40%">Details</th>
-    <th width="20%">Parent</th>
-    <th width="20%" class="text-center">Status</th>
-    <th width="20%" class="text-end">Actions</th>
-    </tr>
-   </thead>
-   <tbody>`;
+    let html = "";
 
-    structuredData.forEach((menu) => {
-      const isParent = !menu.parentId;
-      const rowClass = isParent ? "row-parent" : "row-child";
-      const hasChildren =
-        isParent &&
-        menus.some(
+    // Render TOP MENUS
+    if (topMenus.length) {
+      html += `<div class="menu-section">
+        <h5 class="menu-section-heading">TOP NAVIGATION</h5>
+        <table class="table-clean">
+          <thead>
+            <tr>
+              <th width="40%">Details</th>
+              <th width="15%" class="text-center">Order</th>
+              <th width="20%">Parent</th>
+              <th width="15%" class="text-center">Status</th>
+              <th width="10%" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      topMenus.forEach((menu) => {
+        const hasChildren = menus.some(
           (m) => m.parentId && m.parentId.toString() === menu._id.toString()
         );
+        html += renderMenuRow(menu, menus, true, hasChildren);
+        if (hasChildren) {
+          const children = menus
+            .filter(
+              (c) => c.parentId && c.parentId.toString() === menu._id.toString()
+            )
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+          children.forEach((child) => {
+            html += renderMenuRow(child, menus, false, false);
+          });
+        }
+      });
 
-      html += `
-    <tr class="${rowClass}" data-menu-id="${menu._id}" ${
-        !isParent
-          ? `data-parent-id="${menu.parentId}" style="display: none;"`
-          : ""
-      }>
-     <td>
-      <div class="indent-wrapper">
-       ${
-         isParent && hasChildren
-           ? `
-         <button class="toggle-children" onclick="toggleChildren('${menu._id}', this)" title="Expand/Collapse">
-           <svg class="toggle-icon" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-             <path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-           </svg>
-         </button>
-       `
-           : isParent
-           ? '<span style="width: 24px; display: inline-block;"></span>'
-           : ""
-       }
-       ${!isParent ? '<div class="indent-guide"></div>' : ""}
-       <div>
-        <div class="menu-info-primary">
-         ${menu.title?.en || "-"}
-         <div class="small text-muted">${menu.subTitle?.en || ""}</div>
-         <span class="type-tag ml-2">${menu.type || "Link"}</span>
-        </div>
-        <div class="menu-info-secondary">${menu.route || "/"}</div>
-       </div>
-      </div>
-     </td>
-     <td>
-      <span class="small fw-600 ${
-        isParent ? "text-bronze" : "text-muted"
-      }" style="font-size: 0.75rem;">
-       ${isParent ? "ROOT" : menu.parentName || "—"}
-      </span>
-     </td>
-     <td class="text-center">
-      <div class="d-flex align-items-center justify-content-center gap-3">
-        <span class="status-dot ${
-          menu.isStatus ? "dot-active" : "dot-hidden"
-        }"></span>
-        <div class="form-check form-switch m-0">
-          <input class="form-check-input" type="checkbox" ${
-            menu.isStatus ? "checked" : ""
-          } 
-            onchange="toggleMenuStatus('${menu._id}', this)" />
-        </div>
-      </div>
-     </td>
-     <td class="text-end">
-      <a href="/dashboard/menus/${
-        menu._id
-      }/edit" class="action-circle" title="Edit">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-      </a>
-      <button onclick="deleteMenu('${
-        menu._id
-      }')" class="action-circle btn-del" title="Delete">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-      </button>
-     </td>
-    </tr>`;
-    });
+      html += `</tbody></table></div>`;
+    }
 
-    html += "</tbody></table>";
+    // Render FOOTER MENUS
+    if (botMenus.length) {
+      html += `<div class="menu-section">
+        <h5 class="menu-section-heading">FOOTER NAVIGATION</h5>
+        <table class="table-clean">
+          <thead>
+            <tr>
+              <th width="40%">Details</th>
+              <th width="15%" class="text-center">Order</th>
+              <th width="20%">Parent</th>
+              <th width="15%" class="text-center">Status</th>
+              <th width="10%" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      botMenus.forEach((menu) => {
+        const hasChildren = menus.some(
+          (m) => m.parentId && m.parentId.toString() === menu._id.toString()
+        );
+        html += renderMenuRow(menu, menus, true, hasChildren);
+        if (hasChildren) {
+          const children = menus
+            .filter(
+              (c) => c.parentId && c.parentId.toString() === menu._id.toString()
+            )
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+          children.forEach((child) => {
+            html += renderMenuRow(child, menus, false, false);
+          });
+        }
+      });
+
+      html += `</tbody></table></div>`;
+    }
+
     listContainer.innerHTML = html;
-  } // Khởi chạy
+  }
+
+  function renderMenuRow(menu, allMenus, isParent, hasChildren) {
+    const rowClass = isParent ? "row-parent" : "row-child";
+    const childrenDisplay =
+      isParent && !hasChildren
+        ? ""
+        : !isParent
+        ? `data-parent-id="${menu.parentId}" class="child-row d-none"`
+        : "";
+
+    return `
+    <tr class="${rowClass}" data-menu-id="${menu._id}" ${childrenDisplay}>
+      <td>
+        <div class="menu-details">
+          ${
+            isParent && hasChildren
+              ? `<button class="toggle-menu-children" data-menu-id="${menu._id}" title="Expand/Collapse">
+                   <svg class="toggle-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                     <path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                   </svg>
+                 </button>`
+              : isParent
+              ? '<span style="width: 24px; display: inline-block;"></span>'
+              : "  "
+          }
+          ${!isParent ? '<span class="indent-marker">↳</span>' : ""}
+          <div class="menu-text">
+            <div class="menu-title">${menu.title?.en || "-"}</div>
+            ${
+              menu.subTitle?.en
+                ? `<div class="menu-subtitle">${menu.subTitle.en}</div>`
+                : ""
+            }
+            <div class="menu-meta">${menu.route || "/"}</div>
+          </div>
+        </div>
+      </td>
+      <td class="text-center">
+        <span class="order-badge-table">${menu.order || 0}</span>
+      </td>
+      <td>
+        <span class="parent-label ${isParent ? "parent-root" : "parent-child"}">
+          ${isParent ? "ROOT" : menu.parentName || "—"}
+        </span>
+      </td>
+      <td class="text-center">
+        <div class="status-toggle-group">
+          <span class="status-dot ${
+            menu.isStatus ? "dot-active" : "dot-hidden"
+          }"></span>
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" ${
+              menu.isStatus ? "checked" : ""
+            } 
+              onchange="toggleMenuStatus('${menu._id}', this)" />
+          </div>
+        </div>
+      </td>
+      <td class="text-end">
+        <a href="/dashboard/menus/${
+          menu._id
+        }/edit" class="action-circle" title="Edit">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+        </a>
+        <button onclick="deleteMenu('${
+          menu._id
+        }')" class="action-circle btn-del" title="Delete">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+        </button>
+      </td>
+    </tr>`;
+  }
 
   fetch("/api/menus")
     .then((res) => res.json())
-    .then((data) => renderMenus(data.data))
+    .then((data) => {
+      renderMenus(data.data);
+      initMenuToggle();
+    })
     .catch(() => renderMenus([]));
 
   function toggleMenuStatus(id, el) {
     fetch(`/api/menus/${id}/toggle`, { method: "PATCH" })
       .then((res) => res.json())
       .then((data) => {
-        const dot = el.closest("td").querySelector(".status-dot");
-        dot.className = data.isStatus
-          ? "status-dot dot-active"
-          : "status-dot dot-hidden";
+        const dot = el.closest("tr").querySelector(".status-dot");
+        if (dot) {
+          dot.className = data.isStatus
+            ? "status-dot dot-active"
+            : "status-dot dot-hidden";
+        }
       });
   }
 
@@ -162,18 +226,52 @@
 
     children.forEach((child) => {
       if (isExpanded) {
-        child.style.display = "none";
+        child.classList.add("d-none");
       } else {
-        child.style.display = "";
+        child.classList.remove("d-none");
       }
     });
 
     if (isExpanded) {
       btn.classList.remove("expanded");
       icon.style.transform = "rotate(0deg)";
+      localStorage.setItem(`menu-children-${parentId}`, "closed");
     } else {
       btn.classList.add("expanded");
       icon.style.transform = "rotate(180deg)";
+      localStorage.setItem(`menu-children-${parentId}`, "open");
     }
+  }
+
+  function initMenuToggle() {
+    // Collapse all by default on initial load
+    const collapseAllBtn = document.getElementById("collapse-all-btn");
+    const expandAllBtn = document.getElementById("expand-all-btn");
+
+    const allToggleBtns = document.querySelectorAll(".toggle-menu-children");
+
+    // Make sure all children are collapsed initially
+    allToggleBtns.forEach((btn) => {
+      const menuId = btn.getAttribute("data-menu-id");
+      const children = document.querySelectorAll(
+        `tr[data-parent-id="${menuId}"]`
+      );
+
+      // Ensure collapsed state
+      btn.classList.remove("expanded");
+      const icon = btn.querySelector(".toggle-icon");
+      if (icon) icon.style.transform = "rotate(0deg)";
+      children.forEach((child) => child.classList.add("d-none"));
+      localStorage.removeItem(`menu-children-${menuId}`);
+    });
+
+    // Attach click event listeners
+    allToggleBtns.forEach((btn) => {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        const menuId = this.getAttribute("data-menu-id");
+        toggleChildren(menuId, this);
+      });
+    });
   }
 </script>

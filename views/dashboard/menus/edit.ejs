@@ -83,18 +83,11 @@
 
   <div class="col-md-5 ps-md-5">
     <div class="form-group-minimal mb-4">
-      <label>Parent Category</label>
+      <label>Parent Menu</label>
       <select name="parentId" id="parentId">
-        <option value="">-- Root menu (none) --</option>
-        <% if (menus && menus.length) { %>
-          <% menus.forEach(function(m) { 
-             if (!menu._id || m._id.toString() !== menu._id.toString()) { %>
-            <option value="<%= m._id %>" data-type="<%= m.type %>" 
-              <%= (menu.parentId && menu.parentId.toString() === m._id.toString()) ? 'selected' : '' %>>
-              ↳ <%= m.title?.en || m.title || '-' %>
-            </option>
-          <% }} ) %>
-        <% } %>
+        <option value="">-- Root Menu --</option>
+        <optgroup label="Top" id="topMenuGroup"></optgroup>
+        <optgroup label="Footer" id="botMenuGroup"></optgroup>
       </select>
     </div>
 
@@ -139,14 +132,16 @@
     });
   });
 
-  // 2. LOGIC ĐỒNG BỘ LOẠI MENU (TYPE) VỚI MENU CHA
+  // 2. FETCH & RENDER PARENT OPTIONS  
   const parentSelect = document.getElementById('parentId');
   const typeSelect = document.getElementById('typeSelect');
+  const currentMenuId = '<%= menu._id %>';
+  const currentParentId = '<%= menu.parentId ? menu.parentId.toString() : "" %>';
 
   function syncTypeWithParent() {
     const selected = parentSelect.options[parentSelect.selectedIndex];
     if (!selected) return;
-    
+
     const parentType = selected.getAttribute('data-type');
     if (parentSelect.value && parentType) {
       typeSelect.value = parentType;
@@ -158,8 +153,42 @@
     }
   }
 
+  fetch('/api/menus')
+    .then((res) => res.json())
+    .then((data) => {
+      const topGroup = document.getElementById('topMenuGroup');
+      const botGroup = document.getElementById('botMenuGroup');
+
+      topGroup.innerHTML = '';
+      botGroup.innerHTML = '';
+
+      const menus = data.data || data;
+      menus.forEach((m) => {
+        if (!m || !m._id) return;
+        if (String(m._id) === String(currentMenuId)) return;
+        if (m.parentId) return;
+
+        const opt = document.createElement('option');
+        opt.value = m._id;
+        opt.textContent = `↳ ${m.title?.en || m.title || 'No Title'}`;
+        opt.dataset.type = m.type || 'top';
+
+        if (String(m._id) === String(currentParentId)) {
+          opt.selected = true;
+        }
+
+        if (m.type === 'top') topGroup.appendChild(opt);
+        else botGroup.appendChild(opt);
+      });
+
+      syncTypeWithParent();
+    })
+    .catch((err) => {
+      console.error('Failed to load parent categories:', err);
+      syncTypeWithParent();
+    });
+
   parentSelect.addEventListener('change', syncTypeWithParent);
-  syncTypeWithParent(); // Chạy ngay khi load trang để kiểm tra dữ liệu cũ
 
   // 3. SUBMIT FORM QUA API
   document.getElementById('menu-edit-form').addEventListener('submit', function(e) {
