@@ -130,18 +130,12 @@ exports.getDetail = async (parentId) => {
         title: g.title,
         subTitle: g.subtitle,
         image: g.image,
-        route: null,
-        parentId: parentId,
-        parentName: parentEntry?.parentName || "",
+        route: g.route || null,
         order: parentEntry?.order || 0,
         type: g.type,
-        isButton: g.listButtons && g.listButtons.length > 0,
         isStatus: g.isStatus,
         isActive: g.isActive,
-        createdAt: g.createdAt,
-        updatedAt: g.updatedAt,
-        __v: g.__v,
-        children: [],
+        buttons: g.listButtons,
       };
     })
     .sort((a, b) => a.order - b.order);

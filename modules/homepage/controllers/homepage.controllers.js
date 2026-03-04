@@ -203,3 +203,26 @@ exports.getMenuChildrenTree = async (req, res) => {
     });
   }
 };
+
+// Get detail groups by parentId
+exports.getDetail = async (req, res) => {
+  const parentId = req.params.id;
+  if (!/^[a-fA-F0-9]{24}$/.test(parentId)) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID format" });
+  }
+  try {
+    const groups = await homepageService.getDetail(parentId);
+    res.json({
+      success: true,
+      data: groups,
+    });
+  } catch (error) {
+    console.error("Error fetching detail groups:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch detail groups",
+    });
+  }
+};

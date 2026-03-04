@@ -102,30 +102,6 @@ router.get("/menu-parents", homepageController.getMenuParents);
 
 /**
  * @swagger
- * /api/homepage/menus/{id}/children-tree:
- *   get:
- *     summary: Get menu children tree by parentId (for homepage)
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: ID của menu cha
- *     tags:
- *       - Homepage
- *     responses:
- *       200:
- *         description: Menu tree
- *       404:
- *         description: Not found
- *       500:
- *         description: Server error
- */
-router.get("/menus/:id/children-tree", homepageController.getMenuChildrenTree);
-
-/**
- * @swagger
  * /api/homepage/solutions:
  *   get:
  *     summary: "Get Solutions menu tree (ID: 697c0c9e7d88fcfff27bfb46)"
@@ -171,6 +147,67 @@ router.get("/insights", homepageController.getInsightsMenus);
  *         description: Server error
  */
 router.get("/industry", homepageController.getIndustryMenus);
+
+/**
+ * @swagger
+ * /api/homepage/menu-children-tree/{id}:
+ *   get:
+ *     summary: Get menu children tree by parent menu ID
+ *     description: Returns all child menus for a given parent menu ID
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Parent menu ID
+ *     responses:
+ *       200:
+ *         description: Menu children tree
+ *       404:
+ *         description: Invalid ID format
+ *       500:
+ *         description: Server error
+ */
+router.get("/menu-children-tree/:id", homepageController.getMenuChildrenTree);
+
+/**
+ * @swagger
+ * /api/homepage/detail/{id}:
+ *   get:
+ *     summary: Get detail groups by parent ID
+ *     description: Returns all groups that belong to a specific parent menu, sorted by order
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Parent menu ID
+ *     responses:
+ *       200:
+ *         description: List of detail groups
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       404:
+ *         description: Invalid ID format
+ *       500:
+ *         description: Server error
+ */
+router.get("/detail/:id", homepageController.getDetail);
 
 /**
  * @swagger
