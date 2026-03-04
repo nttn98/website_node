@@ -1,6 +1,21 @@
 const Menu = require("../models/Menu");
 const path = require("path");
 
+function normalizeTags(tagsInput) {
+  if (Array.isArray(tagsInput)) {
+    return tagsInput.map((item) => String(item || "").trim()).filter(Boolean);
+  }
+
+  if (typeof tagsInput === "string") {
+    return tagsInput
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 /* ===== DASHBOARD ===== */
 
 exports.getAllMenus = () => {
@@ -45,6 +60,8 @@ exports.createMenu = async (data) => {
       parentName = parentMenu.title?.en || parentMenu.title || null;
   }
 
+  const tags = normalizeTags(data.tags);
+
   // Handle image path normalization
   let image = "";
   if (typeof data.image === "string" && data.image) {
@@ -82,6 +99,7 @@ exports.createMenu = async (data) => {
     type: data.type || "top",
     isButton: data.isButton === "on",
     image: image,
+    tags,
     isStatus: true,
     isActive: true,
   });
@@ -104,6 +122,10 @@ exports.updateMenu = async (id, data) => {
     type: data.type,
     isButton: data.isButton === "on",
   };
+
+  if (data.tags !== undefined) {
+    update.tags = normalizeTags(data.tags);
+  }
 
   // Handle image path normalization
   if (data.image !== undefined) {

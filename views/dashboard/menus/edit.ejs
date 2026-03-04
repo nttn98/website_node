@@ -62,6 +62,11 @@
       <input type="text" name="route" value="<%= menu.route || '' %>" placeholder="/path-name" />
     </div>
 
+    <div class="form-group-minimal mb-4">
+      <label>Tags</label>
+      <input type="text" name="tags" value="<%= Array.isArray(menu.tags) ? menu.tags.join(', ') : '' %>" placeholder="news, insights, featured" />
+    </div>
+
     <div class="row">
       <div class="col-6">
         <div class="form-group-minimal mb-4">
