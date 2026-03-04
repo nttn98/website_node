@@ -5,9 +5,12 @@ const path = require("path");
 const expressLayouts = require("express-ejs-layouts");
 const compression = require("compression");
 const methodOverride = require("method-override");
+const cors = require("cors");
+
 require("dotenv").config();
 
 const app = express();
+app.use(cors());
 
 /* ===== TRUST PROXY (BẮT BUỘC khi dùng IIS reverse proxy) ===== */
 app.set("trust proxy", 1);
