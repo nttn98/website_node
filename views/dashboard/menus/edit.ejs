@@ -83,6 +83,31 @@
 
   <div class="col-md-5 ps-md-5">
     <div class="form-group-minimal mb-4">
+      <label>Feature Image</label>
+      <div class="custom-file-upload">
+        <input
+          type="file"
+          name="image"
+          id="imageInput"
+          accept="image/*"
+        />
+        <span class="upload-label">Choose image or drag & drop here</span>
+      </div>
+      <% if (menu.image) { %>
+      <div id="imagePreviewList" class="mt-2 d-flex gap-2">
+        <img
+          src="<%= menu.image %>"
+          alt="Current image"
+          class="img-thumbnail"
+          style="max-width: 100px; max-height: 100px;"
+        />
+      </div>
+      <% } else { %>
+      <div id="imagePreviewList" class="mt-2 d-flex gap-2"></div>
+      <% } %>
+    </div>
+
+    <div class="form-group-minimal mb-4">
       <label>Parent Menu</label>
       <select name="parentId" id="parentId">
         <option value="">-- Root Menu --</option>
@@ -190,21 +215,31 @@
 
   parentSelect.addEventListener('change', syncTypeWithParent);
 
-  // 3. SUBMIT FORM QUA API
+  // 3. IMAGE PREVIEW
+  document.getElementById('imageInput').addEventListener('change', function () {
+    const preview = document.getElementById('imagePreviewList');
+    preview.innerHTML = '';
+    if (this.files && this.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = `<img src="${e.target.result}" class="img-thumbnail" style="max-width: 100px; max-height: 100px;">`;
+        preview.insertAdjacentHTML('beforeend', img);
+      };
+      reader.readAsDataURL(this.files[0]);
+    }
+  });
+
+  // 4. SUBMIT FORM QUA API
   document.getElementById('menu-edit-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
     // Thu thập dữ liệu form
     const formData = new FormData(this);
-    const data = Object.fromEntries(formData.entries());
-    
-    // Xử lý riêng cho Checkbox (vì FormData mặc định bỏ qua nếu không check)
-    data.isButton = document.getElementById('isButton').checked;
+    formData.set('isButton', document.getElementById('isButton').checked);
 
     fetch('/api/menus/<%= menu._id %>', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: formData
     })
     .then(res => res.json())
     .then(resp => {

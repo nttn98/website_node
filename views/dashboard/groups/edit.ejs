@@ -178,18 +178,7 @@
             />
             <span class="upload-label">Choose image or drag & drop here</span>
           </div>
-          <% if (Array.isArray(group.images) && group.images.length) { %>
-          <div id="imagePreviewList" class="mt-2 d-flex gap-2">
-            <% group.images.forEach(function(img) { %>
-              <img
-                src="<%= img %>"
-                alt="Current image"
-                class="img-thumbnail"
-                style="max-width: 100px; max-height: 100px;"
-              />
-            <% }) %>
-          </div>
-          <% } else if (group.image) { %>
+          <% if (group.image) { %>
           <div id="imagePreviewList" class="mt-2 d-flex gap-2">
             <img
               src="<%= group.image %>"
@@ -404,11 +393,11 @@
       });
       formData.set('listParents', JSON.stringify(selectedParents));
 
-      // images
-      const imageInput = document.getElementById('imageInput');
-      if (imageInput && imageInput.files.length > 0) {
-        for (let i = 0; i < imageInput.files.length; i++) formData.append('images', imageInput.files[i]);
-      }
+      // image - FormData(form) automatically includes file input, so no need to append again
+      // const imageInput = document.getElementById('imageInput');
+      // if (imageInput && imageInput.files.length > 0) {
+      //   formData.append('image', imageInput.files[0]);
+      // }
 
       // buttons (selected existing ones)
       const buttons = [];

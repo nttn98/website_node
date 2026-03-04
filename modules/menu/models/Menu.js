@@ -34,6 +34,11 @@ const MenuSchema = new mongoose.Schema(
       default: 0,
     },
 
+    image: {
+      type: String,
+      default: "",
+    },
+
     // ===== DISPLAY FLAGS =====
     type: {
       type: String,

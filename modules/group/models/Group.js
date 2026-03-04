@@ -49,13 +49,11 @@ const GroupSchema = new mongoose.Schema(
       },
     ],
 
-    /* ===== IMAGES ===== */
-    images: [
-      {
-        type: String,
-        default: "",
-      },
-    ],
+    /* ===== IMAGE ===== */
+    image: {
+      type: String,
+      default: "",
+    },
 
     listButtons: [
       {

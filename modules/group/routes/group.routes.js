@@ -68,7 +68,7 @@ router.get("/next-order/:menuId", controller.getNextOrder);
  *       201:
  *         description: Tạo thành công
  */
-router.post("/create", upload.array("images"), controller.create);
+router.post("/create", upload.single("image"), controller.create);
 
 /**
  * @swagger
@@ -101,14 +101,7 @@ router.post("/create", upload.array("images"), controller.create);
  *       200:
  *         description: Cập nhật thành công
  */
-router.post(
-  "/:id/update",
-  upload.fields([
-    { name: "image", maxCount: 1 },
-    { name: "images", maxCount: 10 },
-  ]),
-  controller.update
-);
+router.post("/:id/update", upload.single("image"), controller.update);
 
 /**
  * @swagger

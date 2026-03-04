@@ -1,5 +1,6 @@
 const menuService = require("../services/menu.services");
 const groupService = require("../../group/services/group.services");
+const path = require("path");
 
 exports.getAllMenus = async (req, res) => {
   const menus = await menuService.getAllMenus();
@@ -29,6 +30,13 @@ exports.getChildrenTree = async (req, res) => {
 exports.createMenu = async (req, res) => {
   let data = { ...req.body };
   if (!data.parentId) data.parentId = null;
+
+  // Handle image upload
+  if (req.file) {
+    data.image =
+      "/uploads/menus/" + (req.file.filename || path.basename(req.file.path));
+  }
+
   const menu = await menuService.createMenu(data);
   res.status(201).json({ success: true, data: menu });
 };
@@ -36,6 +44,13 @@ exports.createMenu = async (req, res) => {
 exports.updateMenu = async (req, res) => {
   let data = { ...req.body };
   if (!data.parentId) data.parentId = null;
+
+  // Handle image upload
+  if (req.file) {
+    data.image =
+      "/uploads/menus/" + (req.file.filename || path.basename(req.file.path));
+  }
+
   const menu = await menuService.updateMenu(req.params.id, data);
   res.json({ success: true, data: menu });
 };

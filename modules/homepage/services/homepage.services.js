@@ -92,6 +92,21 @@ exports.getMenuParents = () => {
 
 // Get full menu tree for a given parentId
 exports.getMenuChildrenTree = async (parentId) => {
+  const menus = await Menu.find({
+    isActive: true,
+    isStatus: true,
+    parentId: parentId,
+  }).lean();
+
+  return menus
+    .map((g) => ({
+      ...g,
+      route: null,
+    }))
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+};
+
+exports.getDetail = async (parentId) => {
   const groups = await Group.find({ isActive: true, isStatus: true }).lean();
 
   // Filter and map groups that have this parentId in their listParents
@@ -114,7 +129,7 @@ exports.getMenuChildrenTree = async (parentId) => {
         _id: g._id,
         title: g.title,
         subTitle: g.subtitle,
-        images: g.images,
+        image: g.image,
         route: null,
         parentId: parentId,
         parentName: parentEntry?.parentName || "",

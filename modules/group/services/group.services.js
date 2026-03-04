@@ -38,39 +38,31 @@ exports.createGroup = async (data) => {
   } else if (data.parentId && data.parentName) {
     listParents = [{ parentId: data.parentId, parentName: data.parentName }];
   }
-  // images
-  let images = [];
-  if (typeof data.images === "string") {
-    try {
-      images = JSON.parse(data.images);
-    } catch {
-      images = [];
-    }
-  } else if (Array.isArray(data.images)) images = data.images;
-  else if (data.image) images = [data.image];
+  // image
+  let image = "";
+  if (typeof data.image === "string" && data.image) {
+    image = data.image;
+  }
 
-  // Normalize image paths to be relative URLs under /uploads
-  images = (images || [])
-    .map((img) => {
-      if (!img) return null;
-      // Ensure string and normalize slashes
-      if (typeof img !== "string") img = String(img);
-      img = img.replace(/\\/g, "/");
-      // Remove any leading slashes and ../ segments that may have been stored
-      img = img.replace(/^(?:\/+|(?:\.\.\/))+/g, "");
-      // If absolute filesystem path, make it relative to public
-      if (path.isAbsolute(img)) {
-        return (
-          "/" +
-          path
-            .relative(path.join(__dirname, "../../../public"), img)
-            .replace(/\\/g, "/")
-        );
-      }
+  // Normalize image path to be relative URL under /uploads
+  if (image) {
+    // Ensure string and normalize slashes
+    if (typeof image !== "string") image = String(image);
+    image = image.replace(/\\/g, "/");
+    // Remove any leading slashes and ../ segments that may have been stored
+    image = image.replace(/^(?:\/+|(?:\.\.\/))+/g, "");
+    // If absolute filesystem path, make it relative to public
+    if (path.isAbsolute(image)) {
+      image =
+        "/" +
+        path
+          .relative(path.join(__dirname, "../../../public"), image)
+          .replace(/\\/g, "/");
+    } else {
       // Normalize and prefix with single leading slash
-      return "/" + img.replace(/^\/+/, "");
-    })
-    .filter(Boolean);
+      image = "/" + image.replace(/^\/+/, "");
+    }
+  }
 
   // listButtons
   let listButtons = [];
@@ -173,7 +165,7 @@ exports.createGroup = async (data) => {
       vi: data.subtitle_vi || data.subtitle_en,
       zh: data.subtitle_zh || data.subtitle_en,
     },
-    images,
+    image,
     listButtons,
     order: Number(data.order) || 0,
     isStatus: true,
@@ -209,38 +201,28 @@ exports.updateGroup = async (id, data) => {
     listParents = [{ parentId: data.parentId, parentName: data.parentName }];
   }
 
-  // images (only when provided)
-  let images;
-  if (data.images !== undefined) {
-    if (typeof data.images === "string") {
-      try {
-        images = JSON.parse(data.images);
-      } catch {
-        images = [];
-      }
-    } else if (Array.isArray(data.images)) images = data.images;
-    else if (data.image) images = [data.image];
+  // image (only when provided)
+  let image;
+  if (data.image !== undefined) {
+    if (typeof data.image === "string") {
+      image = data.image;
+    }
 
-    // Normalize image paths
-    images = (images || [])
-      .map((img) => {
-        if (!img) return null;
-        if (typeof img !== "string") img = String(img);
-        // Normalize slashes and remove leading slashes and ../ segments
-        img = img.replace(/\\/g, "/");
-        img = img.replace(/^(?:\/+|(?:\.\.\/))+/g, "");
-        if (path.isAbsolute(img)) {
-          return (
-            "/" +
-            path
-              .relative(path.join(__dirname, "../../../public"), img)
-              .replace(/\\/g, "/")
-          );
-        }
+    // Normalize image path
+    if (image) {
+      image = image.replace(/\\/g, "/");
+      image = image.replace(/^(?:\/+|(?:\.\.\/))+/g, "");
+      if (path.isAbsolute(image)) {
+        image =
+          "/" +
+          path
+            .relative(path.join(__dirname, "../../../public"), image)
+            .replace(/\\/g, "/");
+      } else {
         // Normalize and prefix with single leading slash
-        return "/" + img.replace(/^\/+/, "");
-      })
-      .filter(Boolean);
+        image = "/" + image.replace(/^\/+/, "");
+      }
+    }
   }
 
   // listButtons (only when provided)
@@ -358,7 +340,7 @@ exports.updateGroup = async (id, data) => {
     }
   }
   if (listParents !== undefined) updateObj.listParents = listParents;
-  if (images !== undefined) updateObj.images = images;
+  if (image !== undefined) updateObj.image = image;
   if (data.listButtons !== undefined) updateObj.listButtons = listButtons;
 
   return Group.findByIdAndUpdate(id, updateObj, {

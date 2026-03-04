@@ -136,6 +136,11 @@
               : "  "
           }
           ${!isParent ? '<span class="indent-marker">↳</span>' : ""}
+          ${
+            menu.image
+              ? `<img src="${menu.image}" style="width: 45px; height: 34px; object-fit: cover; border-radius: 4px; margin-right: 12px;" />`
+              : ""
+          }
           <div class="menu-text">
             <div class="menu-title">${menu.title?.en || "-"}</div>
             ${

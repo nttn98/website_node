@@ -75,35 +75,15 @@ exports.create = async (req, res) => {
     } else if (Array.isArray(req.body.listParents)) {
       listParents = req.body.listParents;
     }
-    // images
-    let images = [];
-    if (typeof req.body.images === "string") {
-      try {
-        images = JSON.parse(req.body.images);
-      } catch {
-        images = [];
-      }
-    } else if (Array.isArray(req.body.images)) images = req.body.images;
-    // Multer for create uses req.files (array), update uses req.files.images or req.files.image
-    else if (req.files && Array.isArray(req.files) && req.files.length) {
-      images = req.files.map(
-        (f) => "/uploads/groups/" + (f.filename || path.basename(f.path))
-      );
-    } else if (
-      req.files &&
-      req.files.images &&
-      Array.isArray(req.files.images) &&
-      req.files.images.length
-    ) {
-      images = req.files.images.map(
-        (f) => "/uploads/groups/" + (f.filename || path.basename(f.path))
-      );
-    } else if (req.file)
-      images = [
+    // image
+    let image = "";
+    if (typeof req.body.image === "string" && req.body.image) {
+      image = req.body.image;
+    } else if (req.file) {
+      image =
         "/uploads/groups/" +
-          (req.file.filename || path.basename(req.file.path)),
-      ];
-    else if (req.body.image) images = [req.body.image];
+        (req.file.filename || path.basename(req.file.path));
+    }
     // listButtons
     let listButtons = [];
     if (typeof req.body.listButtons === "string") {
@@ -119,7 +99,7 @@ exports.create = async (req, res) => {
     const created = await groupService.createGroup({
       ...req.body,
       listParents,
-      images,
+      image,
       listButtons,
     });
     res.status(201).json({ success: true, group: created });
@@ -167,47 +147,17 @@ exports.update = async (req, res) => {
         { parentId: req.body.parentId, parentName: menu?.title?.en || "" },
       ];
     }
-    // images (only set if provided)
-    let images;
-    if (typeof req.body.images === "string") {
-      try {
-        images = JSON.parse(req.body.images);
-      } catch {
-        images = [];
-      }
-    } else if (Array.isArray(req.body.images)) {
-      images = req.body.images;
-    } else if (
-      req.files &&
-      req.files.images &&
-      Array.isArray(req.files.images) &&
-      req.files.images.length
-    ) {
-      images = req.files.images.map(
-        (f) => "/uploads/groups/" + (f.filename || path.basename(f.path))
-      );
-    } else if (
-      req.files &&
-      req.files.image &&
-      Array.isArray(req.files.image) &&
-      req.files.image.length
-    ) {
-      images = [
+    // image (only set if provided)
+    let image;
+    if (typeof req.body.image === "string" && req.body.image) {
+      image = req.body.image;
+    } else if (req.file) {
+      image =
         "/" +
-          path
-            .relative(
-              path.join(__dirname, "../../../public"),
-              req.files.image[0].path
-            )
-            .replace(/\\/g, "/"),
-      ];
-    } else if (req.file)
-      images = [
-        "/" +
-          path
-            .relative(path.join(__dirname, "../../../public"), req.file.path)
-            .replace(/\\/g, "/"),
-      ];
+        path
+          .relative(path.join(__dirname, "../../../public"), req.file.path)
+          .replace(/\\/g, "/");
+    }
 
     // listButtons (only include if provided)
     let listButtons;
@@ -226,7 +176,7 @@ exports.update = async (req, res) => {
 
     const payload = { ...req.body };
     if (listParents !== undefined) payload.listParents = listParents;
-    if (images !== undefined) payload.images = images;
+    if (image !== undefined) payload.image = image;
     if (listButtons !== undefined) payload.listButtons = listButtons;
 
     const updated = await groupService.updateGroup(req.params.id, payload);

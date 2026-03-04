@@ -1,4 +1,5 @@
 const Menu = require("../models/Menu");
+const path = require("path");
 
 /* ===== DASHBOARD ===== */
 
@@ -43,6 +44,25 @@ exports.createMenu = async (data) => {
     if (parentMenu)
       parentName = parentMenu.title?.en || parentMenu.title || null;
   }
+
+  // Handle image path normalization
+  let image = "";
+  if (typeof data.image === "string" && data.image) {
+    image = data.image;
+    // Normalize image path
+    image = image.replace(/\\/g, "/");
+    image = image.replace(/^(?:\/+|(?:\.\.\/)+)/g, "");
+    if (path.isAbsolute(image)) {
+      image =
+        "/" +
+        path
+          .relative(path.join(__dirname, "../../../public"), image)
+          .replace(/\\/g, "/");
+    } else {
+      image = "/" + image.replace(/^\/+/, "");
+    }
+  }
+
   const menu = await Menu.create({
     title: new Map([
       ["en", data.title_en || data.title || ""],
@@ -61,6 +81,7 @@ exports.createMenu = async (data) => {
     order: Number(data.order) || 0,
     type: data.type || "top",
     isButton: data.isButton === "on",
+    image: image,
     isStatus: true,
     isActive: true,
   });
@@ -74,6 +95,7 @@ exports.updateMenu = async (id, data) => {
     if (parentMenu)
       parentName = parentMenu.title?.en || parentMenu.title || null;
   }
+
   const update = {
     route: data.route || null,
     parentId: data.parentId || null,
@@ -82,6 +104,26 @@ exports.updateMenu = async (id, data) => {
     type: data.type,
     isButton: data.isButton === "on",
   };
+
+  // Handle image path normalization
+  if (data.image !== undefined) {
+    let image = "";
+    if (typeof data.image === "string" && data.image) {
+      image = data.image;
+      image = image.replace(/\\/g, "/");
+      image = image.replace(/^(?:\/+|(?:\.\.\/)+)/g, "");
+      if (path.isAbsolute(image)) {
+        image =
+          "/" +
+          path
+            .relative(path.join(__dirname, "../../../public"), image)
+            .replace(/\\/g, "/");
+      } else {
+        image = "/" + image.replace(/^\/+/, "");
+      }
+    }
+    update.image = image;
+  }
 
   // Multi-language title support
   if (data.title_en) update["title.en"] = data.title_en;

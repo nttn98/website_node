@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/menu.controllers");
+const upload = require("../../../middleware/upload");
 
 /**
  * @swagger
@@ -91,7 +92,7 @@ router.get("/:id/children-tree", controller.getChildrenTree);
  *       302:
  *         description: Redirect sau khi tạo menu
  */
-router.post("/", controller.createMenu);
+router.post("/", upload.single("image"), controller.createMenu);
 
 // ===== PUT =====
 /**
@@ -122,7 +123,7 @@ router.post("/", controller.createMenu);
  *       302:
  *         description: Redirect sau khi cập nhật menu
  */
-router.put("/:id", controller.updateMenu);
+router.put("/:id", upload.single("image"), controller.updateMenu);
 
 // ===== DELETE =====
 /**

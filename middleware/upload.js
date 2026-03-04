@@ -9,8 +9,13 @@ const storage = multer.diskStorage({
     const baseUploads = path.join(__dirname, "../public/uploads");
     // Derive subdir from request path (e.g., 'groups' from '/groups/create')
     const parts = (req.originalUrl || "").split("/").filter(Boolean);
-    const subdir = parts[0] || "others";
+    // If URL starts with 'api', use second part (e.g., '/api/menus' -> 'menus')
+    let subdir = parts[0] || "others";
+    if (subdir === "api" && parts[1]) {
+      subdir = parts[1];
+    }
     const uploadDir = path.join(baseUploads, subdir);
+
     try {
       if (!fs.existsSync(baseUploads))
         fs.mkdirSync(baseUploads, { recursive: true });
