@@ -130,6 +130,7 @@ exports.getDetail = async (parentId) => {
         title: g.title,
         subTitle: g.subtitle,
         image: g.image,
+        content: g.content || null,
         route: g.route || null,
         order: parentEntry?.order || 0,
         type: g.type,
