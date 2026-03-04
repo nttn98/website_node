@@ -114,6 +114,7 @@ exports.getMenuChildrenTree = async (parentId) => {
         _id: g._id,
         title: g.title,
         subTitle: g.subtitle,
+        images: g.images,
         route: null,
         parentId: parentId,
         parentName: parentEntry?.parentName || "",
