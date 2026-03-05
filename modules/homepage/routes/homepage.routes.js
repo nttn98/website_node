@@ -237,12 +237,6 @@ router.get("/detail/:id", homepageController.getDetail);
  *                   email: "john@example.com"
  *                   phone: "+84123456789"
  *                   message: "I need more information"
- *               email:
- *                 type: string
- *                 description: Submitter email
- *               phone:
- *                 type: string
- *                 description: Submitter phone number
  *     responses:
  *       200:
  *         description: Form submission successful

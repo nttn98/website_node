@@ -1,6 +1,7 @@
 const Menu = require("../../menu/models/Menu");
 const Group = require("../../group/models/Group");
 const Social = require("../../social/models/Social");
+const formService = require("../../form/services/form.services");
 
 /* ===== HOMEPAGE API SERVICES ===== */
 
@@ -110,7 +111,7 @@ exports.getDetail = async (parentId) => {
   const groups = await Group.find({ isActive: true, isStatus: true }).lean();
 
   // Filter and map groups that have this parentId in their listParents
-  const filteredGroups = groups
+  let filteredGroups = groups
     .filter((g) => {
       if (g.listParents && Array.isArray(g.listParents)) {
         return g.listParents.some(
@@ -140,6 +141,28 @@ exports.getDetail = async (parentId) => {
       };
     })
     .sort((a, b) => a.order - b.order);
+
+  // Fetch form data for buttons with buttonFormId
+  for (let group of filteredGroups) {
+    if (group.buttons && Array.isArray(group.buttons)) {
+      for (let button of group.buttons) {
+        if (button.buttonFormId) {
+          try {
+            const form = await formService.getFormById(button.buttonFormId);
+            button.form = form;
+          } catch (error) {
+            console.error(
+              `Error fetching form for button ${button.buttonId}:`,
+              error
+            );
+            button.form = null;
+          }
+        } else {
+          button.form = null;
+        }
+      }
+    }
+  }
 
   return filteredGroups;
 };

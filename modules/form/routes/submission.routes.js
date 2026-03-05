@@ -27,12 +27,6 @@ const router = express.Router();
  *               data:
  *                 type: object
  *                 description: Form submission data
- *               email:
- *                 type: string
- *                 description: Submitter email
- *               phone:
- *                 type: string
- *                 description: Submitter phone number
  *     responses:
  *       200:
  *         description: Form submission successful

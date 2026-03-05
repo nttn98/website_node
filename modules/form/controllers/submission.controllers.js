@@ -6,8 +6,6 @@ exports.submit = async (req, res) => {
       formId: req.body.formId || null,
       formType: req.body.formType || req.body.route || "quote",
       data: req.body.data || req.body,
-      email: req.body.email || null,
-      phone: req.body.phone || null,
       ip: req.ip || req.headers["x-forwarded-for"] || null,
       userAgent: req.get("User-Agent") || null,
     };
