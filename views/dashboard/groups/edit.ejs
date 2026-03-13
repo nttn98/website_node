@@ -133,6 +133,7 @@
       <div id="editorBlock" class="d-none">
         <textarea id="editor"><%= group.content || '' %></textarea>
       </div>
+      <div id="localImgWarning" class="mt-2"></div>
     </div>
       </div>
     </div>
@@ -210,6 +211,7 @@
 />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script src="/js/content-img-checker.js"></script>
 
 <script>
   $(document).ready(function () {
@@ -251,10 +253,13 @@
       $html.addClass('d-none');
       $editor.removeClass('d-none');
       if (type === 'editor' && !editor) {
-        ClassicEditor.create(document.getElementById('editor')).then((e) => {
+        ClassicEditor.create(document.getElementById('editor'), {
+          simpleUpload: { uploadUrl: '/api/upload/content-image' }
+        }).then((e) => {
           editor = e;
           editor.model.document.on('change:data', () => {
             $('[name="content"]').val(editor.getData());
+            ContentImgChecker.recheck();
           });
         });
       }
@@ -264,6 +269,20 @@
     });
     // initialize according to current value
     toggleType($('#typeSelect').val() || '-');
+
+    // CONTENT IMAGE CHECKER
+    var _contentTextarea = document.querySelector('[name="content"]');
+    var imgChecker = ContentImgChecker.init({
+      textarea: _contentTextarea,
+      getHtml: function () { return _contentTextarea.value; },
+      setHtml: function (html) {
+        _contentTextarea.value = html;
+        if (editor) editor.setData(html);
+      },
+      warningContainerId: 'localImgWarning'
+    });
+    // Check existing content on load (edit page)
+    imgChecker.recheck();
 
     // PARENT SELECT: initialize Select2 and load grouped options
     const parentSelect = $('#parentIdSelect');

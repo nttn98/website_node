@@ -172,7 +172,7 @@ exports.update = async (req, res) => {
     } else {
       listButtons = undefined; // not provided => do not change
     }
-    console.log("Group update - incoming listButtons:", listButtons);
+    // console.log("Group update - incoming listButtons:", listButtons);
 
     const payload = { ...req.body };
     if (listParents !== undefined) payload.listParents = listParents;

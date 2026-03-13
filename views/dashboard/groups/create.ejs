@@ -67,6 +67,7 @@
       <div id="editorBlock" class="d-none">
         <textarea id="editor"></textarea>
       </div>
+      <div id="localImgWarning" class="mt-2"></div>
     </div>
       </div>
     </div>
@@ -124,6 +125,7 @@
 />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script src="/js/content-img-checker.js"></script>
 
 <script>
   $(document).ready(function () {
@@ -191,17 +193,30 @@
       htmlBlock.classList.add("d-none");
       editorBlock.classList.remove("d-none");
       if (type === "editor" && !editor) {
-        ClassicEditor.create(document.getElementById("editor")).then((e) => {
+        ClassicEditor.create(document.getElementById('editor'), {
+          simpleUpload: { uploadUrl: '/api/upload/content-image' }
+        }).then((e) => {
           editor = e;
           editor.model.document.on("change:data", () => {
-            document.querySelector('[name="content"]').value = editor.getData();
-          });
+            document.querySelector('[name="content"]').value = editor.getData();            ContentImgChecker.recheck();          });
         });
       }
     }
     typeSelect.addEventListener("change", (e) => toggleType(e.target.value));
     // initialize UI according to current value
     toggleType(typeSelect.value || '-');
+
+    // CONTENT IMAGE CHECKER
+    var _contentTextarea = document.querySelector('[name="content"]');
+    ContentImgChecker.init({
+      textarea: _contentTextarea,
+      getHtml: function () { return _contentTextarea.value; },
+      setHtml: function (html) {
+        _contentTextarea.value = html;
+        if (editor) editor.setData(html);
+      },
+      warningContainerId: 'localImgWarning'
+    });
 
     // 5. IMAGE PREVIEW
     document
