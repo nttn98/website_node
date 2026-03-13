@@ -31,6 +31,58 @@ const contentUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
+function resolvePublicBaseUrl(req) {
+  if (process.env.PUBLIC_BASE_URL) {
+    return String(process.env.PUBLIC_BASE_URL).replace(/\/$/, "");
+  }
+
+  const forwardedProto = (req.headers["x-forwarded-proto"] || "")
+    .split(",")[0]
+    .trim();
+  const forwardedHost = (req.headers["x-forwarded-host"] || "")
+    .split(",")[0]
+    .trim();
+  const originalHost = (req.headers["x-original-host"] || "")
+    .split(",")[0]
+    .trim();
+
+  let originHost = "";
+  let originProto = "";
+  const origin = req.headers.origin;
+  if (origin) {
+    try {
+      const u = new URL(origin);
+      originHost = u.host;
+      originProto = u.protocol.replace(":", "");
+    } catch {
+      // ignore invalid origin
+    }
+  }
+
+  // x-arr-ssl is commonly present on IIS/ARR HTTPS requests
+  const proto =
+    forwardedProto ||
+    originProto ||
+    (req.headers["x-arr-ssl"] ? "https" : "") ||
+    req.protocol ||
+    "https";
+
+  let host =
+    forwardedHost ||
+    originalHost ||
+    (req.get("host") || "").split(",")[0].trim();
+
+  // If proxy rewrote host to localhost, prefer browser origin host.
+  if (
+    (!host || host.includes("localhost") || host.startsWith("127.0.0.1")) &&
+    originHost
+  ) {
+    host = originHost;
+  }
+
+  return `${proto}://${host}`.replace(/\/$/, "");
+}
+
 // CKEditor SimpleUploadAdapter sends file as field 'upload'
 // HTML panel also uses field 'upload'
 router.post(
@@ -41,7 +93,8 @@ router.post(
     if (!req.file) {
       return res.status(400).json({ error: { message: "No file uploaded" } });
     }
-    const url = "/uploads/content/" + req.file.filename;
+    const baseUrl = resolvePublicBaseUrl(req);
+    const url = `${baseUrl}/uploads/content/${req.file.filename}`;
     res.json({ url });
   }
 );
