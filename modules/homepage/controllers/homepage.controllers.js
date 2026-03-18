@@ -17,6 +17,9 @@ exports.getHomepageData = async (req, res) => {
       homepageService.getTopMenus(),
       homepageService.getBottomMenus(),
       homepageService.getHeroGroup(),
+      homepageService.getMenuChildrenTree("697c0c9e7d88fcfff27bfb46"),
+      homepageService.getMenuChildrenTree("698aa02d84b05fe995a079a7"),
+      homepageService.getMenuChildrenTree("698191a46ea27a5d8ccbf724"),
       homepageService.getSocials(),
     ]);
 
