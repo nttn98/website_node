@@ -2,6 +2,56 @@
   const container = document.getElementById("social-list");
   if (!container) return;
 
+  let currentPage = 1;
+  let currentLimit = 25;
+  let totalPages = 1;
+  let allItems = [];
+
+  function renderPagination() {
+    const paginationDiv = document.getElementById("social-pagination-controls");
+    if (totalPages <= 1) {
+      paginationDiv.style.display = "none";
+      return;
+    }
+
+    paginationDiv.style.display = "block";
+    let paginationHtml = `<div style="display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap;">`;
+
+    if (currentPage > 1) {
+      paginationHtml += `<button class="pagination-btn" onclick="window.socialGoToPage(1)" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">« First</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="window.socialGoToPage(${
+        currentPage - 1
+      })" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">‹ Prev</button>`;
+    }
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      const isActive = i === currentPage;
+      const btnStyle = isActive
+        ? "background: var(--ui-navy); color: var(--ui-bronze); font-weight: 700;"
+        : "background: #fff; color: #333;";
+      paginationHtml += `<button class="pagination-btn" onclick="window.socialGoToPage(${i})" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; ${btnStyle} cursor: pointer; transition: 0.2s;">${i}</button>`;
+    }
+
+    if (currentPage < totalPages) {
+      paginationHtml += `<button class="pagination-btn" onclick="window.socialGoToPage(${
+        currentPage + 1
+      })" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Next ›</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="window.socialGoToPage(${totalPages})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Last »</button>`;
+    }
+
+    paginationHtml += `<span style="margin-left: 16px; font-size: 0.85rem; color: #666;">Page ${currentPage}/${totalPages}</span>`;
+    paginationHtml += `</div>`;
+    paginationDiv.innerHTML = paginationHtml;
+  }
+
+  window.socialGoToPage = function (page) {
+    currentPage = page;
+    fetchItems();
+  };
+
   function render(items) {
     let html = `<table class="table-clean"><thead><tr><th></th><th>Details</th><th>Order</th><th class="text-center">Status</th><th class="text-end">Actions</th></tr></thead><tbody id="social-list-body">`;
 
@@ -94,19 +144,34 @@
       html += `
       <tr>
         <td colspan="5" class="text-center p-5 text-muted">
-          No social items yet. Click "ADD ITEM" to create your first one.
+          No social items found. Click "ADD ITEM" to create your first one.
         </td>
       </tr>`;
     }
 
     html += "</tbody></table>";
     container.innerHTML = html;
+    renderPagination();
   }
 
   async function fetchItems() {
-    const r = await fetch("/api/socials");
+    const search = document.getElementById("socialSearchInput")?.value || "";
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    params.append("page", currentPage);
+    params.append("limit", currentLimit);
+
+    const r = await fetch(`/api/socials?${params.toString()}`);
     const d = await r.json();
-    return (d && d.items) || [];
+
+    if (d && d.items) {
+      const pagination = d.pagination || {};
+      currentPage = pagination.page || 1;
+      totalPages = pagination.totalPages || 1;
+      render(d.items);
+      return d.items;
+    }
+    return [];
   }
 
   // Sortable support
@@ -292,8 +357,23 @@
 
   // init
   const items = await fetchItems();
-  render(items);
   initSortable();
+
+  // Search and pagination listeners
+  document
+    .getElementById("socialSearchInput")
+    ?.addEventListener("input", () => {
+      currentPage = 1;
+      fetchItems();
+    });
+
+  document
+    .getElementById("socialPageLimitSelect")
+    ?.addEventListener("change", (e) => {
+      currentLimit = parseInt(e.target.value, 10);
+      currentPage = 1;
+      fetchItems();
+    });
 
   // Preload social icons for picker
   loadSocialIcons();

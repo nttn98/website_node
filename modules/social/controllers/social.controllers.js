@@ -8,10 +8,21 @@ const {
 exports.getPublic = async (req, res) => {
   try {
     const params = getPaginationParams(req, {
-      defaultLimit: 20,
+      defaultLimit: 25,
       maxLimit: 100,
     });
-    const items = await socialService.getPublicItems();
+    let items = await socialService.getPublicItems();
+    const searchTerm = (req.query.search || "").trim().toLowerCase();
+
+    // Apply search filter if provided
+    if (searchTerm) {
+      items = items.filter(
+        (item) =>
+          (item.name || "").toLowerCase().includes(searchTerm) ||
+          (item.url || "").toLowerCase().includes(searchTerm)
+      );
+    }
+
     const paged = paginateArray(items, params);
     res.json({
       success: true,

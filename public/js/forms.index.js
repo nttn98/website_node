@@ -3,6 +3,9 @@
   if (!tbody) return;
 
   let groupsCache = [];
+  let currentPage = 1;
+  let currentLimit = 25;
+  let totalPages = 1;
 
   function escHtml(s) {
     if (!s && s !== 0) return "";
@@ -12,13 +15,60 @@
       .replace(/>/g, "&gt;");
   }
 
-  function render(items) {
+  function renderPagination() {
+    const paginationDiv = document.getElementById("form-pagination-controls");
+    if (totalPages <= 1) {
+      paginationDiv.style.display = "none";
+      return;
+    }
+
+    paginationDiv.style.display = "block";
+    let paginationHtml = `<div style="display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap;">`;
+
+    if (currentPage > 1) {
+      paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(1)" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">« First</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(${currentPage - 1})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">‹ Prev</button>`;
+    }
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      const isActive = i === currentPage;
+      const btnStyle = isActive
+        ? "background: var(--ui-navy); color: var(--ui-bronze); font-weight: 700;"
+        : "background: #fff; color: #333;";
+      paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(${i})" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; ${btnStyle} cursor: pointer; transition: 0.2s;">${i}</button>`;
+    }
+
+    if (currentPage < totalPages) {
+      paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(${currentPage + 1})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Next ›</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(${totalPages})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Last »</button>`;
+    }
+
+    paginationHtml += `<span style="margin-left: 16px; font-size: 0.85rem; color: #666;">Page ${currentPage}/${totalPages}</span>`;
+    paginationHtml += `</div>`;
+    paginationDiv.innerHTML = paginationHtml;
+  }
+
+  window.formGoToPage = function(page) {
+    currentPage = page;
+    fetchItems();
+  };
+
+  function render(items, pagination) {
     if (!items || !items.length) {
       tbody.innerHTML = `
         <tr>
           <td colspan="5" class="text-center p-5 text-muted">No forms yet. Click "ADD FORM" to create your first one.</td>
         </tr>`;
+      document.getElementById("form-pagination-controls").style.display = "none";
       return;
+    }
+
+    if (pagination) {
+      currentPage = pagination.page || 1;
+      totalPages = pagination.totalPages || 1;
     }
 
     let rows = "";
@@ -74,12 +124,24 @@
     });
 
     tbody.innerHTML = rows;
+    renderPagination();
   }
 
   async function fetchItems() {
-    const r = await fetch("/forms");
+    const search = document.getElementById("formSearchInput")?.value || "";
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    params.append("page", currentPage);
+    params.append("limit", currentLimit);
+
+    const r = await fetch(`/forms?${params.toString()}`);
     const d = await r.json();
-    return (d && d.forms) || [];
+    
+    if (d && d.forms) {
+      render(d.forms, d.pagination);
+      return d.forms;
+    }
+    return [];
   }
 
   async function fetchGroups() {
@@ -90,7 +152,6 @@
   async function init() {
     groupsCache = await fetchGroups();
     const items = await fetchItems();
-    render(items);
     attachListeners();
   }
 
@@ -121,8 +182,9 @@
           const d = await r.json();
           if (d.success) {
             showToast("Created");
+            currentPage = 1;
             const items = await fetchItems();
-            render(items);
+            attachListeners();
           } else showToast(d.message || "Create failed", true);
         } catch (err) {
           showToast("Create failed", true);
@@ -148,8 +210,9 @@
           const d = await r.json();
           if (d.success) {
             showToast("Deleted");
+            currentPage = 1;
             const items = await fetchItems();
-            render(items);
+            attachListeners();
           } else showToast("Delete failed", true);
         } catch (err) {
           showToast("Delete failed", true);
@@ -171,7 +234,7 @@
           if (d.success) {
             showToast("Status updated");
             const items = await fetchItems();
-            render(items);
+            attachListeners();
           } else showToast("Toggle failed", true);
         } catch (err) {
           showToast("Toggle failed", true);
@@ -197,6 +260,19 @@
     });
   }
 
-  // init
+  // Search and pagination listeners
+  document.getElementById("formSearchInput")?.addEventListener("input", () => {
+    currentPage = 1;
+    fetchItems();
+  });
+
+  document.getElementById("formPageLimitSelect")?.addEventListener("change", (e) => {
+    currentLimit = parseInt(e.target.value, 10);
+    currentPage = 1;
+    fetchItems();
+  });
+
+  init();
+})();
   init();
 })();

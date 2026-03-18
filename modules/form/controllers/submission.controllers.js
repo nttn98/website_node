@@ -100,10 +100,22 @@ exports.submit = async (req, res) => {
 exports.index = async (req, res) => {
   try {
     const params = getPaginationParams(req, {
-      defaultLimit: 50,
+      defaultLimit: 25,
       maxLimit: 500,
     });
-    const submissions = await submissionService.getAllSubmissions();
+    let submissions = await submissionService.getAllSubmissions();
+    const searchTerm = (req.query.search || "").trim().toLowerCase();
+
+    // Apply search filter if provided
+    if (searchTerm) {
+      submissions = submissions.filter(
+        (sub) =>
+          (sub.formType || "").toLowerCase().includes(searchTerm) ||
+          (sub.email || "").toLowerCase().includes(searchTerm) ||
+          (sub.phone || "").toLowerCase().includes(searchTerm)
+      );
+    }
+
     const paged = paginateArray(submissions, params);
     res.json({
       success: true,

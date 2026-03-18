@@ -17,6 +17,63 @@
   </a>
 </div>
 
+<div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+  <div
+    class="search-wrap flex-grow-1"
+    style="max-width: 340px; position: relative"
+  >
+    <i
+      class="bi bi-search"
+      style="
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 0.9rem;
+      "
+    ></i>
+    <input
+      id="formSearchInput"
+      type="search"
+      placeholder="Search by title..."
+      class="search-input"
+      style="
+        width: 100%;
+        padding: 10px 16px 10px 36px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        outline: none;
+      "
+    />
+  </div>
+  <div class="limit-wrap d-flex align-items-center gap-2">
+    <label
+      for="formPageLimitSelect"
+      style="font-size: 0.85rem; color: #666; margin: 0"
+    >
+      Show:
+    </label>
+    <select
+      id="formPageLimitSelect"
+      class="form-select-minimal"
+      style="
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        outline: none;
+      "
+    >
+      <option value="10">10</option>
+      <option value="25" selected>25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+  </div>
+</div>
+
 <div class="table-container-minimal">
   <table class="table-clean">
     <thead>
@@ -31,6 +88,12 @@
     <tbody id="form-list-body"></tbody>
   </table>
 </div>
+
+<div
+  id="form-pagination-controls"
+  class="pagination-controls mt-4"
+  style="display: none; text-align: center"
+></div>
 
 <!-- form renderer (preview modal) -->
 <script src="/js/form.renderer.js"></script>

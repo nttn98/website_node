@@ -6,8 +6,20 @@ const {
 } = require("../../../utils/pagination");
 
 exports.index = async (req, res) => {
-  const params = getPaginationParams(req, { defaultLimit: 50, maxLimit: 300 });
-  const buttons = await buttonService.getAllButtons();
+  const params = getPaginationParams(req, { defaultLimit: 25, maxLimit: 300 });
+  let buttons = await buttonService.getAllButtons();
+  const searchTerm = (req.query.search || "").trim().toLowerCase();
+
+  // Apply search filter if provided
+  if (searchTerm) {
+    buttons = buttons.filter(
+      (btn) =>
+        (btn.title?.en || "").toLowerCase().includes(searchTerm) ||
+        (btn.title?.vi || "").toLowerCase().includes(searchTerm) ||
+        (btn.route || "").toLowerCase().includes(searchTerm)
+    );
+  }
+
   const paged = paginateArray(buttons, params);
   res.json({ buttons: paged.items, pagination: paged.pagination });
 };

@@ -6,8 +6,20 @@ const {
 } = require("../../../utils/pagination");
 
 exports.index = async (req, res) => {
-  const params = getPaginationParams(req, { defaultLimit: 30, maxLimit: 300 });
-  const forms = await formService.getAllForms();
+  const params = getPaginationParams(req, { defaultLimit: 25, maxLimit: 300 });
+  let forms = await formService.getAllForms();
+  const searchTerm = (req.query.search || "").trim().toLowerCase();
+
+  // Apply search filter if provided
+  if (searchTerm) {
+    forms = forms.filter(
+      (form) =>
+        (form.title?.en || "").toLowerCase().includes(searchTerm) ||
+        (form.title?.vi || "").toLowerCase().includes(searchTerm) ||
+        (form.route || "").toLowerCase().includes(searchTerm)
+    );
+  }
+
   // Resolve parentName for display (do not store it on form documents)
   const resolved = await Promise.all(
     (forms || []).map(async (f) => {

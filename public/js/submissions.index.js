@@ -2,6 +2,57 @@
   const container = document.getElementById("submission-list");
   if (!container) return;
 
+  let currentPage = 1;
+  let currentLimit = 25;
+  let totalPages = 1;
+
+  function renderPagination() {
+    const paginationDiv = document.getElementById(
+      "submission-pagination-controls"
+    );
+    if (totalPages <= 1) {
+      paginationDiv.style.display = "none";
+      return;
+    }
+
+    paginationDiv.style.display = "block";
+    let paginationHtml = `<div style="display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap;">`;
+
+    if (currentPage > 1) {
+      paginationHtml += `<button class="pagination-btn" onclick="window.submissionGoToPage(1)" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">« First</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="window.submissionGoToPage(${
+        currentPage - 1
+      })" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">‹ Prev</button>`;
+    }
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      const isActive = i === currentPage;
+      const btnStyle = isActive
+        ? "background: var(--ui-navy); color: var(--ui-bronze); font-weight: 700;"
+        : "background: #fff; color: #333;";
+      paginationHtml += `<button class="pagination-btn" onclick="window.submissionGoToPage(${i})" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; ${btnStyle} cursor: pointer; transition: 0.2s;">${i}</button>`;
+    }
+
+    if (currentPage < totalPages) {
+      paginationHtml += `<button class="pagination-btn" onclick="window.submissionGoToPage(${
+        currentPage + 1
+      })" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Next ›</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="window.submissionGoToPage(${totalPages})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Last »</button>`;
+    }
+
+    paginationHtml += `<span style="margin-left: 16px; font-size: 0.85rem; color: #666;">Page ${currentPage}/${totalPages}</span>`;
+    paginationHtml += `</div>`;
+    paginationDiv.innerHTML = paginationHtml;
+  }
+
+  window.submissionGoToPage = function (page) {
+    currentPage = page;
+    fetchItems();
+  };
+
   function escapeHtml(s) {
     if (!s && s !== 0) return "";
     return String(s)
@@ -68,21 +119,37 @@
         </tr>`;
       });
     } else {
-      html += `<tr><td colspan="6" class="text-center p-5 text-muted">No submissions yet</td></tr>`;
+      html += `<tr><td colspan="6" class="text-center p-5 text-muted">No submissions found</td></tr>`;
     }
     html += "</tbody></table>";
     container.innerHTML = html;
+    renderPagination();
   }
 
   async function fetchItems() {
     try {
-      const r = await fetch("/api/forms/submissions");
+      const search =
+        document.getElementById("submissionSearchInput")?.value || "";
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      params.append("page", currentPage);
+      params.append("limit", currentLimit);
+
+      const r = await fetch(`/api/forms/submissions?${params.toString()}`);
       const d = await r.json();
       if (d.success === false) {
         showToast(d.message || "Failed to load submissions", true);
         return [];
       }
-      return (d && d.submissions) || [];
+
+      if (d && d.submissions) {
+        const pagination = d.pagination || {};
+        currentPage = pagination.page || 1;
+        totalPages = pagination.totalPages || 1;
+        render(d.submissions);
+        return d.submissions;
+      }
+      return [];
     } catch (err) {
       showToast("Failed to load submissions", true);
       return [];
@@ -219,7 +286,22 @@
   });
 
   const items = await fetchItems();
-  render(items);
+
+  // Search and pagination listeners
+  document
+    .getElementById("submissionSearchInput")
+    ?.addEventListener("input", () => {
+      currentPage = 1;
+      fetchItems();
+    });
+
+  document
+    .getElementById("submissionPageLimitSelect")
+    ?.addEventListener("change", (e) => {
+      currentLimit = parseInt(e.target.value, 10);
+      currentPage = 1;
+      fetchItems();
+    });
 
   // Export CSV
   const exportBtn = document.getElementById("export-csv");

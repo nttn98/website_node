@@ -14,6 +14,63 @@
   </div>
 </div>
 
+<div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+  <div
+    class="search-wrap flex-grow-1"
+    style="max-width: 340px; position: relative"
+  >
+    <i
+      class="bi bi-search"
+      style="
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 0.9rem;
+      "
+    ></i>
+    <input
+      id="buttonSearchInput"
+      type="search"
+      placeholder="Search by title..."
+      class="search-input"
+      style="
+        width: 100%;
+        padding: 10px 16px 10px 36px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        outline: none;
+      "
+    />
+  </div>
+  <div class="limit-wrap d-flex align-items-center gap-2">
+    <label
+      for="buttonPageLimitSelect"
+      style="font-size: 0.85rem; color: #666; margin: 0"
+    >
+      Show:
+    </label>
+    <select
+      id="buttonPageLimitSelect"
+      class="form-select-minimal"
+      style="
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        outline: none;
+      "
+    >
+      <option value="10">10</option>
+      <option value="25" selected>25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+  </div>
+</div>
+
 <div class="table-container-minimal">
   <table class="table-clean">
     <thead>
@@ -28,12 +85,87 @@
   </table>
 </div>
 
+<div
+  id="button-pagination-controls"
+  class="pagination-controls mt-4"
+  style="display: none; text-align: center"
+></div>
+
 <script>
+  let currentPage = 1;
+  let currentLimit = 25;
+  let totalPages = 1;
+  let totalItems = 0;
+
+  function renderPagination() {
+    const paginationDiv = document.getElementById("button-pagination-controls");
+    if (totalPages <= 1) {
+      paginationDiv.style.display = "none";
+      return;
+    }
+
+    paginationDiv.style.display = "block";
+    let paginationHtml = `<div style="display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap;">`;
+
+    if (currentPage > 1) {
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(1)" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">« First</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(${
+        currentPage - 1
+      })" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">‹ Prev</button>`;
+    }
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      const isActive = i === currentPage;
+      const btnStyle = isActive
+        ? "background: var(--ui-navy); color: var(--ui-bronze); font-weight: 700;"
+        : "background: #fff; color: #333;";
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(${i})" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; ${btnStyle} cursor: pointer; transition: 0.2s;">${i}</button>`;
+    }
+
+    if (currentPage < totalPages) {
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(${
+        currentPage + 1
+      })" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Next ›</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(${totalPages})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Last »</button>`;
+    }
+
+    paginationHtml += `<span style="margin-left: 16px; font-size: 0.85rem; color: #666;">Page ${currentPage}/${totalPages}</span>`;
+    paginationHtml += `</div>`;
+    paginationDiv.innerHTML = paginationHtml;
+  }
+
+  function goToPage(page) {
+    currentPage = page;
+    fetchButtons();
+  }
+
   async function fetchButtons() {
-    const res = await fetch("/buttons");
+    const search = document.getElementById("buttonSearchInput")?.value || "";
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    params.append("page", currentPage);
+    params.append("limit", currentLimit);
+
+    const res = await fetch(`/buttons?${params.toString()}`);
     const data = await res.json();
     const tbody = document.getElementById("button-list-body");
+
+    if (!data.buttons || !data.buttons.length) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center p-5 text-muted">No buttons found.</td></tr>`;
+      document.getElementById("button-pagination-controls").style.display =
+        "none";
+      return;
+    }
+
     tbody.innerHTML = "";
+    const pagination = data.pagination || {};
+    currentPage = pagination.page || 1;
+    totalPages = pagination.totalPages || 1;
+    totalItems = pagination.total || 0;
+
     (data.buttons || []).forEach((b) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
@@ -72,11 +204,14 @@
       `;
       tbody.appendChild(tr);
     });
+
+    renderPagination();
   }
 
   async function deleteButton(id) {
     if (!confirm("Delete this button?")) return;
     await fetch("/buttons/" + id, { method: "DELETE" });
+    currentPage = 1;
     fetchButtons();
   }
 
@@ -84,6 +219,21 @@
     await fetch(`/buttons/${id}/toggle`, { method: "POST" });
     fetchButtons();
   }
+
+  document
+    .getElementById("buttonSearchInput")
+    ?.addEventListener("input", () => {
+      currentPage = 1;
+      fetchButtons();
+    });
+
+  document
+    .getElementById("buttonPageLimitSelect")
+    ?.addEventListener("change", (e) => {
+      currentLimit = parseInt(e.target.value, 10);
+      currentPage = 1;
+      fetchButtons();
+    });
 
   fetchButtons();
 </script>
