@@ -6,7 +6,7 @@ const {
 } = require("../../../utils/pagination");
 
 exports.index = async (req, res) => {
-  const params = getPaginationParams(req, { defaultLimit: 25, maxLimit: 300 });
+  const params = getPaginationParams(req, { defaultLimit: 5, maxLimit: 300 });
   let buttons = await buttonService.getAllButtons();
   const searchTerm = (req.query.search || "").trim().toLowerCase();
 

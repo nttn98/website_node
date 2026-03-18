@@ -8,7 +8,7 @@ const {
 exports.getPublic = async (req, res) => {
   try {
     const params = getPaginationParams(req, {
-      defaultLimit: 25,
+      defaultLimit: 5,
       maxLimit: 100,
     });
     let items = await socialService.getPublicItems();

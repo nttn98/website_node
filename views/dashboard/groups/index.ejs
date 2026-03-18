@@ -74,10 +74,10 @@
         outline: none;
       "
     >
+      <option value="5" selected>5</option>
       <option value="10">10</option>
-      <option value="25" selected>25</option>
+      <option value="25">25</option>
       <option value="50">50</option>
-      <option value="100">100</option>
     </select>
   </div>
 </div>
@@ -93,14 +93,14 @@
 <script>
   const currentMenuId = <%- JSON.stringify(currentMenuId || '') %>;
   let currentPage = 1;
-  let currentLimit = 25;
+  let currentLimit = 5;
   let totalPages = 1;
 
   function renderGroups(groupsData) {
     const listContainer = document.getElementById("group-list");
     const { groups, pagination } = groupsData;
     const page = pagination?.page || 1;
-    const limit = pagination?.limit || 25;
+    const limit = pagination?.limit || 5;
     const total = pagination?.total || 0;
     currentPage = page;
     currentLimit = limit;

@@ -3,7 +3,7 @@
   if (!container) return;
 
   let currentPage = 1;
-  let currentLimit = 25;
+  let currentLimit = 5;
   let totalPages = 1;
 
   function renderPagination() {

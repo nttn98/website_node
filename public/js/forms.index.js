@@ -4,7 +4,7 @@
 
   let groupsCache = [];
   let currentPage = 1;
-  let currentLimit = 25;
+  let currentLimit = 5;
   let totalPages = 1;
 
   function escHtml(s) {
@@ -27,7 +27,9 @@
 
     if (currentPage > 1) {
       paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(1)" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">« First</button>`;
-      paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(${currentPage - 1})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">‹ Prev</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(${
+        currentPage - 1
+      })" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">‹ Prev</button>`;
     }
 
     const startPage = Math.max(1, currentPage - 2);
@@ -42,7 +44,9 @@
     }
 
     if (currentPage < totalPages) {
-      paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(${currentPage + 1})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Next ›</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(${
+        currentPage + 1
+      })" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Next ›</button>`;
       paginationHtml += `<button class="pagination-btn" onclick="window.formGoToPage(${totalPages})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Last »</button>`;
     }
 
@@ -51,7 +55,7 @@
     paginationDiv.innerHTML = paginationHtml;
   }
 
-  window.formGoToPage = function(page) {
+  window.formGoToPage = function (page) {
     currentPage = page;
     fetchItems();
   };
@@ -62,7 +66,8 @@
         <tr>
           <td colspan="5" class="text-center p-5 text-muted">No forms yet. Click "ADD FORM" to create your first one.</td>
         </tr>`;
-      document.getElementById("form-pagination-controls").style.display = "none";
+      document.getElementById("form-pagination-controls").style.display =
+        "none";
       return;
     }
 
@@ -136,7 +141,7 @@
 
     const r = await fetch(`/forms?${params.toString()}`);
     const d = await r.json();
-    
+
     if (d && d.forms) {
       render(d.forms, d.pagination);
       return d.forms;
@@ -266,13 +271,13 @@
     fetchItems();
   });
 
-  document.getElementById("formPageLimitSelect")?.addEventListener("change", (e) => {
-    currentLimit = parseInt(e.target.value, 10);
-    currentPage = 1;
-    fetchItems();
-  });
+  document
+    .getElementById("formPageLimitSelect")
+    ?.addEventListener("change", (e) => {
+      currentLimit = parseInt(e.target.value, 10);
+      currentPage = 1;
+      fetchItems();
+    });
 
-  init();
-})();
   init();
 })();

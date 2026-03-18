@@ -14,7 +14,7 @@ exports.toggleStatus = async (req, res) => {
 
 /* ===== LIST ===== */
 exports.index = async (req, res) => {
-  const params = getPaginationParams(req, { defaultLimit: 25, maxLimit: 300 });
+  const params = getPaginationParams(req, { defaultLimit: 5, maxLimit: 300 });
   let groups = await groupService.getAllGroupsSorted();
   const menuId = req.query.menuId || req.params.menuId;
   const searchTerm = (req.query.search || "").trim().toLowerCase();

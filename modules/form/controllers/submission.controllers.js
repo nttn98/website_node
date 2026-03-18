@@ -100,7 +100,7 @@ exports.submit = async (req, res) => {
 exports.index = async (req, res) => {
   try {
     const params = getPaginationParams(req, {
-      defaultLimit: 25,
+      defaultLimit: 5,
       maxLimit: 500,
     });
     let submissions = await submissionService.getAllSubmissions();
