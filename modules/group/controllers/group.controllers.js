@@ -1,7 +1,10 @@
 const menuService = require("../../menu/services/menu.services");
 const groupService = require("../services/group.services");
 const path = require("path");
-const { removeUnusedContentImages } = require("../../../utils/content-images");
+const {
+  removeUnusedContentImages,
+  validateContentImageSources,
+} = require("../../../utils/content-images");
 const {
   getPaginationParams,
   paginateArray,
@@ -86,6 +89,22 @@ exports.createForm = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
+    const contentForValidation = String(req.body.content || "");
+    const contentImageCheck = validateContentImageSources(
+      contentForValidation,
+      {
+        allowedHosts: [req.get("host")],
+      }
+    );
+    if (!contentImageCheck.isValid) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Content contains image source(s) not hosted on this server. Please upload & replace before saving.",
+        invalidImageSources: contentImageCheck.invalidSources,
+      });
+    }
+
     // Chỉ lấy listParents từ form (không cần menuId)
     let listParents = [];
     if (typeof req.body.listParents === "string") {
@@ -149,6 +168,22 @@ exports.editForm = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
+    const contentForValidation = String(req.body.content || "");
+    const contentImageCheck = validateContentImageSources(
+      contentForValidation,
+      {
+        allowedHosts: [req.get("host")],
+      }
+    );
+    if (!contentImageCheck.isValid) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Content contains image source(s) not hosted on this server. Please upload & replace before updating.",
+        invalidImageSources: contentImageCheck.invalidSources,
+      });
+    }
+
     const previousGroup = await groupService.getGroupById(req.params.id);
 
     // listParents (only set if provided)

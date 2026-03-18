@@ -14,16 +14,64 @@
     return true;
   }
 
-  /** Extract all local <img src="..."> values from an HTML string */
-  function extractLocalImgs(html) {
+  /** Returns true if the image src is considered hosted on this server */
+  function isServerHostedSrc(src) {
+    var value = String(src || "").trim();
+    if (!value) return false;
+
+    // Inline data URLs are not stored on server.
+    if (/^data:/i.test(value)) return false;
+
+    // Relative non-root paths are not trusted (e.g. ../assets/foo.svg)
+    if (/^(\.\.\/|\.\/)/.test(value)) return false;
+
+    // Root-relative paths served by this app are trusted.
+    if (/^\//.test(value)) {
+      return /^\/(uploads|assets)\//i.test(value);
+    }
+
+    // Absolute URLs: only trust same-host images under /uploads or /assets.
+    if (/^https?:\/\//i.test(value)) {
+      try {
+        var u = new URL(value);
+        var sameHost =
+          u.hostname === window.location.hostname &&
+          (u.port || "") === (window.location.port || "");
+        return sameHost && /^\/(uploads|assets)\//i.test(u.pathname || "");
+      } catch {
+        return false;
+      }
+    }
+
+    // Protocol-relative URLs are treated as external/untrusted.
+    if (/^\/\//.test(value)) return false;
+
+    // Any other format is considered non-server.
+    return false;
+  }
+
+  /** Extract all unique <img src="..."> values from an HTML string */
+  function extractImgs(html) {
     const found = [];
     const re = /<img[^>]+src=["']([^"']+)["']/gi;
     let m;
     while ((m = re.exec(html)) !== null) {
-      const src = m[1];
-      if (isLocalSrc(src) && !found.includes(src)) found.push(src);
+      const src = String(m[1] || "").trim();
+      if (!src) continue;
+      if (found.some((x) => x.src === src)) continue;
+      found.push({ src: src, isLocal: isLocalSrc(src) });
     }
     return found;
+  }
+
+  function extractUnresolvedServerImgs(html) {
+    return extractImgs(html)
+      .map(function (x) {
+        return x.src;
+      })
+      .filter(function (src) {
+        return !isServerHostedSrc(src);
+      });
   }
 
   var _activeCheck = null;
@@ -47,11 +95,42 @@
 
     function check() {
       var html = opts.getHtml() || "";
-      var locals = extractLocalImgs(html);
-      render(container, locals, opts.getHtml, opts.setHtml, check);
+      var images = extractImgs(html);
+      render(container, images, opts.getHtml, opts.setHtml, check);
     }
 
     _activeCheck = check;
+
+    // Block create/update when content still contains non-server images.
+    var formEl =
+      opts.form ||
+      (opts.textarea && opts.textarea.closest && opts.textarea.closest("form"));
+    if (formEl && opts.blockSubmit !== false) {
+      formEl.addEventListener(
+        "submit",
+        function (ev) {
+          var html = opts.getHtml ? opts.getHtml() || "" : "";
+          var unresolved = extractUnresolvedServerImgs(html);
+          if (!unresolved.length) return;
+
+          ev.preventDefault();
+          if (typeof ev.stopImmediatePropagation === "function") {
+            ev.stopImmediatePropagation();
+          }
+          if (typeof ev.stopPropagation === "function") {
+            ev.stopPropagation();
+          }
+          check();
+          if (typeof window.showToast === "function") {
+            window.showToast(
+              "Please upload and replace all non-server images before save/update",
+              true
+            );
+          }
+        },
+        true
+      );
+    }
 
     if (opts.textarea) {
       opts.textarea.addEventListener("input", check);
@@ -60,35 +139,67 @@
       });
     }
 
-    return { recheck: check };
+    return {
+      recheck: check,
+      getUnresolvedServerImages: function () {
+        return extractUnresolvedServerImgs(opts.getHtml ? opts.getHtml() : "");
+      },
+    };
   }
 
-  function render(container, localSrcs, getHtml, setHtml, recheck) {
+  function render(container, images, getHtml, setHtml, recheck) {
     container.innerHTML = "";
-    if (!localSrcs.length) return;
+    if (!images.length) return;
 
-    var plural = localSrcs.length > 1 ? "s" : "";
+    var localCount = images.filter(function (x) {
+      return x.isLocal;
+    }).length;
+    var plural = images.length > 1 ? "s" : "";
     var header = document.createElement("div");
     header.className = "alert alert-warning py-2 px-3 mb-2";
     header.innerHTML =
-      "<strong>&#9888; " +
-      localSrcs.length +
-      " local image" +
+      "<strong>&#128247; " +
+      images.length +
+      " image" +
       plural +
-      " detected</strong>" +
-      " &mdash; These paths only exist on your machine and will be broken on the server." +
-      " Upload each image to replace the path automatically.";
+      " found in content</strong>" +
+      " &mdash; Upload to server to replace source quickly." +
+      (localCount
+        ? " <br><small>" +
+          localCount +
+          " local path(s) may break on production if not uploaded.</small>"
+        : "");
     container.appendChild(header);
 
-    localSrcs.forEach(function (src) {
+    images.forEach(function (img) {
+      var src = img.src;
       var row = document.createElement("div");
       row.className =
         "d-flex align-items-start gap-2 mt-2 flex-wrap border rounded p-2 bg-white";
+
+      var preview = document.createElement("img");
+      preview.alt = "Content image preview";
+      preview.style.width = "80px";
+      preview.style.height = "56px";
+      preview.style.objectFit = "cover";
+      preview.style.borderRadius = "4px";
+      preview.style.border = "1px solid #e9ecef";
+      preview.style.background = "#f8f9fa";
+      if (/^(https?:\/\/|\/|\/\/|data:)/i.test(src)) {
+        preview.src = src;
+      } else {
+        preview.style.display = "none";
+      }
 
       var label = document.createElement("code");
       label.className = "small text-danger w-100 mb-1";
       label.style.wordBreak = "break-all";
       label.textContent = src;
+
+      var typeBadge = document.createElement("span");
+      typeBadge.className =
+        "badge " + (img.isLocal ? "bg-danger" : "bg-secondary");
+      typeBadge.textContent = img.isLocal ? "Local path" : "Current source";
 
       var controls = document.createElement("div");
       controls.className = "d-flex align-items-center gap-2 flex-wrap w-100";
@@ -157,6 +268,8 @@
       controls.appendChild(fileInput);
       controls.appendChild(btn);
       controls.appendChild(status);
+      row.appendChild(preview);
+      row.appendChild(typeBadge);
       row.appendChild(label);
       row.appendChild(controls);
       container.appendChild(row);

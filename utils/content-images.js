@@ -73,6 +73,69 @@ async function removeUnusedContentImages(previousHtml, nextHtml) {
   );
 }
 
+function extractImageSources(html) {
+  const source = String(html || "");
+  if (!source) return [];
+
+  const result = [];
+  const re = /<img[^>]+src=["']([^"']+)["']/gi;
+  let match;
+  while ((match = re.exec(source)) !== null) {
+    const src = String(match[1] || "").trim();
+    if (!src) continue;
+    if (!result.includes(src)) result.push(src);
+  }
+  return result;
+}
+
+function isServerContentImageSource(src, allowedHosts) {
+  const value = String(src || "").trim();
+  if (!value) return false;
+
+  if (/^data:/i.test(value)) return false;
+  if (/^(\.\.\/|\.\/)/.test(value)) return false;
+
+  if (/^\//.test(value)) {
+    return /^\/(uploads|assets)\//i.test(value);
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const u = new URL(value);
+      const host = (u.host || "").toLowerCase();
+      const okHost = allowedHosts.includes(host);
+      const okPath = /^\/(uploads|assets)\//i.test(u.pathname || "");
+      return okHost && okPath;
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+function validateContentImageSources(html, options = {}) {
+  const allowedHosts = (options.allowedHosts || [])
+    .map((h) =>
+      String(h || "")
+        .trim()
+        .toLowerCase()
+    )
+    .filter(Boolean);
+
+  const sources = extractImageSources(html);
+  const invalidSources = sources.filter(
+    (src) => !isServerContentImageSource(src, allowedHosts)
+  );
+
+  return {
+    isValid: invalidSources.length === 0,
+    invalidSources,
+    allSources: sources,
+  };
+}
+
 module.exports = {
   removeUnusedContentImages,
+  validateContentImageSources,
 };
