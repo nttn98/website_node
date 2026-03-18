@@ -2,6 +2,10 @@ const menuService = require("../../menu/services/menu.services");
 const groupService = require("../services/group.services");
 const path = require("path");
 const { removeUnusedContentImages } = require("../../../utils/content-images");
+const {
+  getPaginationParams,
+  paginateArray,
+} = require("../../../utils/pagination");
 
 exports.toggleStatus = async (req, res) => {
   const group = await groupService.toggleStatus(req.params.id);
@@ -10,6 +14,7 @@ exports.toggleStatus = async (req, res) => {
 
 /* ===== LIST ===== */
 exports.index = async (req, res) => {
+  const params = getPaginationParams(req, { defaultLimit: 30, maxLimit: 300 });
   const groups = await groupService.getAllGroupsSorted();
   const menuId = req.query.menuId || req.params.menuId;
   if (menuId) {
@@ -29,9 +34,11 @@ exports.index = async (req, res) => {
         b.listParents.find((p) => p.parentId.toString() === menuId)?.order || 0;
       return aOrder - bOrder;
     });
-    return res.json({ groups: filteredGroups });
+    const paged = paginateArray(filteredGroups, params);
+    return res.json({ groups: paged.items, pagination: paged.pagination });
   }
-  res.json({ groups });
+  const paged = paginateArray(groups, params);
+  res.json({ groups: paged.items, pagination: paged.pagination });
 };
 
 /* ===== GET NEXT ORDER ===== */
@@ -237,12 +244,19 @@ exports.updateOrders = async (req, res) => {
 
 exports.showGroupByMenu = async (req, res) => {
   const menuId = req.params.menuId;
+  const params = getPaginationParams(req, { defaultLimit: 30, maxLimit: 300 });
   // Nếu menuId không phải ObjectId hợp lệ thì trả về 404
   if (!/^[a-fA-F0-9]{24}$/.test(menuId)) {
     return res.status(404).send("Not found");
   }
   const groups = await groupService.getGroupsByParent(menuId);
-  res.json({ success: true, menuId, groups });
+  const paged = paginateArray(groups, params);
+  res.json({
+    success: true,
+    menuId,
+    groups: paged.items,
+    pagination: paged.pagination,
+  });
 };
 
 exports.getById = async (req, res) => {

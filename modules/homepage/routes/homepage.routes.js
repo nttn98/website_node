@@ -12,6 +12,15 @@ const homepageController = require("../controllers/homepage.controllers");
  *     description: Returns all homepage data including menus, hero group, and socials. Optimized for single API call.
  *     tags:
  *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: menuLimit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 8
+ *         description: Max number of items returned for solutionsMenus/industryMenus/insightsMenus
  *     responses:
  *       200:
  *         description: All homepage data
@@ -28,6 +37,23 @@ router.get("/", homepageController.getHomepageData);
  *     description: Returns root menus without parentId for top navigation bar
  *     tags:
  *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: List of top menus
@@ -44,6 +70,23 @@ router.get("/top-menus", homepageController.getTopMenus);
  *     description: Returns menus for footer navigation
  *     tags:
  *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 30
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: List of bottom menus
@@ -76,6 +119,23 @@ router.get("/hero", homepageController.getHeroGroup);
  *     description: Returns active social media links for homepage footer
  *     tags:
  *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: List of social media links
@@ -92,6 +152,23 @@ router.get("/socials", homepageController.getSocials);
  *     description: Returns menus with parentId null
  *     tags:
  *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: List of root menus
@@ -108,6 +185,23 @@ router.get("/menu-parents", homepageController.getMenuParents);
  *     description: Returns the menu tree for Solutions section
  *     tags:
  *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: Solutions menu tree
@@ -124,6 +218,23 @@ router.get("/solutions", homepageController.getSolutionsMenus);
  *     description: Returns the menu tree for Insights section
  *     tags:
  *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: Insights menu tree
@@ -140,6 +251,23 @@ router.get("/insights", homepageController.getInsightsMenus);
  *     description: Returns the menu tree for Industry section
  *     tags:
  *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: Industry menu tree
@@ -163,6 +291,22 @@ router.get("/industry", homepageController.getIndustryMenus);
  *         schema:
  *           type: string
  *         description: Parent menu ID
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: Menu children tree
@@ -188,6 +332,22 @@ router.get("/menu-children-tree/:id", homepageController.getMenuChildrenTree);
  *         schema:
  *           type: string
  *         description: Parent menu ID
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: List of detail groups

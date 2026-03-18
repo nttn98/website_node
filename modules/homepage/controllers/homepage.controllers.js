@@ -1,10 +1,19 @@
 const homepageService = require("../services/homepage.services");
+const {
+  getPaginationParams,
+  paginateArray,
+} = require("../../../utils/pagination");
 
 /* ===== HOMEPAGE API CONTROLLERS ===== */
 
 // Get all homepage data in one call
 exports.getHomepageData = async (req, res) => {
   try {
+    const menuLimitParams = getPaginationParams(
+      { query: { page: 1, limit: req.query.menuLimit } },
+      { defaultLimit: 8, maxLimit: 50, force: true }
+    );
+
     const [
       topMenus,
       bottomMenus,
@@ -23,16 +32,26 @@ exports.getHomepageData = async (req, res) => {
       homepageService.getSocials(),
     ]);
 
+    const solutions = paginateArray(solutionsMenus, menuLimitParams);
+    const industry = paginateArray(industryMenus, menuLimitParams);
+    const insights = paginateArray(insightsMenus, menuLimitParams);
+
     res.json({
       success: true,
       data: {
         topMenus,
         bottomMenus,
         heroGroup,
-        solutionsMenus,
-        industryMenus,
-        insightsMenus,
+        solutionsMenus: solutions.items,
+        industryMenus: industry.items,
+        insightsMenus: insights.items,
         socials,
+      },
+      pagination: {
+        menuLimit: menuLimitParams.limit,
+        solutionsMenus: solutions.pagination,
+        industryMenus: industry.pagination,
+        insightsMenus: insights.pagination,
       },
     });
   } catch (error) {
@@ -47,10 +66,16 @@ exports.getHomepageData = async (req, res) => {
 // Get top menus only
 exports.getTopMenus = async (req, res) => {
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 20,
+      maxLimit: 100,
+    });
     const menus = await homepageService.getTopMenus();
+    const paged = paginateArray(menus, params);
     res.json({
       success: true,
-      data: menus,
+      data: paged.items,
+      pagination: paged.pagination,
     });
   } catch (error) {
     console.error("Error fetching top menus:", error);
@@ -64,10 +89,16 @@ exports.getTopMenus = async (req, res) => {
 // Get bottom menus only
 exports.getBottomMenus = async (req, res) => {
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 30,
+      maxLimit: 200,
+    });
     const menus = await homepageService.getBottomMenus();
+    const paged = paginateArray(menus, params);
     res.json({
       success: true,
-      data: menus,
+      data: paged.items,
+      pagination: paged.pagination,
     });
   } catch (error) {
     console.error("Error fetching bottom menus:", error);
@@ -98,12 +129,18 @@ exports.getHeroGroup = async (req, res) => {
 // Get Solutions menus (ID: 697c0c9e7d88fcfff27bfb46)
 exports.getSolutionsMenus = async (req, res) => {
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
     const menus = await homepageService.getMenuChildrenTree(
       "697c0c9e7d88fcfff27bfb46"
     );
+    const paged = paginateArray(menus, params);
     res.json({
       success: true,
-      data: menus,
+      data: paged.items,
+      pagination: paged.pagination,
     });
   } catch (error) {
     console.error("Error fetching solutions menus:", error);
@@ -117,12 +154,18 @@ exports.getSolutionsMenus = async (req, res) => {
 // Get Industry menus (ID: 698aa02d84b05fe995a079a7)
 exports.getIndustryMenus = async (req, res) => {
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
     const menus = await homepageService.getMenuChildrenTree(
       "698aa02d84b05fe995a079a7"
     );
+    const paged = paginateArray(menus, params);
     res.json({
       success: true,
-      data: menus,
+      data: paged.items,
+      pagination: paged.pagination,
     });
   } catch (error) {
     console.error("Error fetching industry menus:", error);
@@ -136,12 +179,18 @@ exports.getIndustryMenus = async (req, res) => {
 // Get Insights menus (ID: 698191a46ea27a5d8ccbf724)
 exports.getInsightsMenus = async (req, res) => {
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
     const menus = await homepageService.getMenuChildrenTree(
       "698191a46ea27a5d8ccbf724"
     );
+    const paged = paginateArray(menus, params);
     res.json({
       success: true,
-      data: menus,
+      data: paged.items,
+      pagination: paged.pagination,
     });
   } catch (error) {
     console.error("Error fetching insights menus:", error);
@@ -155,10 +204,16 @@ exports.getInsightsMenus = async (req, res) => {
 // Get socials
 exports.getSocials = async (req, res) => {
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 20,
+      maxLimit: 100,
+    });
     const socials = await homepageService.getSocials();
+    const paged = paginateArray(socials, params);
     res.json({
       success: true,
-      data: socials,
+      data: paged.items,
+      pagination: paged.pagination,
     });
   } catch (error) {
     console.error("Error fetching socials:", error);
@@ -172,10 +227,16 @@ exports.getSocials = async (req, res) => {
 // Get root menu parents
 exports.getMenuParents = async (req, res) => {
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 20,
+      maxLimit: 100,
+    });
     const menus = await homepageService.getMenuParents();
+    const paged = paginateArray(menus, params);
     res.json({
       success: true,
-      data: menus,
+      data: paged.items,
+      pagination: paged.pagination,
     });
   } catch (error) {
     console.error("Error fetching menu parents:", error);
@@ -193,10 +254,16 @@ exports.getMenuChildrenTree = async (req, res) => {
     return res.status(404).json({ success: false, message: "Not found" });
   }
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 20,
+      maxLimit: 200,
+    });
     const menus = await homepageService.getMenuChildrenTree(parentId);
+    const paged = paginateArray(menus, params);
     res.json({
       success: true,
-      data: menus,
+      data: paged.items,
+      pagination: paged.pagination,
     });
   } catch (error) {
     console.error("Error fetching menu children tree:", error);
@@ -216,10 +283,16 @@ exports.getDetail = async (req, res) => {
       .json({ success: false, message: "Invalid ID format" });
   }
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 20,
+      maxLimit: 200,
+    });
     const groups = await homepageService.getDetail(parentId);
+    const paged = paginateArray(groups, params);
     res.json({
       success: true,
-      data: groups,
+      data: paged.items,
+      pagination: paged.pagination,
     });
   } catch (error) {
     console.error("Error fetching detail groups:", error);

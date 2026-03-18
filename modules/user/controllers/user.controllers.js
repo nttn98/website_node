@@ -1,4 +1,8 @@
 const userService = require("../services/user.services");
+const {
+  getPaginationParams,
+  paginateArray,
+} = require("../../../utils/pagination");
 
 // Đăng nhập
 exports.login = async (req, res) => {
@@ -26,12 +30,10 @@ exports.login = async (req, res) => {
         req.headers.accept.indexOf("application/json") !== -1) ||
       req.is("application/json");
     if (wantsJSON) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: err.message || "Authentication failed",
-        });
+      return res.status(401).json({
+        success: false,
+        message: err.message || "Authentication failed",
+      });
     }
 
     res.render("user/login", {
@@ -57,8 +59,10 @@ exports.logout = (req, res) => {
 
 // Lấy tất cả user
 exports.getAllUsers = async (req, res) => {
+  const params = getPaginationParams(req, { defaultLimit: 30, maxLimit: 300 });
   const users = await userService.getAllUsers();
-  res.json({ success: true, data: users });
+  const paged = paginateArray(users, params);
+  res.json({ success: true, data: paged.items, pagination: paged.pagination });
 };
 
 // Lấy 1 user theo id

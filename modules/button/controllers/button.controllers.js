@@ -1,9 +1,15 @@
 const buttonService = require("../services/button.services");
 const formService = require("../../form/services/form.services");
+const {
+  getPaginationParams,
+  paginateArray,
+} = require("../../../utils/pagination");
 
 exports.index = async (req, res) => {
+  const params = getPaginationParams(req, { defaultLimit: 50, maxLimit: 300 });
   const buttons = await buttonService.getAllButtons();
-  res.json({ buttons });
+  const paged = paginateArray(buttons, params);
+  res.json({ buttons: paged.items, pagination: paged.pagination });
 };
 
 exports.createForm = async (req, res) => {

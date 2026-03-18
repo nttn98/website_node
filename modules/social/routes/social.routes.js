@@ -10,6 +10,23 @@ const { requireLogin } = require("../../../middleware/auth");
  *     summary: Lấy danh sách social công khai
  *     tags:
  *       - Social
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 20
+ *         description: Số phần tử mỗi trang
  *     responses:
  *       200:
  *         description: Danh sách social items

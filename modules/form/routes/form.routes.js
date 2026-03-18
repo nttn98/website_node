@@ -10,6 +10,23 @@ const router = express.Router();
  *     summary: Get all forms (admin view)
  *     tags:
  *       - Forms
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 30
+ *         description: Items per page
  *     responses:
  *       200:
  *         description: List of all forms

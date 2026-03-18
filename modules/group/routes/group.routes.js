@@ -11,6 +11,23 @@ const router = express.Router();
  *     summary: Lấy danh sách group
  *     tags:
  *       - Group
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 30
+ *         description: Số phần tử mỗi trang
  *     responses:
  *       200:
  *         description: Danh sách group
@@ -153,6 +170,22 @@ router.post("/:id/toggle", controller.toggleStatus);
  *         schema:
  *           type: string
  *         description: ID của menu
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 30
+ *         description: Số phần tử mỗi trang
  *     tags:
  *       - Group
  *     responses:

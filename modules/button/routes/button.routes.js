@@ -13,6 +13,23 @@ const router = express.Router();
  *     description: Returns all active buttons with populated form data
  *     tags:
  *       - Buttons
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 50
+ *         description: Items per page
  *     responses:
  *       200:
  *         description: List of all buttons

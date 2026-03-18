@@ -1,10 +1,23 @@
 const socialService = require("../services/social.services");
 const menuService = require("../../menu/services/menu.services");
+const {
+  getPaginationParams,
+  paginateArray,
+} = require("../../../utils/pagination");
 
 exports.getPublic = async (req, res) => {
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 20,
+      maxLimit: 100,
+    });
     const items = await socialService.getPublicItems();
-    res.json({ success: true, items });
+    const paged = paginateArray(items, params);
+    res.json({
+      success: true,
+      items: paged.items,
+      pagination: paged.pagination,
+    });
   } catch (err) {
     console.error("Get social items failed", err);
     res

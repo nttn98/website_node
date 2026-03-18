@@ -1,4 +1,8 @@
 const submissionService = require("../services/submission.services");
+const {
+  getPaginationParams,
+  paginateArray,
+} = require("../../../utils/pagination");
 
 exports.submit = async (req, res) => {
   try {
@@ -95,8 +99,17 @@ exports.submit = async (req, res) => {
 
 exports.index = async (req, res) => {
   try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 50,
+      maxLimit: 500,
+    });
     const submissions = await submissionService.getAllSubmissions();
-    res.json({ success: true, submissions });
+    const paged = paginateArray(submissions, params);
+    res.json({
+      success: true,
+      submissions: paged.items,
+      pagination: paged.pagination,
+    });
   } catch (err) {
     console.error("Failed to get submissions", err);
     res

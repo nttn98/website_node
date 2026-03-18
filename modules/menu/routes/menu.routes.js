@@ -10,6 +10,23 @@ const upload = require("../../../middleware/upload");
  *     summary: Lấy danh sách menu
  *     tags:
  *       - Menu
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 50
+ *         description: Số phần tử mỗi trang
  *     responses:
  *       200:
  *         description: Danh sách menu
@@ -21,6 +38,23 @@ const upload = require("../../../middleware/upload");
  * /api/menus:
  *   get:
  *     summary: Lấy danh sách menu
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 50
+ *         description: Số phần tử mỗi trang
  *     responses:
  *       200:
  *         description: Danh sách menu
@@ -40,6 +74,22 @@ router.get("/", controller.getAllMenus);
  *         schema:
  *           type: string
  *         description: ID của menu
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 50
+ *         description: Số phần tử mỗi trang
  *     tags:
  *       - Menu
  *     responses:
@@ -61,6 +111,22 @@ router.get("/:id/children", controller.getChildren);
  *         schema:
  *           type: string
  *         description: ID của menu
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Trang hiện tại
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 50
+ *         description: Số phần tử mỗi trang
  *     tags:
  *       - Menu
  *     responses:

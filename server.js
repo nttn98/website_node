@@ -10,7 +10,6 @@ const cors = require("cors");
 const Menu = require("./modules/menu/models/Menu");
 const Group = require("./modules/group/models/Group");
 const Button = require("./modules/button/models/Button");
-const Detail = require("./modules/detail/models/Detail");
 const Form = require("./modules/form/models/Form");
 
 require("dotenv").config();
@@ -131,7 +130,6 @@ app.use("/api/menus", require("./modules/menu/routes/menu.routes"));
 app.use("/api/homepage", require("./modules/homepage/routes/homepage.routes"));
 app.use("/dashboard", require("./modules/dashboard/routes/dashboard.routes"));
 app.use("/groups", require("./modules/group/routes/group.routes"));
-app.use("/details", require("./modules/detail/routes/detail.routes"));
 app.use("/buttons", require("./modules/button/routes/button.routes"));
 app.use("/forms", require("./modules/form/routes/form.routes"));
 app.use("/api/forms", require("./modules/form/routes/submission.routes"));

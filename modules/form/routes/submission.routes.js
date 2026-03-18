@@ -44,6 +44,23 @@ router.post("/submit", controller.submit);
  *     summary: Get all form submissions (admin)
  *     tags:
  *       - Forms
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 50
+ *         description: Items per page
  *     responses:
  *       200:
  *         description: List of all form submissions

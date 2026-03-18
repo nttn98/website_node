@@ -1,10 +1,16 @@
 const menuService = require("../services/menu.services");
 const groupService = require("../../group/services/group.services");
 const path = require("path");
+const {
+  getPaginationParams,
+  paginateArray,
+} = require("../../../utils/pagination");
 
 exports.getAllMenus = async (req, res) => {
+  const params = getPaginationParams(req, { defaultLimit: 50, maxLimit: 300 });
   const menus = await menuService.getAllMenus();
-  res.json({ success: true, data: menus });
+  const paged = paginateArray(menus, params);
+  res.json({ success: true, data: paged.items, pagination: paged.pagination });
 };
 
 // Get child menus by parent menu id
@@ -13,8 +19,10 @@ exports.getChildren = async (req, res) => {
   if (!/^[a-fA-F0-9]{24}$/.test(parentId)) {
     return res.status(404).json({ success: false, message: "Not found" });
   }
+  const params = getPaginationParams(req, { defaultLimit: 50, maxLimit: 300 });
   const children = await menuService.getMenuChildren(parentId);
-  res.json({ success: true, data: children });
+  const paged = paginateArray(children, params);
+  res.json({ success: true, data: paged.items, pagination: paged.pagination });
 };
 
 // Get full child tree by parent menu id
@@ -23,8 +31,10 @@ exports.getChildrenTree = async (req, res) => {
   if (!/^[a-fA-F0-9]{24}$/.test(parentId)) {
     return res.status(404).json({ success: false, message: "Not found" });
   }
+  const params = getPaginationParams(req, { defaultLimit: 50, maxLimit: 300 });
   const children = await menuService.getMenuChildrenTree(parentId);
-  res.json({ success: true, data: children });
+  const paged = paginateArray(children, params);
+  res.json({ success: true, data: paged.items, pagination: paged.pagination });
 };
 
 exports.createMenu = async (req, res) => {

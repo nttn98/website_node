@@ -1,7 +1,12 @@
 const formService = require("../services/form.services");
 const groupService = require("../../group/services/group.services");
+const {
+  getPaginationParams,
+  paginateArray,
+} = require("../../../utils/pagination");
 
 exports.index = async (req, res) => {
+  const params = getPaginationParams(req, { defaultLimit: 30, maxLimit: 300 });
   const forms = await formService.getAllForms();
   // Resolve parentName for display (do not store it on form documents)
   const resolved = await Promise.all(
@@ -15,7 +20,8 @@ exports.index = async (req, res) => {
       return f;
     })
   );
-  res.json({ forms: resolved });
+  const paged = paginateArray(resolved, params);
+  res.json({ forms: paged.items, pagination: paged.pagination });
 };
 
 exports.createForm = async (req, res) => {
