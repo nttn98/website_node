@@ -3,18 +3,57 @@ const path = require("path");
 const fs = require("fs");
 const fsp = fs.promises;
 
+function getUploadSubdir(req) {
+  const parts = (req.originalUrl || "").split("/").filter(Boolean);
+  let subdir = parts[0] || "others";
+  if (subdir === "api" && parts[1]) {
+    subdir = parts[1];
+  }
+  return String(subdir || "others").toLowerCase();
+}
+
+function normalizePublicImagePath(value) {
+  let input = String(value || "")
+    .trim()
+    .replace(/\\/g, "/");
+
+  // Accept full URL values and keep only the pathname part.
+  if (/^https?:\/\//i.test(input)) {
+    try {
+      input = new URL(input).pathname || "";
+    } catch {
+      input = "";
+    }
+  }
+
+  // Drop query/hash if present.
+  input = input.split("?")[0].split("#")[0];
+
+  if (!input) return "";
+  if (input.startsWith("/")) return input;
+  return `/${input}`;
+}
+
+function resolvePublicFilePath(publicRelativePath) {
+  const publicRoot = path.resolve(__dirname, "../public");
+  const relative = String(publicRelativePath || "").replace(/^\/+/, "");
+  const absolute = path.resolve(publicRoot, relative);
+
+  // Prevent deleting outside public root.
+  if (absolute !== publicRoot && !absolute.startsWith(publicRoot + path.sep)) {
+    return null;
+  }
+
+  return absolute;
+}
+
 // Set storage engine
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     // Base uploads dir
     const baseUploads = path.join(__dirname, "../public/uploads");
     // Derive subdir from request path (e.g., 'groups' from '/groups/create')
-    const parts = (req.originalUrl || "").split("/").filter(Boolean);
-    // If URL starts with 'api', use second part (e.g., '/api/menus' -> 'menus')
-    let subdir = parts[0] || "others";
-    if (subdir === "api" && parts[1]) {
-      subdir = parts[1];
-    }
+    const subdir = getUploadSubdir(req);
     const uploadDir = path.join(baseUploads, subdir);
 
     fsp
@@ -23,9 +62,10 @@ const storage = multer.diskStorage({
       .catch((err) => cb(err));
   },
   filename: function (req, file, cb) {
-    // Use title_en and id for filename if available
+    // Use title if available; otherwise fallback to current module name.
     let ext = path.extname(file.originalname);
-    let title = (req.body.title_en || "group")
+    const subdir = getUploadSubdir(req);
+    let title = (req.body.title_en || req.body.title || subdir)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
@@ -37,20 +77,27 @@ const storage = multer.diskStorage({
     let filename = `${
       (parentName && parentName + "-") || ""
     }${title}-${id}${ext}`;
+    const newRelativePath = `/uploads/${subdir}/${filename}`;
+    const oldImage = normalizePublicImagePath(req.body.oldImage);
 
-    const finalize = () => cb(null, filename);
-
-    // If editing, remove old file if exists
+    // Remove old image only when a replacement file is being uploaded.
     if (
-      req.method === "POST" &&
-      req.originalUrl.includes("update") &&
-      req.body.oldImage
+      oldImage &&
+      oldImage !== newRelativePath &&
+      oldImage.startsWith("/uploads/")
     ) {
-      const oldPath = path.join(__dirname, "../public", req.body.oldImage);
-      return fsp.unlink(oldPath).then(finalize).catch(finalize);
+      const oldPath = resolvePublicFilePath(oldImage);
+      if (!oldPath) {
+        return cb(null, filename);
+      }
+
+      return fsp.unlink(oldPath).then(
+        () => cb(null, filename),
+        () => cb(null, filename)
+      );
     }
 
-    finalize();
+    cb(null, filename);
   },
 });
 

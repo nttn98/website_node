@@ -1,6 +1,7 @@
 const menuService = require("../../menu/services/menu.services");
 const groupService = require("../services/group.services");
 const path = require("path");
+const { removeUnusedContentImages } = require("../../../utils/content-images");
 
 exports.toggleStatus = async (req, res) => {
   const group = await groupService.toggleStatus(req.params.id);
@@ -127,6 +128,8 @@ exports.editForm = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
+    const previousGroup = await groupService.getGroupById(req.params.id);
+
     // listParents (only set if provided)
     let listParents;
     if (typeof req.body.listParents === "string") {
@@ -180,6 +183,11 @@ exports.update = async (req, res) => {
     if (listButtons !== undefined) payload.listButtons = listButtons;
 
     const updated = await groupService.updateGroup(req.params.id, payload);
+
+    if (previousGroup && typeof payload.content === "string") {
+      await removeUnusedContentImages(previousGroup.content, updated?.content);
+    }
+
     res.json({ success: true, group: updated });
   } catch (err) {
     console.error("Group update failed", err);

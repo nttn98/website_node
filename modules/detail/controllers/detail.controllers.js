@@ -1,6 +1,7 @@
 const detailService = require("../services/detail.services");
 const groupService = require("../../group/services/group.services");
 const menuService = require("../../menu/services/menu.services");
+const { removeUnusedContentImages } = require("../../../utils/content-images");
 
 exports.index = async (req, res) => {
   const details = await detailService.getAllArticles();
@@ -30,7 +31,13 @@ exports.editForm = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
+  const previousDetail = await detailService.getArticleById(req.params.id);
   const updated = await detailService.updateArticle(req.params.id, req.body);
+
+  if (previousDetail && typeof req.body.content === "string") {
+    await removeUnusedContentImages(previousDetail.content, updated?.content);
+  }
+
   res.json({ success: true, data: updated });
 };
 
