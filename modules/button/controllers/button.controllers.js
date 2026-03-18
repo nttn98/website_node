@@ -1,5 +1,4 @@
 const buttonService = require("../services/button.services");
-const groupService = require("../../group/services/group.services");
 const formService = require("../../form/services/form.services");
 
 exports.index = async (req, res) => {
@@ -8,9 +7,7 @@ exports.index = async (req, res) => {
 };
 
 exports.createForm = async (req, res) => {
-  const groups = await groupService.getAllGroupsSorted();
   const forms = await formService.getAllForms();
-  res.locals.groups = groups;
   res.locals.forms = forms;
   res.render("dashboard/buttons/create");
 };
@@ -34,10 +31,10 @@ exports.create = async (req, res) => {
 };
 
 exports.editForm = async (req, res) => {
-  const button = await buttonService.getButtonById(req.params.id);
-  const groups = await groupService.getAllGroupsSorted();
-  const forms = await formService.getAllForms();
-  res.locals.groups = groups;
+  const [button, forms] = await Promise.all([
+    buttonService.getButtonById(req.params.id),
+    formService.getAllForms(),
+  ]);
   res.locals.forms = forms;
   res.render("dashboard/buttons/edit", { button });
 };

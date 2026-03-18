@@ -1,6 +1,7 @@
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const fsp = fs.promises;
 
 // Set storage engine
 const storage = multer.diskStorage({
@@ -16,15 +17,10 @@ const storage = multer.diskStorage({
     }
     const uploadDir = path.join(baseUploads, subdir);
 
-    try {
-      if (!fs.existsSync(baseUploads))
-        fs.mkdirSync(baseUploads, { recursive: true });
-      if (!fs.existsSync(uploadDir))
-        fs.mkdirSync(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    } catch (err) {
-      cb(err);
-    }
+    fsp
+      .mkdir(uploadDir, { recursive: true })
+      .then(() => cb(null, uploadDir))
+      .catch((err) => cb(err));
   },
   filename: function (req, file, cb) {
     // Use title_en and id for filename if available
@@ -41,6 +37,9 @@ const storage = multer.diskStorage({
     let filename = `${
       (parentName && parentName + "-") || ""
     }${title}-${id}${ext}`;
+
+    const finalize = () => cb(null, filename);
+
     // If editing, remove old file if exists
     if (
       req.method === "POST" &&
@@ -48,11 +47,10 @@ const storage = multer.diskStorage({
       req.body.oldImage
     ) {
       const oldPath = path.join(__dirname, "../public", req.body.oldImage);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
+      return fsp.unlink(oldPath).then(finalize).catch(finalize);
     }
-    cb(null, filename);
+
+    finalize();
   },
 });
 

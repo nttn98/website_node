@@ -7,10 +7,17 @@ const compression = require("compression");
 const methodOverride = require("method-override");
 const cors = require("cors");
 
+const Menu = require("./modules/menu/models/Menu");
+const Group = require("./modules/group/models/Group");
+const Button = require("./modules/button/models/Button");
+const Detail = require("./modules/detail/models/Detail");
+const Form = require("./modules/form/models/Form");
+
 require("dotenv").config();
 
 const app = express();
 app.use(cors());
+app.disable("etag");
 
 /* ===== TRUST PROXY (BẮT BUỘC khi dùng IIS reverse proxy) ===== */
 app.set("trust proxy", 1);
@@ -33,7 +40,19 @@ mongoose
   .connect(process.env.MONGO_URI, {
     autoIndex: false,
   })
-  .then(() => console.log("✅ MongoDB connected"))
+  .then(async () => {
+    console.log("✅ MongoDB connected");
+    if (process.env.SYNC_INDEXES === "true") {
+      await Promise.all([
+        Menu.syncIndexes(),
+        Group.syncIndexes(),
+        Button.syncIndexes(),
+        Detail.syncIndexes(),
+        Form.syncIndexes(),
+      ]);
+      console.log("✅ MongoDB indexes synchronized");
+    }
+  })
   .catch((err) => {
     console.error("❌ MongoDB error:", err);
     process.exit(1);
@@ -70,6 +89,35 @@ app.use(expressLayouts);
 app.set("layout", "layouts/dashboard");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+app.set("view cache", false);
+
+const dynamicPrefixes = [
+  "/dashboard",
+  "/groups",
+  "/details",
+  "/buttons",
+  "/forms",
+  "/api",
+  "/user",
+];
+
+app.use((req, res, next) => {
+  const isDynamicPath = dynamicPrefixes.some(
+    (prefix) => req.path === prefix || req.path.startsWith(`${prefix}/`)
+  );
+
+  if (isDynamicPath) {
+    res.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    );
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+    res.set("Surrogate-Control", "no-store");
+  }
+
+  next();
+});
 
 /* ===== STATIC FILES ===== */
 app.use(express.static(path.join(__dirname, "public")));

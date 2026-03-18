@@ -1,5 +1,4 @@
 const Button = require("../models/Button");
-const Group = require("../../group/models/Group");
 const Form = require("../../form/models/Form");
 
 exports.getAllButtons = () => {
@@ -82,8 +81,12 @@ exports.updateButton = async (id, data) => {
   if (data.title_vi) update["title.vi"] = data.title_vi;
   if (data.title_zh) update["title.zh"] = data.title_zh;
 
-  await Button.findByIdAndUpdate(id, update);
-  return Button.findById(id).populate("form.id", "_id title shortName").lean();
+  return Button.findByIdAndUpdate(id, update, {
+    returnDocument: "after",
+    runValidators: true,
+  })
+    .populate("form.id", "_id title shortName")
+    .lean();
 };
 
 exports.deleteButton = async (id) => {

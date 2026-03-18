@@ -1,6 +1,10 @@
 const Menu = require("../models/Menu");
 const path = require("path");
 
+function invalidateMenuCache() {
+  // No-op: menu list cache has been removed.
+}
+
 function normalizeTags(tagsInput) {
   if (Array.isArray(tagsInput)) {
     return tagsInput.map((item) => String(item || "").trim()).filter(Boolean);
@@ -21,6 +25,12 @@ function normalizeTags(tagsInput) {
 exports.getAllMenus = () => {
   return Menu.find({ isActive: true }).sort({ order: 1 }).lean();
 };
+
+exports.getAllMenusCached = async () => {
+  return exports.getAllMenus();
+};
+
+exports.invalidateMenuCache = invalidateMenuCache;
 
 exports.getMenuChildren = (parentId) => {
   return Menu.find({ parentId, isActive: true }).sort({ order: 1 }).lean();
@@ -103,6 +113,7 @@ exports.createMenu = async (data) => {
     isStatus: true,
     isActive: true,
   });
+  invalidateMenuCache();
   return menu.toObject();
 };
 
@@ -157,8 +168,12 @@ exports.updateMenu = async (id, data) => {
   if (data.subtitle_vi !== undefined) update["subTitle.vi"] = data.subtitle_vi;
   if (data.subtitle_zh !== undefined) update["subTitle.zh"] = data.subtitle_zh;
 
-  await Menu.findByIdAndUpdate(id, update);
-  return Menu.findById(id).lean();
+  const updated = await Menu.findByIdAndUpdate(id, update, {
+    returnDocument: "after",
+    runValidators: true,
+  }).lean();
+  invalidateMenuCache();
+  return updated;
 };
 
 exports.deleteMenu = async (id) => {
@@ -166,6 +181,7 @@ exports.deleteMenu = async (id) => {
     isActive: false,
     isStatus: false,
   });
+  invalidateMenuCache();
   return { success: true };
 };
 
@@ -173,5 +189,6 @@ exports.toggleMenu = async (id) => {
   const menu = await Menu.findById(id);
   menu.isStatus = !menu.isStatus;
   await menu.save();
+  invalidateMenuCache();
   return { success: true, isStatus: menu.isStatus };
 };

@@ -169,8 +169,10 @@ exports.updateForm = async (id, data) => {
     update.fields = fields;
   }
 
-  await FormModel.findByIdAndUpdate(id, update);
-  return FormModel.findById(id).lean();
+  return FormModel.findByIdAndUpdate(id, update, {
+    returnDocument: "after",
+    runValidators: true,
+  }).lean();
 };
 
 exports.deleteForm = async (id) => {

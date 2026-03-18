@@ -61,4 +61,7 @@ const FormSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+FormSchema.index({ isActive: 1, createdAt: -1 });
+FormSchema.index({ shortName: 1 });
+
 module.exports = mongoose.model("Form", FormSchema);

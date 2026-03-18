@@ -43,12 +43,11 @@ exports.updateArticle = async (id, data) => {
   if (data.subtitle_en) update["subtitle.en"] = data.subtitle_en;
   if (data.subtitle_vi) update["subtitle.vi"] = data.subtitle_vi;
   if (data.subtitle_zh) update["subtitle.zh"] = data.subtitle_zh;
-  await Detail.findByIdAndUpdate(
+  return Detail.findByIdAndUpdate(
     id,
     { $set: update },
     { returnDocument: "after", runValidators: true }
-  );
-  return Detail.findById(id).lean();
+  ).lean();
 };
 
 exports.deleteArticle = (id) => {

@@ -73,4 +73,7 @@ const MenuSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+MenuSchema.index({ isActive: 1, order: 1 });
+MenuSchema.index({ parentId: 1, isActive: 1, order: 1 });
+
 module.exports = mongoose.model("Menu", MenuSchema);

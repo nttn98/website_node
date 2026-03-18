@@ -72,4 +72,8 @@ const DetailSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+DetailSchema.index({ isActive: 1, createdAt: -1 });
+DetailSchema.index({ parentId: 1, isActive: 1 });
+DetailSchema.index({ subParentId: 1, isActive: 1 });
+
 module.exports = mongoose.model("Detail", DetailSchema);

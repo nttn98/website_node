@@ -77,12 +77,14 @@
           <span class="badge-minimal">${group.type}</span>
         </td>
         <td>
-          ${
-            (group.listParents || [])
-              .map(
-                (p) => `<span class="badge-minimal me-1">${p.parentName}</span>`
-              )
-          }
+          <div style="max-width: 400px">
+            ${
+              (group.listParents || [])
+                .map(
+                  (p) => `<span class="badge-minimal me-1">${p.parentName}</span>`
+                )
+            }
+          </div>
         </td>
         ${
           currentMenuId

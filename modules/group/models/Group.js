@@ -98,4 +98,8 @@ const GroupSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+GroupSchema.index({ isActive: 1, createdAt: -1 });
+GroupSchema.index({ "listParents.parentId": 1, isActive: 1 });
+GroupSchema.index({ isActive: 1, isStatus: 1 });
+
 module.exports = mongoose.model("Group", GroupSchema);

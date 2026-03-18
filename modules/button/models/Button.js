@@ -46,4 +46,7 @@ const ButtonSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+ButtonSchema.index({ isActive: 1, createdAt: -1 });
+ButtonSchema.index({ isActive: 1, isStatus: 1 });
+
 module.exports = mongoose.model("Button", ButtonSchema);
