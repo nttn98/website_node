@@ -14,9 +14,12 @@ exports.toggleStatus = async (req, res) => {
 
 /* ===== LIST ===== */
 exports.index = async (req, res) => {
-  const params = getPaginationParams(req, { defaultLimit: 30, maxLimit: 300 });
-  const groups = await groupService.getAllGroupsSorted();
+  const params = getPaginationParams(req, { defaultLimit: 25, maxLimit: 300 });
+  let groups = await groupService.getAllGroupsSorted();
   const menuId = req.query.menuId || req.params.menuId;
+  const searchTerm = (req.query.search || "").trim().toLowerCase();
+
+  // Apply menuId filter if provided
   if (menuId) {
     // Filter groups that have the menuId in listParents
     const filteredGroups = groups.filter(
@@ -34,9 +37,20 @@ exports.index = async (req, res) => {
         b.listParents.find((p) => p.parentId.toString() === menuId)?.order || 0;
       return aOrder - bOrder;
     });
-    const paged = paginateArray(filteredGroups, params);
-    return res.json({ groups: paged.items, pagination: paged.pagination });
+    groups = filteredGroups;
   }
+
+  // Apply search filter if provided
+  if (searchTerm) {
+    groups = groups.filter(
+      (group) =>
+        (group.title?.en || "").toLowerCase().includes(searchTerm) ||
+        (group.subtitle?.en || "").toLowerCase().includes(searchTerm) ||
+        (group.title?.vi || "").toLowerCase().includes(searchTerm) ||
+        (group.subtitle?.vi || "").toLowerCase().includes(searchTerm)
+    );
+  }
+
   const paged = paginateArray(groups, params);
   res.json({ groups: paged.items, pagination: paged.pagination });
 };

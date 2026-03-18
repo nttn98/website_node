@@ -45,7 +45,7 @@
               it.iconClass || "fas fa-question"
             }"></i></div>`;
         html += `
-        <tr data-id="${it._id}">
+        <tr data-id="${it._id}" class="drag-row">
           <td class="text-center drag-cell"><span class="drag-handle">≡</span></td>
           <td>
             <div class="d-flex align-items-center">
@@ -120,9 +120,19 @@
       await new Promise((res) => (s.onload = res));
     }
     Sortable.create(tbody, {
-      handle: ".drag-handle",
-      filter: ".new-item-row", // exclude the create row from dragging
+      draggable: "tr.drag-row",
+      filter:
+        ".new-item-row, input, textarea, button, a, .icon-preview, .action-circle, .btn-action-minimal", // keep interactions clickable while allowing row-wide drag
       preventOnFilter: false,
+      animation: 170,
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+      chosenClass: "drag-chosen",
+      ghostClass: "drag-ghost",
+      dragClass: "drag-active",
+      scroll: true,
+      bubbleScroll: true,
+      scrollSensitivity: 80,
+      scrollSpeed: 14,
       onEnd: async () => {
         const rows = Array.from(tbody.children).filter(
           (tr) => tr.dataset.id !== "new"

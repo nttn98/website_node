@@ -30,6 +30,24 @@
   transform: translateY(-3px);
   box-shadow: 0 16px 44px rgba(15, 36, 68, 0.06);
 }
+.table-clean tbody tr.drag-row {
+  cursor: grab;
+}
+.table-clean tbody tr.drag-row:active {
+  cursor: grabbing;
+}
+.table-clean tbody tr.drag-chosen {
+  background: linear-gradient(90deg, #fffaf0, #ffffff);
+  box-shadow: 0 14px 36px rgba(15, 36, 68, 0.14);
+  transform: scale(1.004);
+}
+.table-clean tbody tr.drag-ghost {
+  opacity: 0.55;
+  border: 1px dashed rgba(184, 155, 94, 0.65);
+}
+.table-clean tbody tr.drag-active {
+  box-shadow: 0 18px 48px rgba(15, 36, 68, 0.2);
+}
 .table-clean tbody td {
   padding: 16px 18px;
   vertical-align: middle;
@@ -60,6 +78,13 @@
 }
 .drag-handle:active {
   cursor: grabbing;
+}
+
+.table-clean tbody tr.drag-row input,
+.table-clean tbody tr.drag-row button,
+.table-clean tbody tr.drag-row a,
+.table-clean tbody tr.drag-row .icon-preview {
+  cursor: auto;
 }
 
 /* Details preview */

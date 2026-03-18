@@ -9,6 +9,7 @@
   :root {
     --ui-navy: #0f2444;
     --ui-bronze: #b89b5e;
+    --ui-bronze-soft: rgba(184, 155, 94, 0.2);
   }
 
   /* Menu section labels */
@@ -24,14 +25,81 @@
     display: block;
   }
 
+  /* Controls for long trees */
+  .menu-tools {
+    padding: 0 16px 14px;
+  }
+  .menu-tools .menu-search-wrap {
+    position: relative;
+  }
+  .menu-tools .menu-search-wrap i {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.75rem;
+  }
+  .menu-search-input {
+    width: 100%;
+    height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    border-radius: 7px;
+    font-size: 0.82rem;
+    padding: 0 12px 0 30px;
+    outline: none;
+  }
+  .menu-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+  }
+  .menu-search-input:focus {
+    border-color: var(--ui-bronze);
+    box-shadow: 0 0 0 2px var(--ui-bronze-soft);
+  }
+  .menu-tools-footer {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .menu-action-btn {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-radius: 6px;
+    padding: 5px 9px;
+    transition: 0.2s ease;
+  }
+  .menu-action-btn:hover {
+    border-color: var(--ui-bronze);
+    color: var(--ui-bronze);
+    background: rgba(184, 155, 94, 0.08);
+  }
+  .menu-count-hint {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.72rem;
+  }
+  .menu-empty-state {
+    display: none;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.82rem;
+    padding: 4px 16px 8px;
+  }
+
   /* Toggle button styling */
   .toggle-btn {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 3px;
     background: transparent;
     color: var(--ui-bronze);
@@ -50,46 +118,79 @@
   }
 
   /* Child menu styling */
+  .menu-node-row {
+    min-height: 34px;
+    gap: 6px;
+  }
   .nav-child-item {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding-left: 16px;
-    font-size: 0.9rem;
+    padding-left: 14px;
+    font-size: 0.88rem;
   }
   .nav-child-item[data-nav-level="1"] {
-    padding-left: 28px;
+    padding-left: 22px;
   }
   .nav-child-item[data-nav-level="2"] {
-    padding-left: 40px;
+    padding-left: 30px;
   }
   .nav-child-item[data-nav-level="3"] {
-    padding-left: 52px;
+    padding-left: 38px;
+  }
+  .nav-child-item[data-nav-level="4"] {
+    padding-left: 46px;
   }
 
   /* Indent marker */
   .indent-marker {
-    color: rgba(184, 155, 94, 0.5);
-    font-size: 0.75rem;
-    margin-right: 2px;
+    color: rgba(184, 155, 94, 0.48);
+    font-size: 0.62rem;
+    width: 10px;
+    text-align: center;
+    flex-shrink: 0;
   }
 
   /* Parent menu styling */
   .nav-parent-text {
     flex-grow: 1;
     font-weight: 500;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
   }
   .nav-parent-text.active {
     font-weight: 700;
     color: var(--ui-bronze);
   }
+  .menu-item-text {
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+    line-height: 1.25;
+  }
 
   /* Children list */
   .children-list {
     transition: all 0.3s ease;
+    border-left: 1px dashed rgba(184, 155, 94, 0.22);
+    margin-left: 14px !important;
+    padding-left: 2px;
   }
   .children-list.d-none {
     display: none !important;
+  }
+
+  .menu-node[data-hidden="true"] {
+    display: none;
+  }
+
+  .sidebar-wrapper .nav-link {
+    padding-right: 6px !important;
   }
 </style>
 
@@ -105,67 +206,108 @@
 
   <div class="menu-divider">MENU SYSTEM</div>
 
-  <% %> <% function getChildren(parentId) { return menus.filter(function(m) {
-  return (m.parentId ? m.parentId.toString() : null) === (parentId ?
-  parentId.toString() : null); }).sort(function(a, b) { return (a.order || 0) - (b.order || 0); }); } %> 
+  <div class="menu-tools">
+    <div class="menu-search-wrap">
+      <i class="bi bi-search"></i>
+      <input
+        id="menuSearchInput"
+        class="menu-search-input"
+        type="search"
+        placeholder="Search menu"
+        aria-label="Search menu"
+      />
+    </div>
+    <div class="menu-tools-footer">
+      <button id="collapseAllMenus" class="menu-action-btn" type="button">
+        Collapse all
+      </button>
+      <span class="menu-count-hint" id="menuMatchCount"></span>
+    </div>
+  </div>
 
-  <% function renderTree(parentId, level, isChild) { var children = getChildren(parentId); children.forEach(function(menu) { %>
-  <li class="nav-item">
-    <div class="d-flex align-items-center" <%= isChild ? 'class="nav-child-item" data-nav-level="' + level + '"' : '' %>>
+  <div id="menuEmptyState" class="menu-empty-state">No matching menu item.</div>
+
+  <% function getChildren(parentId) { return menus.filter(function(m) {
+  return (m.parentId ? m.parentId.toString() : null) === (parentId ?
+  parentId.toString() : null); }).sort(function(a, b) { return (a.order || 0) - (b.order || 0); }); } %>
+
+  <% var menuById = {}; menus.forEach(function(m) { menuById[m._id.toString()] = m; }); %>
+
+  <% function isInActivePath(menu) {
+      if (!currentMenuId || !menu) return false;
+      if (menu._id.toString() === currentMenuId) return true;
+
+      var cursor = menuById[currentMenuId] || null;
+      while (cursor && cursor.parentId) {
+        if (cursor.parentId.toString() === menu._id.toString()) return true;
+        cursor = menuById[cursor.parentId.toString()] || null;
+      }
+      return false;
+    }
+  %>
+
+  <% function renderTree(parentId, level, isChild) { var children = getChildren(parentId); children.forEach(function(menu) { var menuId = menu._id.toString(); var menuTitle = (menu.title && menu.title.en) ? menu.title.en : 'Untitled'; var hasKids = getChildren(menu._id).length > 0; var shouldOpen = hasKids && isInActivePath(menu); %>
+  <li class="nav-item menu-node" data-menu-title="<%= menuTitle.toLowerCase() %>">
+    <div class="d-flex align-items-center menu-node-row <%= isChild ? 'nav-child-item' : '' %>" <%= isChild ? 'data-nav-level="' + level + '"' : '' %>>
       <% if (isChild) { %>
-        <span class="indent-marker">↳</span>
+      <span class="indent-marker">></span>
       <% } %>
       <a
-        href="/dashboard/groups?menuId=<%= menu._id %>"
-        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> nav-parent-text flex-grow-1"
+        href="/dashboard/groups?menuId=<%= menuId %>"
+        class="nav-link <%= currentMenuId === menuId ? 'active fw-bold' : '' %> nav-parent-text flex-grow-1"
+        title="<%= menuTitle %>"
       >
-        <%= menu.title.en %>
+        <span class="menu-item-text"><%= menuTitle %></span>
       </a>
-      <% if (getChildren(menu._id).length) { %>
-      <button class="toggle-btn" data-target="children-<%= menu._id %>" type="button" title="Expand/Collapse">
+      <% if (hasKids) { %>
+      <button class="toggle-btn <%= shouldOpen ? 'open' : '' %>" data-target="children-<%= menuId %>" type="button" title="Expand/Collapse" aria-expanded="<%= shouldOpen ? 'true' : 'false' %>">
         <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
           <path d="M8.5 6.5a.5.5 0 0 0-.707 0l-3 3a.5.5 0 0 0 .707.707L8 7.207l2.646 2.647a.5.5 0 0 0 .707-.707l-3-3z"/>
         </svg>
       </button>
       <% } else { %>
-      <span style="width: 14px;"></span>
+      <span style="width: 20px;"></span>
       <% } %>
     </div>
-    <% if (getChildren(menu._id).length) { %>
+    <% if (hasKids) { %>
     <ul
-      class="nav flex-column ms-2 children-list d-none"
-      id="children-<%= menu._id %>"
+      class="nav flex-column ms-2 children-list <%= shouldOpen ? '' : 'd-none' %>"
+      id="children-<%= menuId %>"
     >
       <% renderTree(menu._id, level + 1, true); %>
     </ul>
     <% } %>
   </li>
-  <% }); } %> 
+  <% }); } %>
 
   <!-- TOP MENUS -->
   <% var topMenus = menus.filter(function(m) { return !m.parentId && m.type === 'top'; }).sort(function(a, b) { return (a.order || 0) - (b.order || 0); }); %>
   <div class="menu-section-label">TOP MENUS</div>
   <% topMenus.forEach(function(menu) { %>
-  <li class="nav-item">
-    <div class="d-flex align-items-center">
+  <% var menuId = menu._id.toString(); var menuTitle = (menu.title && menu.title.en) ? menu.title.en : 'Untitled'; var hasKids = getChildren(menu._id).length > 0; var shouldOpen = hasKids && isInActivePath(menu); %>
+  <li class="nav-item menu-node" data-menu-title="<%= menuTitle.toLowerCase() %>">
+    <div class="d-flex align-items-center menu-node-row">
       <a
-        href="/dashboard/groups?menuId=<%= menu._id %>"
-        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> nav-parent-text flex-grow-1"
+        href="/dashboard/groups?menuId=<%= menuId %>"
+        class="nav-link <%= currentMenuId === menuId ? 'active fw-bold' : '' %> nav-parent-text flex-grow-1"
+        title="<%= menuTitle %>"
       >
-        <%= menu.title.en %>
+        <span class="menu-item-text"><%= menuTitle %></span>
       </a>
-      <% if (getChildren(menu._id).length) { %>
-      <button class="toggle-btn" data-target="children-<%= menu._id %>" type="button" title="Expand/Collapse">
+      <% if (hasKids) { %>
+      <button class="toggle-btn <%= shouldOpen ? 'open' : '' %>" data-target="children-<%= menuId %>" type="button" title="Expand/Collapse" aria-expanded="<%= shouldOpen ? 'true' : 'false' %>">
         <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
           <path d="M8.5 6.5a.5.5 0 0 0-.707 0l-3 3a.5.5 0 0 0 .707.707L8 7.207l2.646 2.647a.5.5 0 0 0 .707-.707l-3-3z"/>
         </svg>
       </button>
+      <% } else { %>
+      <span style="width: 20px;"></span>
       <% } %>
     </div>
-    <% if (getChildren(menu._id).length) { %>
+    <% if (hasKids) { %>
     <ul
-      class="nav flex-column ms-2 children-list d-none"
-      id="children-<%= menu._id %>"
+      class="nav flex-column ms-2 children-list <%= shouldOpen ? '' : 'd-none' %>"
+      id="children-<%= menuId %>"
     >
       <% renderTree(menu._id, 1, true); %>
     </ul>
@@ -178,26 +320,30 @@
   <% if (footerMenus.length) { %>
   <div class="menu-section-label">FOOTER MENUS</div>
   <% footerMenus.forEach(function(menu) { %>
-  <li class="nav-item">
-    <div class="d-flex align-items-center">
+  <% var menuId = menu._id.toString(); var menuTitle = (menu.title && menu.title.en) ? menu.title.en : 'Untitled'; var hasKids = getChildren(menu._id).length > 0; var shouldOpen = hasKids && isInActivePath(menu); %>
+  <li class="nav-item menu-node" data-menu-title="<%= menuTitle.toLowerCase() %>">
+    <div class="d-flex align-items-center menu-node-row">
       <a
-        href="/dashboard/groups?menuId=<%= menu._id %>"
-        class="nav-link <%= currentMenuId === menu._id.toString() ? 'active fw-bold' : '' %> nav-parent-text flex-grow-1"
+        href="/dashboard/groups?menuId=<%= menuId %>"
+        class="nav-link <%= currentMenuId === menuId ? 'active fw-bold' : '' %> nav-parent-text flex-grow-1"
+        title="<%= menuTitle %>"
       >
-        <%= menu.title.en %>
+        <span class="menu-item-text"><%= menuTitle %></span>
       </a>
-       <% if (getChildren(menu._id).length) { %>
-      <button class="toggle-btn" data-target="children-<%= menu._id %>" type="button" title="Expand/Collapse">
+      <% if (hasKids) { %>
+      <button class="toggle-btn <%= shouldOpen ? 'open' : '' %>" data-target="children-<%= menuId %>" type="button" title="Expand/Collapse" aria-expanded="<%= shouldOpen ? 'true' : 'false' %>">
         <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
           <path d="M8.5 6.5a.5.5 0 0 0-.707 0l-3 3a.5.5 0 0 0 .707.707L8 7.207l2.646 2.647a.5.5 0 0 0 .707-.707l-3-3z"/>
         </svg>
       </button>
+      <% } else { %>
+      <span style="width: 20px;"></span>
       <% } %>
     </div>
-    <% if (getChildren(menu._id).length) { %>
+    <% if (hasKids) { %>
     <ul
-      class="nav flex-column ms-2 children-list d-none"
-      id="children-<%= menu._id %>"
+      class="nav flex-column ms-2 children-list <%= shouldOpen ? '' : 'd-none' %>"
+      id="children-<%= menuId %>"
     >
       <% renderTree(menu._id, 1, true); %>
     </ul>
@@ -256,39 +402,168 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Restore toggle states from localStorage
-    document.querySelectorAll(".toggle-btn").forEach((btn) => {
+    const toggleButtons = document.querySelectorAll(".toggle-btn");
+    const menuNodes = document.querySelectorAll(".menu-node");
+    const searchInput = document.getElementById("menuSearchInput");
+    const collapseAllBtn = document.getElementById("collapseAllMenus");
+    const menuMatchCount = document.getElementById("menuMatchCount");
+    const menuEmptyState = document.getElementById("menuEmptyState");
+
+    function closeBranch(rootUl) {
+      if (!rootUl) return;
+      rootUl.classList.add("d-none");
+      const ownerButton = document.querySelector(
+        '.toggle-btn[data-target="' + rootUl.id + '"]'
+      );
+      if (ownerButton) {
+        ownerButton.classList.remove("open");
+        ownerButton.setAttribute("aria-expanded", "false");
+      }
+      localStorage.setItem(rootUl.id, "closed");
+
+      rootUl.querySelectorAll(".children-list").forEach((childUl) => {
+        childUl.classList.add("d-none");
+        localStorage.setItem(childUl.id, "closed");
+      });
+
+      rootUl.querySelectorAll(".toggle-btn").forEach((childBtn) => {
+        childBtn.classList.remove("open");
+        childBtn.setAttribute("aria-expanded", "false");
+      });
+    }
+
+    function closeSiblings(targetUl) {
+      const ownerNode = targetUl.closest("li.menu-node");
+      if (!ownerNode || !ownerNode.parentElement) return;
+      const siblingLists = ownerNode.parentElement.querySelectorAll(
+        ":scope > li.menu-node > ul.children-list"
+      );
+      siblingLists.forEach((listEl) => {
+        if (listEl.id !== targetUl.id) {
+          closeBranch(listEl);
+        }
+      });
+    }
+
+    function updateMatchLabel(visibleCount, keyword) {
+      if (!keyword) {
+        menuMatchCount.textContent = "";
+        return;
+      }
+      menuMatchCount.textContent = visibleCount + " match" + (visibleCount > 1 ? "es" : "");
+    }
+
+    function showAncestorPath(node) {
+      let cursor = node;
+      while (cursor) {
+        cursor.dataset.hidden = "false";
+
+        const parentList = cursor.parentElement.closest("ul.children-list");
+        if (!parentList) break;
+
+        parentList.classList.remove("d-none");
+        const ownerButton = document.querySelector(
+          '.toggle-btn[data-target="' + parentList.id + '"]'
+        );
+        if (ownerButton) {
+          ownerButton.classList.add("open");
+          ownerButton.setAttribute("aria-expanded", "true");
+        }
+
+        cursor = parentList.closest("li.menu-node");
+      }
+    }
+
+    function applyFilter(keyword) {
+      const normalized = (keyword || "").trim().toLowerCase();
+
+      if (!normalized) {
+        menuNodes.forEach((node) => {
+          node.dataset.hidden = "false";
+        });
+        updateMatchLabel(0, "");
+        menuEmptyState.style.display = "none";
+        return;
+      }
+
+      let matchCount = 0;
+      menuNodes.forEach((node) => {
+        const title = node.dataset.menuTitle || "";
+        const isMatch = title.includes(normalized);
+        node.dataset.hidden = isMatch ? "false" : "true";
+        if (isMatch) {
+          matchCount += 1;
+        }
+      });
+
+      if (matchCount > 0) {
+        menuNodes.forEach((node) => {
+          if (node.dataset.hidden === "false") {
+            showAncestorPath(node);
+          }
+        });
+      }
+
+      updateMatchLabel(matchCount, normalized);
+      menuEmptyState.style.display = matchCount === 0 ? "block" : "none";
+    }
+
+    // Restore toggle states from localStorage while preserving default active path.
+    toggleButtons.forEach((btn) => {
       const targetId = btn.getAttribute("data-target");
       const targetUl = document.getElementById(targetId);
-      const savedState = localStorage.getItem(targetId);
+      if (!targetUl) return;
 
+      const savedState = localStorage.getItem(targetId);
       if (savedState === "open") {
         targetUl.classList.remove("d-none");
-        btn.classList.add("open");
-      } else {
-        targetUl.classList.add("d-none");
-        btn.classList.remove("open");
       }
+      if (savedState === "closed") {
+        targetUl.classList.add("d-none");
+      }
+
+      const isOpen = !targetUl.classList.contains("d-none");
+      btn.classList.toggle("open", isOpen);
+      btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
     });
 
-    // Handle toggle click
-    document.querySelectorAll(".toggle-btn").forEach((btn) => {
+    toggleButtons.forEach((btn) => {
       btn.addEventListener("click", function (e) {
         e.preventDefault();
         const targetId = this.getAttribute("data-target");
         const targetUl = document.getElementById(targetId);
-        const isHidden = targetUl.classList.contains("d-none");
+        if (!targetUl) return;
 
-        if (isHidden) {
+        const willOpen = targetUl.classList.contains("d-none");
+        if (willOpen) {
+          closeSiblings(targetUl);
           targetUl.classList.remove("d-none");
           this.classList.add("open");
+          this.setAttribute("aria-expanded", "true");
           localStorage.setItem(targetId, "open");
         } else {
-          targetUl.classList.add("d-none");
-          this.classList.remove("open");
-          localStorage.setItem(targetId, "closed");
+          closeBranch(targetUl);
         }
       });
     });
+
+    if (collapseAllBtn) {
+      collapseAllBtn.addEventListener("click", function () {
+        document.querySelectorAll(".children-list").forEach((listEl) => {
+          listEl.classList.add("d-none");
+          localStorage.setItem(listEl.id, "closed");
+        });
+        toggleButtons.forEach((btn) => {
+          btn.classList.remove("open");
+          btn.setAttribute("aria-expanded", "false");
+        });
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        applyFilter(this.value);
+      });
+    }
   });
 </script>

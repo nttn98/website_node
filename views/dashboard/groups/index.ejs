@@ -25,14 +25,90 @@
   </a>
 </div>
 
+<div class="group-controls mb-3 d-flex align-items-center gap-3">
+  <div
+    class="search-wrap flex-grow-1"
+    style="max-width: 340px; position: relative"
+  >
+    <i
+      class="bi bi-search"
+      style="
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 0.9rem;
+      "
+    ></i>
+    <input
+      id="groupSearchInput"
+      type="search"
+      placeholder="Search by name..."
+      class="group-search-input"
+      style="
+        width: 100%;
+        padding: 10px 16px 10px 36px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        outline: none;
+      "
+    />
+  </div>
+  <div class="limit-wrap d-flex align-items-center gap-2">
+    <label
+      for="pageLimitSelect"
+      style="font-size: 0.85rem; color: #666; margin: 0"
+    >
+      Show:
+    </label>
+    <select
+      id="pageLimitSelect"
+      class="form-select-minimal"
+      style="
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        outline: none;
+      "
+    >
+      <option value="10">10</option>
+      <option value="25" selected>25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+  </div>
+</div>
+
 <div id="group-list" class="table-container-minimal"></div>
+
+<div
+  id="pagination-controls"
+  class="pagination-controls mt-4"
+  style="display: none; text-align: center"
+></div>
 
 <script>
   const currentMenuId = <%- JSON.stringify(currentMenuId || '') %>;
-  function renderGroups(groups) {
+  let currentPage = 1;
+  let currentLimit = 25;
+  let totalPages = 1;
+
+  function renderGroups(groupsData) {
     const listContainer = document.getElementById("group-list");
+    const { groups, pagination } = groupsData;
+    const page = pagination?.page || 1;
+    const limit = pagination?.limit || 25;
+    const total = pagination?.total || 0;
+    currentPage = page;
+    currentLimit = limit;
+    totalPages = pagination?.totalPages || 1;
+
     if (!groups || !groups.length) {
-      listContainer.innerHTML = `<div class="p-5 text-center text-muted">No groups yet.</div>`;
+      listContainer.innerHTML = `<div class="p-5 text-center text-muted">No groups found.</div>`;
+      document.getElementById("pagination-controls").style.display = "none";
       return;
     }
 
@@ -58,7 +134,7 @@
         "https://placehold.co/100x75?text=No+Image";
 
       html += `
-      <tr data-group-id="${group._id}">
+      <tr data-group-id="${group._id}" class="${currentMenuId ? 'drag-row' : ''}">
         ${currentMenuId ? `
         <td class="text-center drag-cell">
           <span class="drag-handle" title="Drag to reorder">≡</span>
@@ -130,6 +206,49 @@
 
     html += "</tbody></table>";
     listContainer.innerHTML = html;
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const paginationDiv = document.getElementById("pagination-controls");
+    if (totalPages <= 1) {
+      paginationDiv.style.display = "none";
+      return;
+    }
+
+    paginationDiv.style.display = "block";
+    let paginationHtml = `<div style="display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap;">`;
+
+    if (currentPage > 1) {
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(1)" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">« First</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(${currentPage - 1})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">‹ Prev</button>`;
+    }
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      const isActive = i === currentPage;
+      const btnStyle = isActive
+        ? "background: var(--ui-navy); color: var(--ui-bronze); font-weight: 700;"
+        : "background: #fff; color: #333;";
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(${i})" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; ${btnStyle} cursor: pointer; transition: 0.2s;">${i}</button>`;
+    }
+
+    if (currentPage < totalPages) {
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(${currentPage + 1})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Next ›</button>`;
+      paginationHtml += `<button class="pagination-btn" onclick="goToPage(${totalPages})" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; transition: 0.2s;">Last »</button>`;
+    }
+
+    paginationHtml += `<span style="margin-left: 16px; font-size: 0.85rem; color: #666;">Page ${currentPage}/${totalPages}</span>`;
+    paginationHtml += `</div>`;
+    paginationDiv.innerHTML = paginationHtml;
+  }
+
+  function goToPage(page) {
+    currentPage = page;
+    loadGroups();
   }
 
   function getMenuId() {
@@ -137,19 +256,27 @@
     return url.searchParams.get("menuId") || "";
   }
 
-  function fetchGroups() {
+  function loadGroups() {
     const menuId = getMenuId();
-    const url = menuId ? `/groups?menuId=${menuId}` : "/groups";
+    const search = document.getElementById("groupSearchInput")?.value || "";
+
+    const params = new URLSearchParams();
+    if (menuId) params.append("menuId", menuId);
+    if (search) params.append("search", search);
+    params.append("page", currentPage);
+    params.append("limit", currentLimit);
+
+    const url = `/groups?${params.toString()}`;
     return fetch(url)
       .then((res) => res.json())
-      .then((data) => renderGroups(data.groups));
+      .then((data) => renderGroups(data));
   }
 
   function toggleGroupStatus(id, btn) {
     fetch(`/groups/${id}/toggle`, { method: "POST" })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) fetchGroups();
+        if (data.success) loadGroups();
         else alert("Toggle failed");
       });
   }
@@ -159,7 +286,10 @@
     fetch(`/groups/${id}`, { method: "DELETE" })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) fetchGroups();
+        if (data.success) {
+          currentPage = 1;
+          loadGroups();
+        }
         else alert("Delete failed");
       });
   }
@@ -185,7 +315,18 @@
     }
     return ensureSortable().then(() => {
       sortableInstance = Sortable.create(tbody, {
-        handle: '.drag-handle',
+        draggable: 'tr.drag-row',
+        filter: 'button, a, input, textarea, select',
+        preventOnFilter: false,
+        animation: 170,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        chosenClass: 'drag-chosen',
+        ghostClass: 'drag-ghost',
+        dragClass: 'drag-active',
+        scroll: true,
+        bubbleScroll: true,
+        scrollSensitivity: 80,
+        scrollSpeed: 14,
         onEnd: function (evt) {
           const items = Array.from(tbody.children);
           const updates = items.map((tr, index) => {
@@ -201,18 +342,30 @@
             .then((data) => {
               if (data && data.success) showToast('Order saved');
               else showToast('Order save failed', true);
-              return fetchGroups();
+              return loadGroups();
             })
             .then(() => initSortable())
             .catch(() => {
               showToast('Order save failed', true);
-              return fetchGroups().then(() => initSortable());
+              return loadGroups().then(() => initSortable());
             });
         },
       });
     });
   }
 
+  // Event listeners for search and limit
+  document.getElementById("groupSearchInput")?.addEventListener("input", () => {
+    currentPage = 1;
+    loadGroups();
+  });
+
+  document.getElementById("pageLimitSelect")?.addEventListener("change", (e) => {
+    currentLimit = parseInt(e.target.value, 10);
+    currentPage = 1;
+    loadGroups();
+  });
+
   // Initialize list and sortable
-  fetchGroups().then(() => initSortable());
+  loadGroups().then(() => initSortable());
 </script>
