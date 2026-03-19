@@ -65,6 +65,7 @@
           <div style="max-width:600px">
             <input type="hidden" name="iconClass" value="" />
             <input type="text" name="name[]" class="inline-input details-title" placeholder="Name" value="" />
+            <input type="text" name="code" class="inline-input small details-sub" placeholder="Code" value="" />
             <input type="text" name="url[]" class="inline-input small details-sub" placeholder="URL" value="" />
           </div>
         </div>
@@ -108,6 +109,9 @@
                 <input type="text" name="name[]" class="inline-input details-title" value="${
                   it.name || ""
                 }" />
+                <input type="text" name="code" class="inline-input small details-sub" value="${
+                  it.code || ""
+                }" readonly />
                 <input type="text" name="url[]" class="inline-input small details-sub" value="${
                   it.url || ""
                 }" />
@@ -245,6 +249,7 @@
         const tr = btn.closest("tr");
         btn.disabled = true;
         const name = tr.querySelector('input[name="name[]"]').value.trim();
+        const code = tr.querySelector('input[name="code"]').value.trim();
         const url = tr.querySelector('input[name="url[]"]').value.trim();
         const iconClass =
           tr.querySelector('input[name="iconClass"]')?.value || "";
@@ -259,7 +264,15 @@
           return;
         }
 
-        const payload = { items: [{ name, url, iconClass, order, isStatus }] };
+        if (!code) {
+          showToast("Code is required", true);
+          btn.disabled = false;
+          return;
+        }
+
+        const payload = {
+          items: [{ name, code, url, iconClass, order, isStatus }],
+        };
         try {
           const r = await fetch("/api/socials", {
             method: "POST",

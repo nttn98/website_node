@@ -8,11 +8,16 @@ function escapeRegex(str) {
 // Create new social item with default values (prevent duplicates)
 exports.create = async (payload) => {
   const name = String(payload.name || "").trim();
+  const code = String(payload.code || "").trim();
   const url = String(payload.url || "").trim();
   const iconClass = String(payload.iconClass || "").trim();
 
   if (!name && !url) {
     throw new Error("Name or URL is required to create a social item");
+  }
+
+  if (!code) {
+    throw new Error("Code is required to create a social item");
   }
 
   // Build duplicate query (case-insensitive match)
@@ -25,6 +30,7 @@ exports.create = async (payload) => {
 
   const newItem = await Social.create({
     name,
+    code,
     iconClass,
     url,
     order: Number(payload.order || 0),
@@ -51,7 +57,7 @@ exports.update = async (payload) => {
 
   for (const item of incoming) {
     if (item._id) {
-      // Update existing item: only set fields provided to avoid overwriting with blanks during reorder
+      // Existing items keep their original code and cannot update it.
       const updateData = {};
       if (item.name !== undefined)
         updateData.name = String(item.name || "").trim();
@@ -70,9 +76,15 @@ exports.update = async (payload) => {
       });
       if (updated) results.push(updated);
     } else {
+      const code = String(item.code || "").trim();
+      if (!code) {
+        throw new Error("Code is required to create a social item");
+      }
+
       // Create new item: always default isStatus/isActive to true to prevent accidental false values
       const newItem = await Social.create({
         name: String(item.name || "").trim(),
+        code,
         iconClass: String(item.iconClass || "").trim(),
         url: String(item.url || "").trim(),
         order: Number(item.order || 0),
