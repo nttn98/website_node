@@ -10,6 +10,33 @@ const {
   paginateArray,
 } = require("../../../utils/pagination");
 
+function extractHost(value) {
+  const input = String(value || "").trim();
+  if (!input) return "";
+
+  if (/^https?:\/\//i.test(input)) {
+    try {
+      return (new URL(input).host || "").toLowerCase();
+    } catch {
+      return "";
+    }
+  }
+
+  return input.split(",")[0].trim().toLowerCase();
+}
+
+function resolveAllowedImageHosts(req) {
+  const candidates = [
+    process.env.PUBLIC_BASE_URL,
+    req.headers["x-forwarded-host"],
+    req.headers["x-original-host"],
+    req.headers.origin,
+    req.get("host"),
+  ];
+
+  return [...new Set(candidates.map(extractHost).filter(Boolean))];
+}
+
 exports.toggleStatus = async (req, res) => {
   const group = await groupService.toggleStatus(req.params.id);
   res.json({ success: true, isStatus: group.isStatus });
@@ -93,7 +120,7 @@ exports.create = async (req, res) => {
     const contentImageCheck = validateContentImageSources(
       contentForValidation,
       {
-        allowedHosts: [req.get("host")],
+        allowedHosts: resolveAllowedImageHosts(req),
       }
     );
     if (!contentImageCheck.isValid) {
@@ -172,7 +199,7 @@ exports.update = async (req, res) => {
     const contentImageCheck = validateContentImageSources(
       contentForValidation,
       {
-        allowedHosts: [req.get("host")],
+        allowedHosts: resolveAllowedImageHosts(req),
       }
     );
     if (!contentImageCheck.isValid) {
