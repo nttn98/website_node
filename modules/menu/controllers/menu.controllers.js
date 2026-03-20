@@ -74,3 +74,14 @@ exports.toggleMenu = async (req, res) => {
   const menu = await menuService.toggleMenu(req.params.id);
   res.json({ success: true, isStatus: menu.isStatus });
 };
+
+// Toggle only showHomePage flag without updating other fields
+exports.toggleShowHomePage = async (req, res) => {
+  try {
+    const menu = await menuService.toggleShowHomePage(req.params.id);
+    res.json({ success: true, showHomePage: menu.showHomePage });
+  } catch (err) {
+    console.error("Toggle homepage error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};

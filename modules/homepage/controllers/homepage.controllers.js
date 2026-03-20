@@ -6,6 +6,17 @@ const {
 
 /* ===== HOMEPAGE API CONTROLLERS ===== */
 
+function parseOptionalBoolean(value) {
+  if (value === undefined) return undefined;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+  }
+  return undefined;
+}
+
 // Get all homepage data in one call
 exports.getHomepageData = async (req, res) => {
   try {
@@ -133,8 +144,10 @@ exports.getSolutionsMenus = async (req, res) => {
       defaultLimit: 12,
       maxLimit: 100,
     });
+    const showHomePage = parseOptionalBoolean(req.query.showHomePage);
     const menus = await homepageService.getMenuChildrenTree(
-      "697c0c9e7d88fcfff27bfb46"
+      "697c0c9e7d88fcfff27bfb46",
+      showHomePage
     );
     const paged = paginateArray(menus, params);
     res.json({
@@ -158,8 +171,10 @@ exports.getIndustryMenus = async (req, res) => {
       defaultLimit: 12,
       maxLimit: 100,
     });
+    const showHomePage = parseOptionalBoolean(req.query.showHomePage);
     const menus = await homepageService.getMenuChildrenTree(
-      "698aa02d84b05fe995a079a7"
+      "698aa02d84b05fe995a079a7",
+      showHomePage
     );
     const paged = paginateArray(menus, params);
     res.json({
@@ -183,8 +198,10 @@ exports.getInsightsMenus = async (req, res) => {
       defaultLimit: 12,
       maxLimit: 100,
     });
+    const showHomePage = parseOptionalBoolean(req.query.showHomePage);
     const menus = await homepageService.getMenuChildrenTree(
-      "698191a46ea27a5d8ccbf724"
+      "698191a46ea27a5d8ccbf724",
+      showHomePage
     );
     const paged = paginateArray(menus, params);
     res.json({

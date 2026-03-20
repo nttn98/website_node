@@ -77,6 +77,20 @@
       </select>
     </div>
 
+    <div class="switch-card mb-3" id="showHomePageCard" style="display: none">
+      <div class="d-flex justify-content-between">
+        <span class="fw-700 small text-navy">SHOW ON HOMEPAGE</span>
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="showHomePage"
+            id="showHomePage"
+          />
+        </div>
+      </div>
+    </div>
+
     <div class="switch-card mb-5">
       <div class="d-flex justify-content-between">
         <span class="fw-700 small text-navy">DISPLAY AS BUTTON</span>
@@ -130,19 +144,25 @@
     })
     .catch((err) => console.error("Failed to load parent categories:", err));
 
-  // 2. Auto-logic cho Parent/Type (Giữ nguyên)
+  // 2. Auto-logic cho Parent/Type
   document.getElementById("parentId").addEventListener("change", function () {
     const selectedOption = this.options[this.selectedIndex];
     const parentType = selectedOption.dataset.type;
     const typeSelect = document.getElementById("typeSelect");
+    const showHomePageCard = document.getElementById("showHomePageCard");
 
     if (this.value && parentType) {
       typeSelect.value = parentType;
       typeSelect.style.pointerEvents = "none";
       typeSelect.style.opacity = "0.5";
+      // Show homepage toggle only if parent is selected
+      showHomePageCard.style.display = "block";
     } else {
       typeSelect.style.pointerEvents = "auto";
       typeSelect.style.opacity = "1";
+      // Hide homepage toggle if no parent selected (root menu)
+      showHomePageCard.style.display = "none";
+      document.getElementById("showHomePage").checked = false;
     }
   });
 
@@ -167,6 +187,23 @@
       e.preventDefault();
       const formData = new FormData(this);
       formData.set("isButton", document.getElementById("isButton").checked);
+      formData.set(
+        "showHomePage",
+        document.getElementById("showHomePage").checked
+      );
+
+      console.log(
+        "Form data - isButton:",
+        document.getElementById("isButton").checked
+      );
+      console.log(
+        "Form data - showHomePage:",
+        document.getElementById("showHomePage").checked
+      );
+      console.log(
+        "Form data - parentId:",
+        document.getElementById("parentId").value
+      );
 
       fetch("/api/menus", {
         method: "POST",
@@ -174,8 +211,9 @@
       })
         .then((res) => res.json())
         .then((resp) => {
+          console.log("Create response:", resp);
           if (resp.success) window.location.href = "/dashboard/menus";
-          else alert("Save failed!");
+          else alert("Save failed: " + (resp.message || "Unknown error"));
         })
         .catch((err) => {
           console.error("Create menu error", err);

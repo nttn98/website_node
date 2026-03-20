@@ -3,6 +3,7 @@ const router = express.Router();
 const controller = require("../controllers/menu.controllers");
 const upload = require("../../../middleware/upload");
 
+// ===== GET =====
 /**
  * @swagger
  * /api/menus:
@@ -10,34 +11,6 @@ const upload = require("../../../middleware/upload");
  *     summary: Lấy danh sách menu
  *     tags:
  *       - Menu
- *     parameters:
- *       - in: query
- *         name: page
- *         required: false
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: Trang hiện tại
- *       - in: query
- *         name: limit
- *         required: false
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 50
- *         description: Số phần tử mỗi trang
- *     responses:
- *       200:
- *         description: Danh sách menu
- */
-
-// ===== GET =====
-/**
- * @swagger
- * /api/menus:
- *   get:
- *     summary: Lấy danh sách menu
  *     parameters:
  *       - in: query
  *         name: page
@@ -146,17 +119,45 @@ router.get("/:id/children-tree", controller.getChildrenTree);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               title:
  *                 type: string
+ *                 description: Menu title (EN)
+ *               subtitle:
+ *                 type: string
+ *                 description: Menu subtitle (EN)
+ *               route:
+ *                 type: string
+ *                 description: Menu route path
  *               parentId:
  *                 type: string
+ *                 description: Parent menu ID (for sub-menus)
+ *               type:
+ *                 type: string
+ *                 enum: [top, bot]
+ *                 description: Menu position
+ *               order:
+ *                 type: number
+ *                 default: 0
+ *               tags:
+ *                 type: string
+ *                 description: Comma-separated tags
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Menu feature image
+ *               isButton:
+ *                 type: boolean
+ *                 description: Display as button
+ *               showHomePage:
+ *                 type: boolean
+ *                 description: Show on homepage (only for non-root menus)
  *     responses:
- *       302:
- *         description: Redirect sau khi tạo menu
+ *       201:
+ *         description: Menu created successfully
  */
 router.post("/", upload.single("image"), controller.createMenu);
 
@@ -174,20 +175,45 @@ router.post("/", upload.single("image"), controller.createMenu);
  *         required: true
  *         schema:
  *           type: string
+ *         description: Menu ID
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               title_en:
  *                 type: string
- *               parentId:
+ *               title_vi:
  *                 type: string
+ *               title_zh:
+ *                 type: string
+ *               subtitle_en:
+ *                 type: string
+ *               subtitle_vi:
+ *                 type: string
+ *               subtitle_zh:
+ *                 type: string
+ *               route:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [top, bot]
+ *               order:
+ *                 type: number
+ *               tags:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               isButton:
+ *                 type: boolean
+ *               showHomePage:
+ *                 type: boolean
  *     responses:
- *       302:
- *         description: Redirect sau khi cập nhật menu
+ *       200:
+ *         description: Menu updated successfully
  */
 router.put("/:id", upload.single("image"), controller.updateMenu);
 
@@ -246,5 +272,33 @@ router.delete("/:id", controller.deleteMenu);
  *                   type: boolean
  */
 router.patch("/:id/toggle", controller.toggleMenu);
+
+/**
+ * @swagger
+ * /api/menus/{id}/toggle-homepage:
+ *   patch:
+ *     summary: Đổi trạng thái hiển thị trên homepage
+ *     tags:
+ *       - Menu
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Đổi trạng thái thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 showHomePage:
+ *                   type: boolean
+ */
+router.patch("/:id/toggle-homepage", controller.toggleShowHomePage);
 
 module.exports = router;

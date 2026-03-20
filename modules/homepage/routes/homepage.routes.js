@@ -202,6 +202,12 @@ router.get("/menu-parents", homepageController.getMenuParents);
  *           minimum: 1
  *           default: 12
  *         description: Number of items per page
+ *       - in: query
+ *         name: showHomePage
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by showHomePage (true/false)
  *     responses:
  *       200:
  *         description: Solutions menu tree
@@ -235,6 +241,12 @@ router.get("/solutions", homepageController.getSolutionsMenus);
  *           minimum: 1
  *           default: 12
  *         description: Number of items per page
+ *       - in: query
+ *         name: showHomePage
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by showHomePage (true/false)
  *     responses:
  *       200:
  *         description: Insights menu tree
@@ -268,6 +280,12 @@ router.get("/insights", homepageController.getInsightsMenus);
  *           minimum: 1
  *           default: 12
  *         description: Number of items per page
+ *       - in: query
+ *         name: showHomePage
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by showHomePage (true/false)
  *     responses:
  *       200:
  *         description: Industry menu tree

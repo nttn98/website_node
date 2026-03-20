@@ -5,7 +5,7 @@ const formService = require("../../form/services/form.services");
 
 /* ===== HOMEPAGE API SERVICES ===== */
 
-// Get top menus (root menus without parentId)
+// Get top menus (root header menus shown on homepage)
 exports.getTopMenus = () => {
   return Menu.find({
     type: "top",
@@ -18,7 +18,7 @@ exports.getTopMenus = () => {
     .lean();
 };
 
-// Get bottom menus
+// Get bottom menus (footer menus shown on homepage)
 exports.getBottomMenus = () => {
   return Menu.find({
     type: "bot",
@@ -91,13 +91,19 @@ exports.getMenuParents = () => {
     .lean();
 };
 
-// Get full menu tree for a given parentId
-exports.getMenuChildrenTree = async (parentId) => {
-  const menus = await Menu.find({
+// Get menus for a given parentId with optional showHomePage filter
+exports.getMenuChildrenTree = async (parentId, showHomePage) => {
+  const query = {
     isActive: true,
     isStatus: true,
     parentId: parentId,
-  }).lean();
+  };
+
+  if (typeof showHomePage === "boolean") {
+    query.showHomePage = showHomePage;
+  }
+
+  const menus = await Menu.find(query).lean();
 
   return menus
     .map((g) => ({

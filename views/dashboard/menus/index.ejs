@@ -43,11 +43,12 @@
         <table class="table-clean">
           <thead>
             <tr>
-              <th width="40%">Details</th>
-              <th width="15%" class="text-center">Order</th>
-              <th width="20%">Parent</th>
-              <th width="15%" class="text-center">Status</th>
-              <th width="10%" class="text-end">Actions</th>
+              <th width="30%">Details</th>
+              <th width="12%" class="text-center">Order</th>
+              <th width="18%">Parent</th>
+              <th width="12%" class="text-center">Homepage</th>
+              <th width="12%" class="text-center">Status</th>
+              <th width="16%" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>`;
@@ -79,11 +80,12 @@
         <table class="table-clean">
           <thead>
             <tr>
-              <th width="40%">Details</th>
-              <th width="15%" class="text-center">Order</th>
-              <th width="20%">Parent</th>
-              <th width="15%" class="text-center">Status</th>
-              <th width="10%" class="text-end">Actions</th>
+              <th width="30%">Details</th>
+              <th width="12%" class="text-center">Order</th>
+              <th width="18%">Parent</th>
+              <th width="12%" class="text-center">Homepage</th>
+              <th width="12%" class="text-center">Status</th>
+              <th width="16%" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>`;
@@ -161,6 +163,25 @@
         </span>
       </td>
       <td class="text-center">
+        ${
+          menu.parentId
+            ? `<div class="status-toggle-group">
+          <span class="status-dot ${
+            menu.showHomePage ? "dot-active" : "dot-hidden"
+          }" style="background: ${
+                menu.showHomePage ? "#2ecc71" : "#bdc3c7"
+              };"></span>
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" ${
+              menu.showHomePage ? "checked" : ""
+            } 
+              onchange="toggleShowHomePage('${menu._id}', this)" />
+          </div>
+        </div>`
+            : ""
+        }
+      </td>
+      <td class="text-center">
         <div class="status-toggle-group">
           <span class="status-dot ${
             menu.isStatus ? "dot-active" : "dot-hidden"
@@ -173,7 +194,7 @@
           </div>
         </div>
       </td>
-      <td class="text-end">
+      <td class="text-end ps-2">
         <a href="/dashboard/menus/${
           menu._id
         }/edit" class="action-circle" title="Edit">
@@ -210,6 +231,53 @@
             ? "status-dot dot-active"
             : "status-dot dot-hidden";
         }
+      });
+  }
+
+  function toggleShowHomePage(id, el) {
+    const currentState = el.checked;
+    el.disabled = true; // Disable while processing
+
+    console.log(`Toggle homepage for menu ${id}, current state:`, currentState);
+
+    fetch(`/api/menus/${id}/toggle-homepage`, {
+      method: "PATCH",
+    })
+      .then((res) => {
+        console.log(`Response status: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Response data:", data);
+        el.disabled = false;
+        if (data.success) {
+          // Update checkbox to reflect new state
+          el.checked = data.showHomePage;
+          const row = el.closest("tr");
+          const dots = row.querySelectorAll(".status-dot");
+          if (dots.length > 0) {
+            const homepageDot = dots[0];
+            homepageDot.className = data.showHomePage
+              ? "status-dot dot-active"
+              : "status-dot dot-hidden";
+            homepageDot.style.background = data.showHomePage
+              ? "#2ecc71"
+              : "#bdc3c7";
+          }
+          console.log("Toggle successful");
+        } else {
+          alert("Toggle failed: " + (data.message || "Unknown error"));
+          el.checked = currentState; // rollback
+        }
+      })
+      .catch((err) => {
+        console.error("Toggle homepage failed:", err);
+        el.disabled = false;
+        alert("Toggle failed: " + err.message);
+        el.checked = currentState; // rollback
       });
   }
 

@@ -39,6 +39,11 @@ const MenuSchema = new mongoose.Schema(
       default: "",
     },
 
+    showHomePage: {
+      type: Boolean,
+      default: false,
+    },
+
     tags: [
       {
         type: String,
