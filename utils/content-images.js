@@ -125,6 +125,14 @@ function isServerContentImageSource(src, allowedHosts) {
   if (/^data:/i.test(value)) return false;
   if (/^(\.\.\/|\.\/)/.test(value)) return false;
 
+  // YouTube CDN thumbnails are valid external sources – do not block save
+  if (
+    /^https?:\/\/(img\.youtube\.com|i\.ytimg\.com)\/vi\/[A-Za-z0-9_-]+\//i.test(
+      value
+    )
+  )
+    return true;
+
   if (/^\//.test(value)) {
     return /^\/(uploads|assets)\//i.test(value);
   }
