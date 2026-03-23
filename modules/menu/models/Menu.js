@@ -44,11 +44,16 @@ const MenuSchema = new mongoose.Schema(
       default: false,
     },
 
-    tags: [
-      {
-        type: String,
-      },
-    ],
+    featuredInsights: {
+      type: Boolean,
+      default: false,
+    },
+
+    tags: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
     // ===== DISPLAY FLAGS =====
     type: {

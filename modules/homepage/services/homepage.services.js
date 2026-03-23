@@ -92,7 +92,11 @@ exports.getMenuParents = () => {
 };
 
 // Get menus for a given parentId with optional showHomePage filter
-exports.getMenuChildrenTree = async (parentId, showHomePage) => {
+exports.getMenuChildrenTree = async (
+  parentId,
+  showHomePage,
+  featuredInsights
+) => {
   const query = {
     isActive: true,
     isStatus: true,
@@ -103,14 +107,16 @@ exports.getMenuChildrenTree = async (parentId, showHomePage) => {
     query.showHomePage = showHomePage;
   }
 
-  const menus = await Menu.find(query).lean();
+  if (typeof featuredInsights === "boolean") {
+    query.featuredInsights = featuredInsights;
+  }
 
-  return menus
-    .map((g) => ({
-      ...g,
-      route: null,
-    }))
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  const menus = await Menu.find(query).sort({ createdAt: -1, order: 1 }).lean();
+
+  return menus.map((g) => ({
+    ...g,
+    route: null,
+  }));
 };
 
 exports.getDetail = async (parentId) => {

@@ -89,3 +89,23 @@
   background-color: var(--ui-bronze);
   border-color: var(--ui-bronze);
 }
+
+.featured-star-btn {
+  border: none;
+  background: transparent;
+  color: #c7ced8;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: transform 0.12s ease, color 0.2s ease;
+}
+
+.featured-star-btn:hover {
+  color: #f59e0b;
+  transform: scale(1.08);
+}
+
+.featured-star-btn.active {
+  color: #f59e0b;
+}

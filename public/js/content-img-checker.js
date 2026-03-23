@@ -64,6 +64,31 @@
     return found;
   }
 
+  function extractPdfLinks(html) {
+    const found = [];
+    const re = /<a[^>]+href=["']([^"']+)["'][^>]*>/gi;
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      const href = String(m[1] || "").trim();
+      if (!href) continue;
+
+      var path = href;
+      if (/^https?:\/\//i.test(href)) {
+        try {
+          path = new URL(href).pathname || "";
+        } catch {
+          path = href;
+        }
+      }
+      path = path.split("?")[0].split("#")[0].toLowerCase();
+      if (!path.endsWith(".pdf")) continue;
+
+      if (found.some((x) => x.src === href)) continue;
+      found.push({ src: href, isLocal: isLocalSrc(href), type: "pdf" });
+    }
+    return found;
+  }
+
   function extractUnresolvedServerImgs(html) {
     return extractImgs(html)
       .map(function (x) {
@@ -72,6 +97,18 @@
       .filter(function (src) {
         return !isServerHostedSrc(src);
       });
+  }
+
+  function extractUnresolvedServerAssets(html) {
+    const img = extractUnresolvedServerImgs(html);
+    const pdf = extractPdfLinks(html)
+      .map(function (x) {
+        return x.src;
+      })
+      .filter(function (src) {
+        return !isServerHostedSrc(src);
+      });
+    return img.concat(pdf);
   }
 
   var _activeCheck = null;
@@ -95,8 +132,17 @@
 
     function check() {
       var html = opts.getHtml() || "";
-      var images = extractImgs(html);
-      render(container, images, opts.getHtml, opts.setHtml, check);
+      var images = extractImgs(html).map(function (x) {
+        return { src: x.src, isLocal: x.isLocal, type: "image" };
+      });
+      var pdfLinks = extractPdfLinks(html);
+      render(
+        container,
+        images.concat(pdfLinks),
+        opts.getHtml,
+        opts.setHtml,
+        check
+      );
     }
 
     _activeCheck = check;
@@ -110,7 +156,7 @@
         "submit",
         function (ev) {
           var html = opts.getHtml ? opts.getHtml() || "" : "";
-          var unresolved = extractUnresolvedServerImgs(html);
+          var unresolved = extractUnresolvedServerAssets(html);
           if (!unresolved.length) return;
 
           ev.preventDefault();
@@ -123,7 +169,7 @@
           check();
           if (typeof window.showToast === "function") {
             window.showToast(
-              "Please upload and replace all non-server images before save/update",
+              "Please upload and replace all non-server images/PDF links before save/update",
               true
             );
           }
@@ -142,25 +188,27 @@
     return {
       recheck: check,
       getUnresolvedServerImages: function () {
-        return extractUnresolvedServerImgs(opts.getHtml ? opts.getHtml() : "");
+        return extractUnresolvedServerAssets(
+          opts.getHtml ? opts.getHtml() : ""
+        );
       },
     };
   }
 
-  function render(container, images, getHtml, setHtml, recheck) {
+  function render(container, assets, getHtml, setHtml, recheck) {
     container.innerHTML = "";
-    if (!images.length) return;
+    if (!assets.length) return;
 
-    var localCount = images.filter(function (x) {
+    var localCount = assets.filter(function (x) {
       return x.isLocal;
     }).length;
-    var plural = images.length > 1 ? "s" : "";
+    var plural = assets.length > 1 ? "s" : "";
     var header = document.createElement("div");
     header.className = "alert alert-warning py-2 px-3 mb-2";
     header.innerHTML =
-      "<strong>&#128247; " +
-      images.length +
-      " image" +
+      "<strong>&#128206; " +
+      assets.length +
+      " asset" +
       plural +
       " found in content</strong>" +
       " &mdash; Upload to server to replace source quickly." +
@@ -171,21 +219,31 @@
         : "");
     container.appendChild(header);
 
-    images.forEach(function (img) {
-      var src = img.src;
+    assets.forEach(function (asset) {
+      var src = asset.src;
       var row = document.createElement("div");
       row.className =
         "d-flex align-items-start gap-2 mt-2 flex-wrap border rounded p-2 bg-white";
 
-      var preview = document.createElement("img");
-      preview.alt = "Content image preview";
+      var preview = document.createElement(
+        asset.type === "pdf" ? "span" : "img"
+      );
+      preview.alt = "Content asset preview";
       preview.style.width = "80px";
       preview.style.height = "56px";
       preview.style.objectFit = "cover";
       preview.style.borderRadius = "4px";
       preview.style.border = "1px solid #e9ecef";
       preview.style.background = "#f8f9fa";
-      if (/^(https?:\/\/|\/|\/\/|data:)/i.test(src)) {
+      preview.style.display = "inline-flex";
+      preview.style.alignItems = "center";
+      preview.style.justifyContent = "center";
+      preview.style.fontSize = "12px";
+      preview.style.fontWeight = "600";
+      preview.style.color = "#495057";
+      if (asset.type === "pdf") {
+        preview.textContent = "PDF";
+      } else if (/^(https?:\/\/|\/|\/\/|data:)/i.test(src)) {
         preview.src = src;
       } else {
         preview.style.display = "none";
@@ -198,15 +256,18 @@
 
       var typeBadge = document.createElement("span");
       typeBadge.className =
-        "badge " + (img.isLocal ? "bg-danger" : "bg-secondary");
-      typeBadge.textContent = img.isLocal ? "Local path" : "Current source";
+        "badge " + (asset.isLocal ? "bg-danger" : "bg-secondary");
+      typeBadge.textContent =
+        (asset.type === "pdf" ? "PDF" : "Image") +
+        (asset.isLocal ? " - Local path" : " - Current source");
 
       var controls = document.createElement("div");
       controls.className = "d-flex align-items-center gap-2 flex-wrap w-100";
 
       var fileInput = document.createElement("input");
       fileInput.type = "file";
-      fileInput.accept = "image/*";
+      fileInput.accept =
+        asset.type === "pdf" ? ".pdf,application/pdf" : "image/*";
       fileInput.className = "form-control form-control-sm";
       fileInput.style.maxWidth = "240px";
 
@@ -228,8 +289,13 @@
         status.textContent = "";
         var fd = new FormData();
         fd.append("upload", fileInput.files[0]);
+        fd.append("oldSource", src);
         try {
-          var res = await fetch("/api/upload/content-image", {
+          var endpoint =
+            asset.type === "pdf"
+              ? "/api/upload/content-pdf"
+              : "/api/upload/content-image";
+          var res = await fetch(endpoint, {
             method: "POST",
             body: fd,
           });

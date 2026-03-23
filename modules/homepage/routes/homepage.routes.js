@@ -247,6 +247,12 @@ router.get("/solutions", homepageController.getSolutionsMenus);
  *         schema:
  *           type: boolean
  *         description: Optional filter by showHomePage (true/false)
+ *       - in: query
+ *         name: featuredInsights
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by featuredInsights (true/false)
  *     responses:
  *       200:
  *         description: Insights menu tree

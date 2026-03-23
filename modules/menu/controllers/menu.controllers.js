@@ -85,3 +85,13 @@ exports.toggleShowHomePage = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
+exports.toggleFeaturedInsights = async (req, res) => {
+  try {
+    const menu = await menuService.toggleFeaturedInsights(req.params.id);
+    res.json({ success: true, featuredInsights: menu.featuredInsights });
+  } catch (err) {
+    console.error("Toggle featured insights error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};

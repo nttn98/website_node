@@ -72,7 +72,18 @@
     })
       .then(res => res.json())
       .then(resp => {
-        if (resp.success) window.location.href = '/details';
+        if (resp.success) {
+          if (typeof window.redirectWithToast === 'function') {
+            window.redirectWithToast('/details', 'Detail updated successfully');
+          } else if (typeof window.showToast === 'function') {
+            window.showToast('Detail updated successfully');
+            setTimeout(() => {
+              window.location.href = '/details';
+            }, 350);
+          } else {
+            window.location.href = '/details';
+          }
+        }
         else alert('Update failed');
       })
       .catch(() => alert('Update failed'));

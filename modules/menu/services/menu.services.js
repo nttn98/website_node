@@ -1,5 +1,6 @@
 const Menu = require("../models/Menu");
 const path = require("path");
+const INSIGHTS_PARENT_ID = "698191a46ea27a5d8ccbf724";
 
 function invalidateMenuCache() {
   // No-op: menu list cache has been removed.
@@ -7,17 +8,25 @@ function invalidateMenuCache() {
 
 function normalizeTags(tagsInput) {
   if (Array.isArray(tagsInput)) {
-    return tagsInput.map((item) => String(item || "").trim()).filter(Boolean);
+    return tagsInput
+      .map((item) => String(item || "").trim())
+      .filter(Boolean)
+      .join(", ");
   }
 
   if (typeof tagsInput === "string") {
     return tagsInput
       .split(",")
       .map((item) => item.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .join(", ");
   }
 
-  return [];
+  return "";
+}
+
+function isInsightsChild(parentId) {
+  return String(parentId || "") === INSIGHTS_PARENT_ID;
 }
 
 /* ===== DASHBOARD ===== */
@@ -33,7 +42,9 @@ exports.getAllMenusCached = async () => {
 exports.invalidateMenuCache = invalidateMenuCache;
 
 exports.getMenuChildren = (parentId) => {
-  return Menu.find({ parentId, isActive: true }).sort({ order: 1 }).lean();
+  return Menu.find({ parentId, isActive: true })
+    .sort({ createdAt: -1, order: 1 })
+    .lean();
 };
 
 // Get full descendants tree by parentId
@@ -71,6 +82,7 @@ exports.createMenu = async (data) => {
   }
 
   const tags = normalizeTags(data.tags);
+  const isInsightsMenu = isInsightsChild(data.parentId);
 
   // Handle image path normalization
   let image = "";
@@ -115,6 +127,11 @@ exports.createMenu = async (data) => {
           data.showHomePage === "true" ||
           data.showHomePage === true)) ||
       false,
+    featuredInsights:
+      isInsightsMenu &&
+      (data.featuredInsights === "on" ||
+        data.featuredInsights === "true" ||
+        data.featuredInsights === true),
     image: image,
     tags,
     isStatus: true,
@@ -129,6 +146,7 @@ exports.updateMenu = async (id, data) => {
   const currentMenu = await Menu.findById(id).lean();
   const finalParentId =
     data.parentId !== undefined ? data.parentId : currentMenu.parentId;
+  const isInsightsMenu = isInsightsChild(finalParentId);
 
   if (data.parentId) {
     const parentMenu = await Menu.findById(data.parentId).lean();
@@ -154,6 +172,17 @@ exports.updateMenu = async (id, data) => {
           data.showHomePage === "true" ||
           data.showHomePage === true)) ||
       false;
+  }
+
+  if (data.featuredInsights !== undefined) {
+    update.featuredInsights =
+      isInsightsMenu &&
+      (data.featuredInsights === "on" ||
+        data.featuredInsights === "true" ||
+        data.featuredInsights === true);
+  } else if (!isInsightsMenu) {
+    // Ensure old featured flag is cleared if menu is moved outside Insights.
+    update.featuredInsights = false;
   }
 
   if (data.tags !== undefined) {
@@ -208,15 +237,19 @@ exports.deleteMenu = async (id) => {
 };
 
 exports.toggleMenu = async (id) => {
-  const menu = await Menu.findById(id);
-  menu.isStatus = !menu.isStatus;
-  await menu.save();
+  const menu = await Menu.findById(id).select("isStatus").lean();
+  if (!menu) {
+    throw new Error("Menu not found");
+  }
+
+  const nextStatus = !menu.isStatus;
+  await Menu.updateOne({ _id: id }, { $set: { isStatus: nextStatus } });
   invalidateMenuCache();
-  return { success: true, isStatus: menu.isStatus };
+  return { success: true, isStatus: nextStatus };
 };
 
 exports.toggleShowHomePage = async (id) => {
-  const menu = await Menu.findById(id);
+  const menu = await Menu.findById(id).select("parentId showHomePage").lean();
   if (!menu) {
     throw new Error("Menu not found");
   }
@@ -224,8 +257,35 @@ exports.toggleShowHomePage = async (id) => {
   if (!menu.parentId) {
     throw new Error("Only non-root menus can be shown on homepage");
   }
-  menu.showHomePage = !menu.showHomePage;
-  const updatedMenu = await menu.save();
+
+  const nextShowHomePage = !menu.showHomePage;
+  await Menu.updateOne(
+    { _id: id },
+    { $set: { showHomePage: nextShowHomePage } }
+  );
   invalidateMenuCache();
-  return updatedMenu.toObject ? updatedMenu.toObject() : updatedMenu;
+  return { ...menu, showHomePage: nextShowHomePage };
+};
+
+exports.toggleFeaturedInsights = async (id) => {
+  const menu = await Menu.findById(id)
+    .select("parentId featuredInsights")
+    .lean();
+  if (!menu) {
+    throw new Error("Menu not found");
+  }
+
+  if (!isInsightsChild(menu.parentId)) {
+    throw new Error(
+      "Featured Insights is only available for Insights child menus"
+    );
+  }
+
+  const nextFeaturedInsights = !menu.featuredInsights;
+  await Menu.updateOne(
+    { _id: id },
+    { $set: { featuredInsights: nextFeaturedInsights } }
+  );
+  invalidateMenuCache();
+  return { ...menu, featuredInsights: nextFeaturedInsights };
 };

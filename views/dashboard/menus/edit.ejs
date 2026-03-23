@@ -65,7 +65,7 @@
 
     <div class="form-group-minimal mb-4">
       <label>Tags</label>
-      <input type="text" name="tags" value="<%= Array.isArray(menu.tags) ? menu.tags.join(', ') : '' %>" placeholder="news, insights, featured" />
+      <input type="text" name="tags" value="<%= Array.isArray(menu.tags) ? menu.tags.join(', ') : (menu.tags || '') %>" placeholder="news, insights, featured" />
     </div>
 
     <div class="row">
@@ -136,6 +136,27 @@
     </div>
     <% } %>
 
+    <div class="switch-card mb-3" id="featuredInsightsCard" style="display: none">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <span class="fw-700 small text-navy d-block">FEATURED INSIGHTS</span>
+          <small class="text-muted" style="font-size: 0.6rem;">Mark this menu as featured for insights section</small>
+        </div>
+        <div>
+          <input type="checkbox" name="featuredInsights" id="featuredInsights" style="display: none" <%= menu.featuredInsights ? 'checked' : '' %>>
+          <button
+            type="button"
+            class="featured-star-btn <%= menu.featuredInsights ? 'active' : '' %>"
+            id="featuredInsightsStar"
+            aria-label="Toggle Featured Insights"
+            aria-pressed="<%= menu.featuredInsights ? 'true' : 'false' %>"
+          >
+            <%= menu.featuredInsights ? '★' : '☆' %>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="switch-card mb-5">
       <div class="d-flex justify-content-between align-items-center">
         <div>
@@ -153,6 +174,16 @@
 </form>
 
 <script>
+  const INSIGHTS_PARENT_ID = "698191a46ea27a5d8ccbf724";
+
+  function notify(message, isError = false) {
+    if (typeof window.showToast === "function") {
+      window.showToast(message, isError);
+      return;
+    }
+    window.alert(message);
+  }
+
   // 1. XỬ LÝ CHUYỂN TAB (Vanilla JS - Không cần Bootstrap JS)
   const tabButtons = document.querySelectorAll('.nav-tabs-minimal .nav-link');
   const tabPanes = document.querySelectorAll('.tab-content .tab-pane');
@@ -182,6 +213,9 @@
   const typeSelect = document.getElementById('typeSelect');
   const currentMenuId = '<%= menu._id %>';
   const currentParentId = '<%= menu.parentId ? menu.parentId.toString() : "" %>';
+  const featuredInsightsCard = document.getElementById('featuredInsightsCard');
+  const featuredInsightsCheckbox = document.getElementById('featuredInsights');
+  const featuredInsightsStar = document.getElementById('featuredInsightsStar');
 
   function syncTypeWithParent() {
     const selected = parentSelect.options[parentSelect.selectedIndex];
@@ -196,7 +230,30 @@
       typeSelect.style.pointerEvents = 'auto';
       typeSelect.style.opacity = '1';
     }
+
+    const isInsightsMenu = parentSelect.value === INSIGHTS_PARENT_ID;
+    featuredInsightsCard.style.display = isInsightsMenu ? 'block' : 'none';
+    if (!isInsightsMenu) {
+      featuredInsightsCheckbox.checked = false;
+    }
+    featuredInsightsStar.classList.toggle('active', featuredInsightsCheckbox.checked);
+    featuredInsightsStar.textContent = featuredInsightsCheckbox.checked ? '★' : '☆';
+    featuredInsightsStar.setAttribute(
+      'aria-pressed',
+      featuredInsightsCheckbox.checked ? 'true' : 'false'
+    );
   }
+
+  featuredInsightsStar.addEventListener('click', function () {
+    if (parentSelect.value !== INSIGHTS_PARENT_ID) return;
+    featuredInsightsCheckbox.checked = !featuredInsightsCheckbox.checked;
+    featuredInsightsStar.classList.toggle('active', featuredInsightsCheckbox.checked);
+    featuredInsightsStar.textContent = featuredInsightsCheckbox.checked ? '★' : '☆';
+    featuredInsightsStar.setAttribute(
+      'aria-pressed',
+      featuredInsightsCheckbox.checked ? 'true' : 'false'
+    );
+  });
 
   fetch('/api/menus')
     .then((res) => res.json())
@@ -249,13 +306,13 @@
         if (resp.success) {
           console.log('Homepage display toggled');
         } else {
-          alert('Toggle failed');
+          notify('Toggle failed', true);
           this.checked = !this.checked; // rollback
         }
       })
       .catch(err => {
         console.error('Toggle error:', err);
-        alert('Toggle failed');
+        notify('Toggle failed', true);
         this.checked = !this.checked; // rollback
       });
     });
@@ -282,6 +339,10 @@
     // Thu thập dữ liệu form
     const formData = new FormData(this);
     formData.set('isButton', document.getElementById('isButton').checked);
+    formData.set(
+      'featuredInsights',
+      parentSelect.value === INSIGHTS_PARENT_ID && featuredInsightsCheckbox.checked
+    );
     // Note: showHomePage is NOT included here - it's handled separately via toggle-homepage endpoint
 
     fetch('/api/menus/<%= menu._id %>', {
@@ -291,14 +352,21 @@
     .then(res => res.json())
     .then(resp => {
       if (resp.success) {
-          window.location.href = '/dashboard/menus';
+          if (typeof window.redirectWithToast === 'function') {
+            window.redirectWithToast('/dashboard/menus', 'Menu updated successfully');
+          } else {
+            notify('Menu updated successfully');
+            setTimeout(() => {
+              window.location.href = '/dashboard/menus';
+            }, 350);
+          }
         } else {
-          alert('Update failed: ' + (resp.message || 'Server error'));
+          notify('Update failed: ' + (resp.message || 'Server error'), true);
         }
     })
     .catch(err => {
       console.error('Error:', err);
-        alert('Cannot connect to server');
+        notify('Cannot connect to server', true);
     });
   });
 </script>

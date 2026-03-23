@@ -147,7 +147,18 @@
       })
         .then((res) => res.json())
         .then((resp) => {
-          if (resp.success) window.location.href = "/details";
+          if (resp.success) {
+            if (typeof window.redirectWithToast === "function") {
+              window.redirectWithToast("/details", "Detail created successfully");
+            } else if (typeof window.showToast === "function") {
+              window.showToast("Detail created successfully");
+              setTimeout(() => {
+                window.location.href = "/details";
+              }, 350);
+            } else {
+              window.location.href = "/details";
+            }
+          }
           else alert("Create failed");
         })
         .catch(() => alert("Create failed"));

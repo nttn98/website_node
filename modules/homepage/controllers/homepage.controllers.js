@@ -17,6 +17,13 @@ function parseOptionalBoolean(value) {
   return undefined;
 }
 
+function sortByCreatedAtDesc(items) {
+  const list = Array.isArray(items) ? items : [];
+  return [...list].sort(
+    (a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0)
+  );
+}
+
 // Get all homepage data in one call
 exports.getHomepageData = async (req, res) => {
   try {
@@ -45,7 +52,12 @@ exports.getHomepageData = async (req, res) => {
 
     const solutions = paginateArray(solutionsMenus, menuLimitParams);
     const industry = paginateArray(industryMenus, menuLimitParams);
-    const insights = paginateArray(insightsMenus, menuLimitParams);
+    const insights = paginateArray(
+      [...insightsMenus].sort(
+        (a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0)
+      ),
+      menuLimitParams
+    );
 
     res.json({
       success: true,
@@ -199,11 +211,18 @@ exports.getInsightsMenus = async (req, res) => {
       maxLimit: 100,
     });
     const showHomePage = parseOptionalBoolean(req.query.showHomePage);
+    const featuredInsights = parseOptionalBoolean(req.query.featuredInsights);
     const menus = await homepageService.getMenuChildrenTree(
       "698191a46ea27a5d8ccbf724",
-      showHomePage
+      showHomePage,
+      featuredInsights
     );
-    const paged = paginateArray(menus, params);
+    const paged = paginateArray(
+      [...menus].sort(
+        (a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0)
+      ),
+      params
+    );
     res.json({
       success: true,
       data: paged.items,

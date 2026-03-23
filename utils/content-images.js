@@ -33,7 +33,10 @@ function extractContentUploadPaths(html) {
 
   while ((match = attrRegex.exec(source)) !== null) {
     const normalized = normalizePublicImagePath(match[1]);
-    if (normalized.startsWith("/uploads/content/")) {
+    if (
+      normalized.startsWith("/uploads/content/") ||
+      normalized.startsWith("/uploads/pdf/")
+    ) {
       result.add(normalized);
     }
   }
@@ -88,6 +91,33 @@ function extractImageSources(html) {
   return result;
 }
 
+function extractPdfSources(html) {
+  const source = String(html || "");
+  if (!source) return [];
+
+  const result = [];
+  const re = /<a[^>]+href=["']([^"']+)["'][^>]*>/gi;
+  let match;
+  while ((match = re.exec(source)) !== null) {
+    const href = String(match[1] || "").trim();
+    if (!href) continue;
+
+    let pathname = href;
+    if (/^https?:\/\//i.test(href)) {
+      try {
+        pathname = new URL(href).pathname || "";
+      } catch {
+        pathname = href;
+      }
+    }
+    pathname = pathname.split("?")[0].split("#")[0].toLowerCase();
+    if (!pathname.endsWith(".pdf")) continue;
+
+    if (!result.includes(href)) result.push(href);
+  }
+  return result;
+}
+
 function isServerContentImageSource(src, allowedHosts) {
   const value = String(src || "").trim();
   if (!value) return false;
@@ -123,15 +153,19 @@ function validateContentImageSources(html, options = {}) {
     )
     .filter(Boolean);
 
-  const sources = extractImageSources(html);
-  const invalidSources = sources.filter(
+  const imageSources = extractImageSources(html);
+  const pdfSources = extractPdfSources(html);
+  const allSources = [...imageSources, ...pdfSources];
+  const invalidSources = allSources.filter(
     (src) => !isServerContentImageSource(src, allowedHosts)
   );
 
   return {
     isValid: invalidSources.length === 0,
     invalidSources,
-    allSources: sources,
+    allSources,
+    imageSources,
+    pdfSources,
   };
 }
 

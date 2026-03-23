@@ -229,7 +229,12 @@
 
   <% function getChildren(parentId) { return menus.filter(function(m) {
   return (m.parentId ? m.parentId.toString() : null) === (parentId ?
-  parentId.toString() : null); }).sort(function(a, b) { return (a.order || 0) - (b.order || 0); }); } %>
+  parentId.toString() : null); }).sort(function(a, b) {
+  var aTime = Date.parse(a && a.createdAt) || 0;
+  var bTime = Date.parse(b && b.createdAt) || 0;
+  if (bTime !== aTime) return bTime - aTime;
+  return (a.order || 0) - (b.order || 0);
+  }); } %>
 
   <% var menuById = {}; menus.forEach(function(m) { menuById[m._id.toString()] = m; }); %>
 

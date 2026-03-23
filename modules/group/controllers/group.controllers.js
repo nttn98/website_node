@@ -127,7 +127,7 @@ exports.create = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Content contains image source(s) not hosted on this server. Please upload & replace before saving.",
+          "Content contains image/PDF source(s) not hosted on this server. Please upload & replace before saving.",
         invalidImageSources: contentImageCheck.invalidSources,
       });
     }
@@ -206,7 +206,7 @@ exports.update = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Content contains image source(s) not hosted on this server. Please upload & replace before updating.",
+          "Content contains image/PDF source(s) not hosted on this server. Please upload & replace before updating.",
         invalidImageSources: contentImageCheck.invalidSources,
       });
     }

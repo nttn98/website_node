@@ -16,9 +16,37 @@
   </a>
 </div>
 
+<div class="menu-filter-bar mb-3">
+  <div class="menu-filter-item grow"></div>
+  <div class="menu-filter-item">
+    <select id="parentFilterSelect" class="menu-filter-select">
+      <option value="all">All Parent Menus</option>
+      <option value="root">Root Menus Only</option>
+    </select>
+  </div>
+</div>
+
 <div id="menu-list" class="table-container-minimal"></div>
 
 <script>
+  const INSIGHTS_PARENT_ID = "698191a46ea27a5d8ccbf724";
+  let allMenusData = [];
+
+  function notify(message, isError = false) {
+    if (typeof window.showToast === "function") {
+      window.showToast(message, isError);
+      return;
+    }
+    window.alert(message);
+  }
+
+  function sortByCreatedAtThenOrder(a, b) {
+    const aTime = Date.parse(a?.createdAt) || 0;
+    const bTime = Date.parse(b?.createdAt) || 0;
+    if (bTime !== aTime) return bTime - aTime;
+    return (a.order || 0) - (b.order || 0);
+  }
+
   function renderMenus(menus) {
     const listContainer = document.getElementById("menu-list");
     if (!menus || !menus.length) {
@@ -44,11 +72,12 @@
           <thead>
             <tr>
               <th width="30%">Details</th>
-              <th width="12%" class="text-center">Order</th>
-              <th width="18%">Parent</th>
-              <th width="12%" class="text-center">Homepage</th>
-              <th width="12%" class="text-center">Status</th>
-              <th width="16%" class="text-end">Actions</th>
+              <th width="10%" class="text-center">Order</th>
+              <th width="14%">Parent</th>
+              <th width="10%" class="text-center">Homepage</th>
+              <th width="12%" class="text-center">Featured Insights</th>
+              <th width="10%" class="text-center">Status</th>
+              <th width="14%" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>`;
@@ -63,7 +92,7 @@
             .filter(
               (c) => c.parentId && c.parentId.toString() === menu._id.toString()
             )
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
+            .sort(sortByCreatedAtThenOrder);
           children.forEach((child) => {
             html += renderMenuRow(child, menus, false, false);
           });
@@ -81,11 +110,12 @@
           <thead>
             <tr>
               <th width="30%">Details</th>
-              <th width="12%" class="text-center">Order</th>
-              <th width="18%">Parent</th>
-              <th width="12%" class="text-center">Homepage</th>
-              <th width="12%" class="text-center">Status</th>
-              <th width="16%" class="text-end">Actions</th>
+              <th width="10%" class="text-center">Order</th>
+              <th width="14%">Parent</th>
+              <th width="10%" class="text-center">Homepage</th>
+              <th width="12%" class="text-center">Featured Insights</th>
+              <th width="10%" class="text-center">Status</th>
+              <th width="14%" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>`;
@@ -100,7 +130,7 @@
             .filter(
               (c) => c.parentId && c.parentId.toString() === menu._id.toString()
             )
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
+            .sort(sortByCreatedAtThenOrder);
           children.forEach((child) => {
             html += renderMenuRow(child, menus, false, false);
           });
@@ -111,6 +141,82 @@
     }
 
     listContainer.innerHTML = html;
+  }
+
+  function normalizeText(value) {
+    return String(value || "").toLowerCase();
+  }
+
+  function setupParentFilterOptions(menus) {
+    const parentSelect = document.getElementById("parentFilterSelect");
+    const roots = (menus || [])
+      .filter((m) => !m.parentId)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    const dynamicOptions = roots
+      .map((m) => {
+        const label = m.title?.en || m.title || "No Title";
+        return `<option value="${m._id}">${label}</option>`;
+      })
+      .join("");
+
+    parentSelect.innerHTML = `
+      <option value="all">All Parent Menus</option>
+      <option value="root">Root Menus Only</option>
+      ${dynamicOptions}
+    `;
+  }
+
+  function applyFilters() {
+    const searchValue = normalizeText(
+      document.getElementById("menuSearchInput")?.value
+    );
+    const parentValue = document.getElementById("parentFilterSelect")?.value;
+
+    let filtered = [...allMenusData];
+
+    if (parentValue === "root") {
+      filtered = filtered.filter((m) => !m.parentId);
+    } else if (parentValue && parentValue !== "all") {
+      filtered = filtered.filter(
+        (m) =>
+          String(m._id) === parentValue ||
+          String(m.parentId || "") === parentValue
+      );
+    }
+
+    if (searchValue) {
+      const matchedIds = new Set();
+      const byId = new Map(filtered.map((m) => [String(m._id), m]));
+
+      filtered.forEach((m) => {
+        const haystack = [
+          m.title?.en,
+          m.title?.vi,
+          m.title?.zh,
+          m.subTitle?.en,
+          m.subTitle?.vi,
+          m.subTitle?.zh,
+          m.route,
+          m.tags,
+          m.parentName,
+        ]
+          .map(normalizeText)
+          .join(" ");
+
+        if (haystack.includes(searchValue)) {
+          matchedIds.add(String(m._id));
+          if (m.parentId && byId.has(String(m.parentId))) {
+            matchedIds.add(String(m.parentId));
+          }
+        }
+      });
+
+      filtered = filtered.filter((m) => matchedIds.has(String(m._id)));
+    }
+
+    renderMenus(filtered);
+    initMenuToggle();
   }
 
   function renderMenuRow(menu, allMenus, isParent, hasChildren) {
@@ -182,6 +288,20 @@
         }
       </td>
       <td class="text-center">
+        ${
+          String(menu.parentId || "") === INSIGHTS_PARENT_ID
+            ? `<button
+          type="button"
+          class="featured-star-btn ${menu.featuredInsights ? "active" : ""}"
+          aria-label="Toggle Featured Insights"
+          title="Toggle Featured Insights"
+          onclick="toggleFeaturedInsights('${menu._id}', this)">
+          ${menu.featuredInsights ? "★" : "☆"}
+        </button>`
+            : '<span class="text-muted">&mdash;</span>'
+        }
+      </td>
+      <td class="text-center">
         <div class="status-toggle-group">
           <span class="status-dot ${
             menu.isStatus ? "dot-active" : "dot-hidden"
@@ -216,21 +336,44 @@
   fetch("/api/menus")
     .then((res) => res.json())
     .then((data) => {
-      renderMenus(data.data);
-      initMenuToggle();
+      allMenusData = data.data || [];
+      setupParentFilterOptions(allMenusData);
+      applyFilters();
     })
-    .catch(() => renderMenus([]));
+    .catch(() => {
+      allMenusData = [];
+      setupParentFilterOptions(allMenusData);
+      applyFilters();
+    });
+
+  const menuSearchInput = document.getElementById("menuSearchInput");
+  if (menuSearchInput) {
+    menuSearchInput.addEventListener("input", applyFilters);
+  }
+
+  const parentFilterSelect = document.getElementById("parentFilterSelect");
+  if (parentFilterSelect) {
+    parentFilterSelect.addEventListener("change", applyFilters);
+  }
 
   function toggleMenuStatus(id, el) {
     fetch(`/api/menus/${id}/toggle`, { method: "PATCH" })
       .then((res) => res.json())
       .then((data) => {
+        if (!data.success) {
+          throw new Error(data.message || "Toggle failed");
+        }
         const dot = el.closest("tr").querySelector(".status-dot");
         if (dot) {
           dot.className = data.isStatus
             ? "status-dot dot-active"
             : "status-dot dot-hidden";
         }
+        notify("Menu status updated");
+      })
+      .catch((err) => {
+        console.error("Toggle status failed:", err);
+        notify("Toggle status failed: " + err.message, true);
       });
   }
 
@@ -267,17 +410,48 @@
               ? "#2ecc71"
               : "#bdc3c7";
           }
-          console.log("Toggle successful");
+          notify("Homepage visibility updated");
         } else {
-          alert("Toggle failed: " + (data.message || "Unknown error"));
+          notify("Toggle failed: " + (data.message || "Unknown error"), true);
           el.checked = currentState; // rollback
         }
       })
       .catch((err) => {
         console.error("Toggle homepage failed:", err);
         el.disabled = false;
-        alert("Toggle failed: " + err.message);
+        notify("Toggle failed: " + err.message, true);
         el.checked = currentState; // rollback
+      });
+  }
+
+  function toggleFeaturedInsights(id, el) {
+    const wasActive = el.classList.contains("active");
+    el.disabled = true;
+
+    fetch(`/api/menus/${id}/toggle-featured-insights`, {
+      method: "PATCH",
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        el.disabled = false;
+        if (!data.success) {
+          throw new Error(data.message || "Toggle failed");
+        }
+        el.classList.toggle("active", !!data.featuredInsights);
+        el.textContent = data.featuredInsights ? "★" : "☆";
+        notify("Featured Insights updated");
+      })
+      .catch((err) => {
+        console.error("Toggle featured insights failed:", err);
+        el.disabled = false;
+        el.classList.toggle("active", wasActive);
+        el.textContent = wasActive ? "★" : "☆";
+        notify("Toggle Featured Insights failed: " + err.message, true);
       });
   }
 
@@ -286,7 +460,15 @@
     fetch(`/api/menus/${id}`, { method: "DELETE" })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) location.reload();
+        if (data.success) {
+          notify("Menu deleted");
+          setTimeout(() => location.reload(), 300);
+        } else {
+          notify("Delete failed: " + (data.message || "Unknown error"), true);
+        }
+      })
+      .catch((err) => {
+        notify("Delete failed: " + err.message, true);
       });
   }
 

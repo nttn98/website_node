@@ -301,4 +301,35 @@ router.patch("/:id/toggle", controller.toggleMenu);
  */
 router.patch("/:id/toggle-homepage", controller.toggleShowHomePage);
 
+/**
+ * @swagger
+ * /api/menus/{id}/toggle-featured-insights:
+ *   patch:
+ *     summary: Đổi trạng thái Featured Insights
+ *     tags:
+ *       - Menu
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Đổi trạng thái thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 featuredInsights:
+ *                   type: boolean
+ */
+router.patch(
+  "/:id/toggle-featured-insights",
+  controller.toggleFeaturedInsights
+);
+
 module.exports = router;

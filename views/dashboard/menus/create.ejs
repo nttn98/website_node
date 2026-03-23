@@ -91,6 +91,24 @@
       </div>
     </div>
 
+    <div class="switch-card mb-3" id="featuredInsightsCard" style="display: none">
+      <div class="d-flex justify-content-between">
+        <span class="fw-700 small text-navy">FEATURED INSIGHTS</span>
+        <div>
+          <input type="checkbox" name="featuredInsights" id="featuredInsights" style="display: none" />
+          <button
+            type="button"
+            class="featured-star-btn"
+            id="featuredInsightsStar"
+            aria-label="Toggle Featured Insights"
+            aria-pressed="false"
+          >
+            ☆
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="switch-card mb-5">
       <div class="d-flex justify-content-between">
         <span class="fw-700 small text-navy">DISPLAY AS BUTTON</span>
@@ -110,6 +128,16 @@
 </form>
 
 <script>
+  const INSIGHTS_PARENT_ID = "698191a46ea27a5d8ccbf724";
+
+  function notify(message, isError = false) {
+    if (typeof window.showToast === "function") {
+      window.showToast(message, isError);
+      return;
+    }
+    window.alert(message);
+  }
+
   // 1. Fetch & Render Parent Options
   fetch("/api/menus")
     .then((res) => res.json())
@@ -150,6 +178,10 @@
     const parentType = selectedOption.dataset.type;
     const typeSelect = document.getElementById("typeSelect");
     const showHomePageCard = document.getElementById("showHomePageCard");
+    const featuredInsightsCard = document.getElementById("featuredInsightsCard");
+    const featuredInsightsCheckbox = document.getElementById("featuredInsights");
+    const featuredInsightsStar = document.getElementById("featuredInsightsStar");
+    const isInsightsMenu = this.value === INSIGHTS_PARENT_ID;
 
     if (this.value && parentType) {
       typeSelect.value = parentType;
@@ -164,6 +196,36 @@
       showHomePageCard.style.display = "none";
       document.getElementById("showHomePage").checked = false;
     }
+
+    featuredInsightsCard.style.display = isInsightsMenu ? "block" : "none";
+    if (!isInsightsMenu) {
+      featuredInsightsCheckbox.checked = false;
+    }
+    featuredInsightsStar.classList.toggle("active", featuredInsightsCheckbox.checked);
+    featuredInsightsStar.textContent = featuredInsightsCheckbox.checked
+      ? "★"
+      : "☆";
+    featuredInsightsStar.setAttribute(
+      "aria-pressed",
+      featuredInsightsCheckbox.checked ? "true" : "false"
+    );
+  });
+
+  const featuredInsightsCheckbox = document.getElementById("featuredInsights");
+  const featuredInsightsStar = document.getElementById("featuredInsightsStar");
+  featuredInsightsStar.addEventListener("click", function () {
+    if (document.getElementById("parentId").value !== INSIGHTS_PARENT_ID) {
+      return;
+    }
+    featuredInsightsCheckbox.checked = !featuredInsightsCheckbox.checked;
+    featuredInsightsStar.classList.toggle("active", featuredInsightsCheckbox.checked);
+    featuredInsightsStar.textContent = featuredInsightsCheckbox.checked
+      ? "★"
+      : "☆";
+    featuredInsightsStar.setAttribute(
+      "aria-pressed",
+      featuredInsightsCheckbox.checked ? "true" : "false"
+    );
   });
 
   // 3. Image Preview
@@ -191,6 +253,11 @@
         "showHomePage",
         document.getElementById("showHomePage").checked
       );
+      formData.set(
+        "featuredInsights",
+        document.getElementById("parentId").value === INSIGHTS_PARENT_ID &&
+          document.getElementById("featuredInsights").checked
+      );
 
       console.log(
         "Form data - isButton:",
@@ -204,6 +271,10 @@
         "Form data - parentId:",
         document.getElementById("parentId").value
       );
+      console.log(
+        "Form data - featuredInsights:",
+        document.getElementById("featuredInsights").checked
+      );
 
       fetch("/api/menus", {
         method: "POST",
@@ -212,12 +283,22 @@
         .then((res) => res.json())
         .then((resp) => {
           console.log("Create response:", resp);
-          if (resp.success) window.location.href = "/dashboard/menus";
-          else alert("Save failed: " + (resp.message || "Unknown error"));
+          if (resp.success) {
+            if (typeof window.redirectWithToast === "function") {
+              window.redirectWithToast("/dashboard/menus", "Menu created successfully");
+            } else {
+              notify("Menu created successfully");
+              setTimeout(() => {
+                window.location.href = "/dashboard/menus";
+              }, 350);
+            }
+          } else {
+            notify("Save failed: " + (resp.message || "Unknown error"), true);
+          }
         })
         .catch((err) => {
           console.error("Create menu error", err);
-          alert("Save failed — see console");
+          notify("Save failed — see console", true);
         });
     });
 </script>
