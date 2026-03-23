@@ -216,7 +216,17 @@
   }
 
   async function toggleButtonStatus(id, btn) {
-    await fetch(`/buttons/${id}/toggle`, { method: "POST" });
+    try {
+      const res = await fetch(`/buttons/${id}/toggle`, { method: "POST" });
+      const data = await res.json();
+      if (data && data.success !== false) {
+        showToast("Status updated");
+      } else {
+        showToast(data?.message || "Update failed", true);
+      }
+    } catch (e) {
+      showToast("Update failed", true);
+    }
     fetchButtons();
   }
 

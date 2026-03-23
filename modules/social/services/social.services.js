@@ -41,7 +41,7 @@ exports.create = async (payload) => {
 };
 
 exports.getPublicItems = async () => {
-  return await Social.find({ isActive: true, isStatus: true }).sort({
+  return await Social.find({ isActive: true }).sort({
     order: 1,
   });
 };
