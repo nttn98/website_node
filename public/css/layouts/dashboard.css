@@ -78,7 +78,7 @@ aside.sidebar-wrapper {
 }
 .top-header {
   background: white;
-  height: 70px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -100,7 +100,7 @@ aside.sidebar-wrapper {
 }
 
 main {
-  padding: 30px;
+  padding: 15px;
 }
 
 /* Style cho wrapper để chứa link và nút collapse trên cùng 1 hàng */
