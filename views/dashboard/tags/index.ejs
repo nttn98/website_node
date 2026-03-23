@@ -1,0 +1,86 @@
+<link rel="stylesheet" href="/css/tags/index.css" />
+
+<div class="d-flex justify-content-between align-items-end mb-4">
+  <div>
+    <h4 class="fw-800 mb-1" style="color: var(--ui-navy); letter-spacing: -1px">
+      TAGS
+    </h4>
+    <div class="d-flex align-items-center gap-2">
+      <p class="small text-muted mb-0">
+        Manage tags for content classification
+      </p>
+    </div>
+  </div>
+
+  <button id="add-tag-btn" class="btn-ui-main">
+    <span class="plus-symbol">+</span>
+    ADD TAG
+  </button>
+</div>
+
+<div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+  <div
+    class="search-wrap flex-grow-1"
+    style="max-width: 340px; position: relative"
+  >
+    <i
+      class="bi bi-search"
+      style="
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 0.9rem;
+      "
+    ></i>
+    <input
+      id="tagSearchInput"
+      type="search"
+      placeholder="Search by name, slug..."
+      class="search-input"
+      style="
+        width: 100%;
+        padding: 10px 16px 10px 36px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        outline: none;
+      "
+    />
+  </div>
+  <div class="limit-wrap d-flex align-items-center gap-2">
+    <label
+      for="tagPageLimitSelect"
+      style="font-size: 0.85rem; color: #666; margin: 0"
+    >
+      Show:
+    </label>
+    <select
+      id="tagPageLimitSelect"
+      class="form-select-minimal"
+      style="
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        outline: none;
+      "
+    >
+      <option value="5" selected>5</option>
+      <option value="10">10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+    </select>
+  </div>
+</div>
+
+<div id="tag-list" class="table-container-minimal"></div>
+
+<div
+  id="tag-pagination-controls"
+  class="pagination-controls mt-3"
+  style="display: none; text-align: center"
+></div>
+
+<script src="/js/tags.index.js"></script>

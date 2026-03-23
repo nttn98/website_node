@@ -142,9 +142,9 @@ router.get("/:id/children-tree", controller.getChildrenTree);
  *               order:
  *                 type: number
  *                 default: 0
- *               tags:
+ *               tagId:
  *                 type: string
- *                 description: Comma-separated tags
+ *                 description: Selected tag id
  *               image:
  *                 type: string
  *                 format: binary
@@ -202,7 +202,7 @@ router.post("/", upload.single("image"), controller.createMenu);
  *                 enum: [top, bot]
  *               order:
  *                 type: number
- *               tags:
+ *               tagId:
  *                 type: string
  *               image:
  *                 type: string

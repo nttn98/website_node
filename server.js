@@ -134,6 +134,7 @@ app.use("/buttons", require("./modules/button/routes/button.routes"));
 app.use("/forms", require("./modules/form/routes/form.routes"));
 app.use("/api/forms", require("./modules/form/routes/submission.routes"));
 app.use("/api/socials", require("./modules/social/routes/social.routes"));
+app.use("/api/tags", require("./modules/tag/routes/tag.routes"));
 app.use("/api/upload", require("./routes/upload.routes"));
 app.use("/", require("./routes/view.routes"));
 

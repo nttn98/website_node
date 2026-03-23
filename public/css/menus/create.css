@@ -100,6 +100,19 @@
   background: #fff;
 }
 
+.tag-select {
+  cursor: pointer;
+  background: #fbfcff !important;
+  border: 1px solid #e7eaf1 !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+}
+
+.tag-select:focus {
+  border-color: var(--ui-bronze) !important;
+  box-shadow: 0 0 0 2px rgba(184, 155, 94, 0.18);
+}
+
 /* Thêm khoảng cách cho phần Parent Menu */
 #parentId {
   cursor: pointer;

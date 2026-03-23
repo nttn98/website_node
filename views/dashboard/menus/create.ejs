@@ -36,7 +36,12 @@
 
     <div class="form-group-minimal mb-4">
       <label>TAGS</label>
-      <input type="text" name="tags" placeholder="news, insights, featured" />
+      <select name="tagId" id="tagIdSelect" class="tag-select">
+        <option value="">-- No tag --</option>
+      </select>
+      <small class="text-muted d-block mt-1"></small>
+        Choose one tag to attach this menu.
+      </small>
     </div>
 
     <div class="row">
@@ -91,11 +96,20 @@
       </div>
     </div>
 
-    <div class="switch-card mb-3" id="featuredInsightsCard" style="display: none">
+    <div
+      class="switch-card mb-3"
+      id="featuredInsightsCard"
+      style="display: none"
+    >
       <div class="d-flex justify-content-between">
         <span class="fw-700 small text-navy">FEATURED INSIGHTS</span>
         <div>
-          <input type="checkbox" name="featuredInsights" id="featuredInsights" style="display: none" />
+          <input
+            type="checkbox"
+            name="featuredInsights"
+            id="featuredInsights"
+            style="display: none"
+          />
           <button
             type="button"
             class="featured-star-btn"
@@ -172,15 +186,49 @@
     })
     .catch((err) => console.error("Failed to load parent categories:", err));
 
+  // Load tags from database and render dropdown options
+  fetch("/api/tags?limit=300")
+    .then((res) => res.json())
+    .then((resp) => {
+      const tagSelect = document.getElementById("tagIdSelect");
+      if (!tagSelect) return;
+
+      const tags = Array.isArray(resp.data) ? resp.data : [];
+      tagSelect.innerHTML = '<option value="">-- No tag --</option>';
+
+      if (!tags.length) {
+        return;
+      }
+
+      tags.forEach((tag) => {
+        const opt = document.createElement("option");
+        opt.value = tag._id || "";
+        opt.textContent = tag.name || tag.slug || "Unnamed tag";
+        tagSelect.appendChild(opt);
+      });
+    })
+    .catch((err) => {
+      console.error("Failed to load tags:", err);
+      const tagSelect = document.getElementById("tagIdSelect");
+      if (tagSelect) {
+        tagSelect.innerHTML = '<option value="">-- No tag --</option>';
+      }
+    });
+
   // 2. Auto-logic cho Parent/Type
   document.getElementById("parentId").addEventListener("change", function () {
     const selectedOption = this.options[this.selectedIndex];
     const parentType = selectedOption.dataset.type;
     const typeSelect = document.getElementById("typeSelect");
     const showHomePageCard = document.getElementById("showHomePageCard");
-    const featuredInsightsCard = document.getElementById("featuredInsightsCard");
-    const featuredInsightsCheckbox = document.getElementById("featuredInsights");
-    const featuredInsightsStar = document.getElementById("featuredInsightsStar");
+    const featuredInsightsCard = document.getElementById(
+      "featuredInsightsCard"
+    );
+    const featuredInsightsCheckbox =
+      document.getElementById("featuredInsights");
+    const featuredInsightsStar = document.getElementById(
+      "featuredInsightsStar"
+    );
     const isInsightsMenu = this.value === INSIGHTS_PARENT_ID;
 
     if (this.value && parentType) {
@@ -201,7 +249,10 @@
     if (!isInsightsMenu) {
       featuredInsightsCheckbox.checked = false;
     }
-    featuredInsightsStar.classList.toggle("active", featuredInsightsCheckbox.checked);
+    featuredInsightsStar.classList.toggle(
+      "active",
+      featuredInsightsCheckbox.checked
+    );
     featuredInsightsStar.textContent = featuredInsightsCheckbox.checked
       ? "★"
       : "☆";
@@ -218,7 +269,10 @@
       return;
     }
     featuredInsightsCheckbox.checked = !featuredInsightsCheckbox.checked;
-    featuredInsightsStar.classList.toggle("active", featuredInsightsCheckbox.checked);
+    featuredInsightsStar.classList.toggle(
+      "active",
+      featuredInsightsCheckbox.checked
+    );
     featuredInsightsStar.textContent = featuredInsightsCheckbox.checked
       ? "★"
       : "☆";
@@ -285,7 +339,10 @@
           console.log("Create response:", resp);
           if (resp.success) {
             if (typeof window.redirectWithToast === "function") {
-              window.redirectWithToast("/dashboard/menus", "Menu created successfully");
+              window.redirectWithToast(
+                "/dashboard/menus",
+                "Menu created successfully"
+              );
             } else {
               notify("Menu created successfully");
               setTimeout(() => {

@@ -91,11 +91,12 @@ exports.getMenuParents = () => {
     .lean();
 };
 
-// Get menus for a given parentId with optional showHomePage filter
+// Get menus for a given parentId with optional showHomePage/featuredInsights/tag filter
 exports.getMenuChildrenTree = async (
   parentId,
   showHomePage,
-  featuredInsights
+  featuredInsights,
+  tag
 ) => {
   const query = {
     isActive: true,
@@ -109,6 +110,15 @@ exports.getMenuChildrenTree = async (
 
   if (typeof featuredInsights === "boolean") {
     query.featuredInsights = featuredInsights;
+  }
+
+  const normalizedTag = String(tag || "").trim();
+  if (normalizedTag) {
+    if (/^[a-fA-F0-9]{24}$/.test(normalizedTag)) {
+      query.tagId = normalizedTag;
+    } else {
+      query.tagName = { $regex: normalizedTag, $options: "i" };
+    }
   }
 
   const menus = await Menu.find(query).sort({ createdAt: -1, order: 1 }).lean();

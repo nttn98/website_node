@@ -18,6 +18,7 @@ const options = {
       { name: "User", description: "User management" },
       { name: "Dashboard", description: "Dashboard" },
       { name: "Social", description: "Social media links" },
+      { name: "Tags", description: "Tag management" },
       { name: "Forms", description: "Form management and submission" },
     ],
   },

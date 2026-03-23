@@ -49,10 +49,15 @@ const MenuSchema = new mongoose.Schema(
       default: false,
     },
 
-    tags: {
+    tagId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tag",
+      default: null,
+    },
+
+    tagName: {
       type: String,
       default: "",
-      trim: true,
     },
 
     // ===== DISPLAY FLAGS =====

@@ -72,6 +72,12 @@ router.get("/dashboard/socials", requireLoginView, async (req, res) => {
   res.render("dashboard/socials/index");
 });
 
+router.get("/dashboard/tags", requireLoginView, async (req, res) => {
+  res.locals.menus = await menuService.getAllMenusCached();
+  res.locals.currentPage = "tags";
+  res.render("dashboard/tags/index");
+});
+
 router.get("/dashboard/buttons/create", requireLoginView, async (req, res) => {
   const [menus, forms] = await Promise.all([
     menuService.getAllMenusCached(),

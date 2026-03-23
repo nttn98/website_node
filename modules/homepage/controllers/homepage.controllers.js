@@ -157,9 +157,12 @@ exports.getSolutionsMenus = async (req, res) => {
       maxLimit: 100,
     });
     const showHomePage = parseOptionalBoolean(req.query.showHomePage);
+    const tag = String(req.query.tag || "").trim();
     const menus = await homepageService.getMenuChildrenTree(
       "697c0c9e7d88fcfff27bfb46",
-      showHomePage
+      showHomePage,
+      undefined,
+      tag
     );
     const paged = paginateArray(menus, params);
     res.json({
@@ -184,9 +187,12 @@ exports.getIndustryMenus = async (req, res) => {
       maxLimit: 100,
     });
     const showHomePage = parseOptionalBoolean(req.query.showHomePage);
+    const tag = String(req.query.tag || "").trim();
     const menus = await homepageService.getMenuChildrenTree(
       "698aa02d84b05fe995a079a7",
-      showHomePage
+      showHomePage,
+      undefined,
+      tag
     );
     const paged = paginateArray(menus, params);
     res.json({
@@ -212,10 +218,12 @@ exports.getInsightsMenus = async (req, res) => {
     });
     const showHomePage = parseOptionalBoolean(req.query.showHomePage);
     const featuredInsights = parseOptionalBoolean(req.query.featuredInsights);
+    const tag = String(req.query.tag || "").trim();
     const menus = await homepageService.getMenuChildrenTree(
       "698191a46ea27a5d8ccbf724",
       showHomePage,
-      featuredInsights
+      featuredInsights,
+      tag
     );
     const paged = paginateArray(
       [...menus].sort(
@@ -294,7 +302,15 @@ exports.getMenuChildrenTree = async (req, res) => {
       defaultLimit: 20,
       maxLimit: 200,
     });
-    const menus = await homepageService.getMenuChildrenTree(parentId);
+    const showHomePage = parseOptionalBoolean(req.query.showHomePage);
+    const featuredInsights = parseOptionalBoolean(req.query.featuredInsights);
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      parentId,
+      showHomePage,
+      featuredInsights,
+      tag
+    );
     const paged = paginateArray(menus, params);
     res.json({
       success: true,

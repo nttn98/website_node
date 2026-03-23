@@ -1,4 +1,5 @@
 const Menu = require("../models/Menu");
+const Tag = require("../../tag/models/Tag");
 const path = require("path");
 const INSIGHTS_PARENT_ID = "698191a46ea27a5d8ccbf724";
 
@@ -6,23 +7,24 @@ function invalidateMenuCache() {
   // No-op: menu list cache has been removed.
 }
 
-function normalizeTags(tagsInput) {
-  if (Array.isArray(tagsInput)) {
-    return tagsInput
-      .map((item) => String(item || "").trim())
-      .filter(Boolean)
-      .join(", ");
+async function resolveTagPayload(tagIdInput) {
+  const tagId = String(tagIdInput || "").trim();
+  if (!tagId) {
+    return { tagId: null, tagName: "" };
   }
 
-  if (typeof tagsInput === "string") {
-    return tagsInput
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .join(", ");
+  const tag = await Tag.findOne({ _id: tagId, isActive: true })
+    .select("_id name")
+    .lean();
+
+  if (!tag) {
+    return { tagId: null, tagName: "" };
   }
 
-  return "";
+  return {
+    tagId: tag._id,
+    tagName: String(tag.name || "").trim(),
+  };
 }
 
 function isInsightsChild(parentId) {
@@ -81,7 +83,7 @@ exports.createMenu = async (data) => {
       parentName = parentMenu.title?.en || parentMenu.title || null;
   }
 
-  const tags = normalizeTags(data.tags);
+  const selectedTag = await resolveTagPayload(data.tagId);
   const isInsightsMenu = isInsightsChild(data.parentId);
 
   // Handle image path normalization
@@ -133,7 +135,8 @@ exports.createMenu = async (data) => {
         data.featuredInsights === "true" ||
         data.featuredInsights === true),
     image: image,
-    tags,
+    tagId: selectedTag.tagId,
+    tagName: selectedTag.tagName,
     isStatus: true,
     isActive: true,
   });
@@ -185,8 +188,10 @@ exports.updateMenu = async (id, data) => {
     update.featuredInsights = false;
   }
 
-  if (data.tags !== undefined) {
-    update.tags = normalizeTags(data.tags);
+  if (data.tagId !== undefined) {
+    const selectedTag = await resolveTagPayload(data.tagId);
+    update.tagId = selectedTag.tagId;
+    update.tagName = selectedTag.tagName;
   }
 
   // Handle image path normalization

@@ -198,7 +198,7 @@
           m.subTitle?.vi,
           m.subTitle?.zh,
           m.route,
-          m.tags,
+          m.tagName,
           m.parentName,
         ]
           .map(normalizeText)
@@ -257,6 +257,11 @@
                 : ""
             }
             <div class="menu-meta">${menu.route || "/"}</div>
+            ${
+              menu.tagName
+                ? `<span class="menu-tag-badge">${menu.tagName}</span>`
+                : ""
+            }
           </div>
         </div>
       </td>

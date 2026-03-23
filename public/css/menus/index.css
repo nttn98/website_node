@@ -210,6 +210,20 @@
   color: #aaa;
 }
 
+.menu-tag-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  background: rgba(184, 155, 94, 0.12);
+  color: var(--ui-bronze);
+  border: 1px solid rgba(184, 155, 94, 0.35);
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 /* Order badge */
 .order-badge-table {
   display: inline-flex;

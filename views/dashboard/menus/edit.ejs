@@ -65,7 +65,10 @@
 
     <div class="form-group-minimal mb-4">
       <label>Tags</label>
-      <input type="text" name="tags" value="<%= Array.isArray(menu.tags) ? menu.tags.join(', ') : (menu.tags || '') %>" placeholder="news, insights, featured" />
+      <select name="tagId" id="tagIdSelect" class="tag-select">
+        <option value="">-- No tag --</option>
+      </select>
+      <small class="text-muted d-block mt-1">Choose one tag for this menu.</small>
     </div>
 
     <div class="row">
@@ -213,6 +216,7 @@
   const typeSelect = document.getElementById('typeSelect');
   const currentMenuId = '<%= menu._id %>';
   const currentParentId = '<%= menu.parentId ? menu.parentId.toString() : "" %>';
+  const currentTagId = '<%= menu.tagId ? menu.tagId.toString() : "" %>';
   const featuredInsightsCard = document.getElementById('featuredInsightsCard');
   const featuredInsightsCheckbox = document.getElementById('featuredInsights');
   const featuredInsightsStar = document.getElementById('featuredInsightsStar');
@@ -291,6 +295,29 @@
     });
 
   parentSelect.addEventListener('change', syncTypeWithParent);
+
+  fetch('/api/tags?limit=300')
+    .then((res) => res.json())
+    .then((resp) => {
+      const tagSelect = document.getElementById('tagIdSelect');
+      if (!tagSelect) return;
+
+      const tags = Array.isArray(resp.data) ? resp.data : [];
+      tagSelect.innerHTML = '<option value="">-- No tag --</option>';
+
+      tags.forEach((tag) => {
+        const opt = document.createElement('option');
+        opt.value = tag._id || '';
+        opt.textContent = tag.name || tag.slug || 'Unnamed tag';
+        if (String(opt.value) === String(currentTagId)) {
+          opt.selected = true;
+        }
+        tagSelect.appendChild(opt);
+      });
+    })
+    .catch((err) => {
+      console.error('Failed to load tags:', err);
+    });
 
   // 3. TOGGLE SHOW HOMEPAGE
   const showHomePageCheckbox = document.getElementById('showHomePage');

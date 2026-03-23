@@ -1,0 +1,12 @@
+@import url("/css/socials/edit.css");
+
+/* Keep Tag layout aligned with Socials while adapting Tag-specific fields. */
+.table-clean thead th:first-child,
+.table-clean tbody td:first-child {
+  width: auto;
+}
+
+input[name="slug"][readonly] {
+  color: #8a8a8a;
+  cursor: not-allowed;
+}

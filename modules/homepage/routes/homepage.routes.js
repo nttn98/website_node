@@ -208,6 +208,12 @@ router.get("/menu-parents", homepageController.getMenuParents);
  *         schema:
  *           type: boolean
  *         description: Optional filter by showHomePage (true/false)
+ *       - in: query
+ *         name: tag
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional filter by tagId or tagName
  *     responses:
  *       200:
  *         description: Solutions menu tree
@@ -253,6 +259,12 @@ router.get("/solutions", homepageController.getSolutionsMenus);
  *         schema:
  *           type: boolean
  *         description: Optional filter by featuredInsights (true/false)
+ *       - in: query
+ *         name: tag
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional filter by tagId or tagName
  *     responses:
  *       200:
  *         description: Insights menu tree
@@ -292,6 +304,12 @@ router.get("/insights", homepageController.getInsightsMenus);
  *         schema:
  *           type: boolean
  *         description: Optional filter by showHomePage (true/false)
+ *       - in: query
+ *         name: tag
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional filter by tagId or tagName
  *     responses:
  *       200:
  *         description: Industry menu tree
@@ -331,6 +349,12 @@ router.get("/industry", homepageController.getIndustryMenus);
  *           minimum: 1
  *           default: 20
  *         description: Number of items per page
+ *       - in: query
+ *         name: tag
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional filter by tagId or tagName
  *     responses:
  *       200:
  *         description: Menu children tree
