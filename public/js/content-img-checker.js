@@ -100,6 +100,12 @@
     );
   }
 
+  function isTikTokThumbnailSrc(src) {
+    return /^https?:\/\/(?:[^/]+\.)?(tiktokcdn\.com|muscdn\.com)\//i.test(
+      String(src || "")
+    );
+  }
+
   function getYoutubeIdFromSrc(src) {
     var m = String(src || "").match(/\/vi\/([A-Za-z0-9_-]{11})\//);
     return m ? m[1] : null;
@@ -115,6 +121,46 @@
     m = url.match(/youtube\.com\/(?:shorts|embed|v)\/([A-Za-z0-9_-]{11})/);
     if (m) return m[1];
     return null;
+  }
+
+  function detectVideoPlatform(url) {
+    var value = String(url || "").toLowerCase();
+    if (/youtu\.be|youtube\.com/.test(value)) return "youtube";
+    if (/tiktok\.com/.test(value)) return "tiktok";
+    return "unknown";
+  }
+
+  async function resolveVideoMetaFromUrl(url) {
+    var inputUrl = String(url || "").trim();
+    var platform = detectVideoPlatform(inputUrl);
+    if (!inputUrl || platform === "unknown") return null;
+
+    var endpoint = "";
+    if (platform === "youtube") {
+      endpoint =
+        "https://www.youtube.com/oembed?url=" +
+        encodeURIComponent(inputUrl) +
+        "&format=json";
+    } else if (platform === "tiktok") {
+      endpoint =
+        "https://www.tiktok.com/oembed?url=" + encodeURIComponent(inputUrl);
+    }
+
+    var res = await fetch(endpoint);
+    if (!res.ok) return null;
+    var meta = await res.json();
+    var youtubeId =
+      platform === "youtube" ? extractYoutubeIdFromUrl(inputUrl) : null;
+
+    return {
+      platform: platform,
+      provider: String(meta.provider_name || platform).trim(),
+      url: inputUrl,
+      videoId: youtubeId,
+      title: String(meta.title || "").trim(),
+      thumbnailUrl: String(meta.thumbnail_url || "").trim(),
+      authorName: String(meta.author_name || "").trim(),
+    };
   }
 
   function getCurrentVideoGroup(html, videoId) {
@@ -220,10 +266,24 @@
     );
   }
 
-  function appendYoutubeCardToHtml(html, videoId, group, title, thumbnailUrl) {
+  function buildVideoShareDataItem(meta, thumbnailUrl, title, tag) {
+    return {
+      linkUrl: String(meta.url || "").trim(),
+      image: String(
+        thumbnailUrl ||
+          meta.thumbnailUrl ||
+          (meta.videoId
+            ? "https://img.youtube.com/vi/" + meta.videoId + "/hqdefault.jpg"
+            : "")
+      ).trim(),
+      tag: String(tag || meta.provider || "Video").trim(),
+      title: String(title || "Video Title Goes Here").trim(),
+    };
+  }
+
+  function appendCardHtmlToTrack(html, cardHtml) {
     var wrapper = document.createElement("div");
     wrapper.innerHTML = String(html || "");
-    var cardHtml = buildYoutubeCardHtml(videoId, group, title, thumbnailUrl);
     var track = wrapper.querySelector(".my-carousel-track");
 
     if (track) {
@@ -235,6 +295,75 @@
     // Fallback: put newest card first if no carousel track found.
     return cardHtml + wrapper.innerHTML;
   }
+
+  function appendYoutubeCardToHtml(html, videoId, group, title, thumbnailUrl) {
+    var cardHtml = buildYoutubeCardHtml(videoId, group, title, thumbnailUrl);
+    return appendCardHtmlToTrack(html, cardHtml);
+  }
+
+  function appendVideoShareDataToHtml(html, meta, thumbnailUrl, title, tag) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var script = wrapper.querySelector('script[data-video-share-list="1"]');
+    var list = [];
+
+    if (script) {
+      try {
+        var parsed = JSON.parse(script.textContent || "[]");
+        if (Array.isArray(parsed)) list = parsed;
+      } catch {
+        list = [];
+      }
+    }
+
+    var item = buildVideoShareDataItem(meta, thumbnailUrl, title, tag);
+    list.unshift(item);
+
+    var text = JSON.stringify(list, null, 2);
+    if (!script) {
+      script = document.createElement("script");
+      script.type = "application/json";
+      script.setAttribute("data-video-share-list", "1");
+      wrapper.appendChild(script);
+    }
+    script.textContent = text;
+
+    return wrapper.innerHTML;
+  }
+
+  function extractVideoShareListFromHtml(html) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+    var script = wrapper.querySelector('script[data-video-share-list="1"]');
+    if (!script) return [];
+    try {
+      var parsed = JSON.parse(script.textContent || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function setVideoShareListToHtml(html, list) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+    var script = wrapper.querySelector('script[data-video-share-list="1"]');
+
+    if (!script) {
+      script = document.createElement("script");
+      script.type = "application/json";
+      script.setAttribute("data-video-share-list", "1");
+      wrapper.appendChild(script);
+    }
+
+    script.textContent = JSON.stringify(
+      Array.isArray(list) ? list : [],
+      null,
+      2
+    );
+    return wrapper.innerHTML;
+  }
   // ─────────────────────────────────────────────────────────────────────────────
 
   function extractUnresolvedServerImgs(html) {
@@ -243,8 +372,12 @@
         return x.src;
       })
       .filter(function (src) {
-        // YouTube CDN thumbnails are valid external URLs – do not block save
-        return !isServerHostedSrc(src) && !isYoutubeThumbnailSrc(src);
+        // YouTube/TikTok CDN thumbnails are valid external URLs – do not block save
+        return (
+          !isServerHostedSrc(src) &&
+          !isYoutubeThumbnailSrc(src) &&
+          !isTikTokThumbnailSrc(src)
+        );
       });
   }
 
@@ -279,6 +412,17 @@
     var container = document.getElementById(opts.warningContainerId);
     if (!container) return { recheck: function () {} };
 
+    function shouldAlwaysShowPanel() {
+      if (typeof opts.alwaysShowPanel === "function") {
+        try {
+          return !!opts.alwaysShowPanel();
+        } catch {
+          return false;
+        }
+      }
+      return !!opts.alwaysShowPanel;
+    }
+
     function check() {
       var html = opts.getHtml() || "";
       var images = extractImgs(html).map(function (x) {
@@ -290,7 +434,8 @@
         images.concat(pdfLinks),
         opts.getHtml,
         opts.setHtml,
-        check
+        check,
+        shouldAlwaysShowPanel()
       );
     }
 
@@ -344,9 +489,16 @@
     };
   }
 
-  function render(container, assets, getHtml, setHtml, recheck) {
+  function render(
+    container,
+    assets,
+    getHtml,
+    setHtml,
+    recheck,
+    forceShowPanel
+  ) {
     container.innerHTML = "";
-    if (!assets.length) return;
+    if (!assets.length && !forceShowPanel) return;
 
     var localCount = assets.filter(function (x) {
       return x.isLocal;
@@ -354,18 +506,24 @@
     var plural = assets.length > 1 ? "s" : "";
     var header = document.createElement("div");
     header.className = "alert alert-warning py-2 px-3 mb-2";
-    header.innerHTML =
-      "<strong>&#128206; " +
-      assets.length +
-      " asset" +
-      plural +
-      " found in content</strong>" +
-      " &mdash; Upload to server to replace source quickly." +
-      (localCount
-        ? " <br><small>" +
-          localCount +
-          " local path(s) may break on production if not uploaded.</small>"
-        : "");
+    if (assets.length) {
+      header.innerHTML =
+        "<strong>&#128206; " +
+        assets.length +
+        " asset" +
+        plural +
+        " found in content</strong>" +
+        " &mdash; Upload to server to replace source quickly." +
+        (localCount
+          ? " <br><small>" +
+            localCount +
+            " local path(s) may break on production if not uploaded.</small>"
+          : "");
+    } else {
+      header.innerHTML =
+        "<strong>&#128250; Video Share List</strong>" +
+        " &mdash; Add link url, image, tag, title without storing HTML.";
+    }
     container.appendChild(header);
 
     var addBar = document.createElement("div");
@@ -377,6 +535,150 @@
     addBtn.textContent = "Add";
     addBar.appendChild(addBtn);
     container.appendChild(addBar);
+
+    if (forceShowPanel) {
+      var existingList = extractVideoShareListFromHtml(getHtml());
+      existingList.forEach(function (item, idx) {
+        var row = document.createElement("div");
+        row.className =
+          "d-flex align-items-start gap-2 mt-2 flex-wrap border rounded p-2 bg-white";
+
+        var previewRow = document.createElement("img");
+        previewRow.alt = "Video share preview";
+        previewRow.style.width = "80px";
+        previewRow.style.height = "56px";
+        previewRow.style.objectFit = "cover";
+        previewRow.style.borderRadius = "4px";
+        previewRow.style.border = "1px solid #e9ecef";
+        previewRow.style.background = "#f8f9fa";
+        if (item && item.image) {
+          previewRow.src = String(item.image);
+        } else {
+          previewRow.style.display = "none";
+        }
+
+        var badgeRow = document.createElement("span");
+        badgeRow.className = "badge bg-secondary";
+        badgeRow.textContent = "Saved #" + (idx + 1);
+
+        var controlsRow = document.createElement("div");
+        controlsRow.className =
+          "d-flex align-items-center gap-2 flex-wrap w-100";
+
+        var urlInputRow = document.createElement("input");
+        urlInputRow.type = "text";
+        urlInputRow.className = "form-control form-control-sm";
+        urlInputRow.style.minWidth = "280px";
+        urlInputRow.style.flex = "1";
+        urlInputRow.value = String((item && item.linkUrl) || "");
+        urlInputRow.placeholder = "Link URL";
+
+        var groupSelectRow = document.createElement("select");
+        groupSelectRow.className = "form-select form-select-sm";
+        groupSelectRow.style.cssText = "width:auto;min-width:110px";
+        ["video", "webinars"].forEach(function (g) {
+          var opt = document.createElement("option");
+          opt.value = g;
+          opt.textContent = g.charAt(0).toUpperCase() + g.slice(1);
+          groupSelectRow.appendChild(opt);
+        });
+        groupSelectRow.value =
+          String((item && item.tag) || "").toLowerCase() === "webinar"
+            ? "webinars"
+            : "video";
+
+        var titleInputRow = document.createElement("input");
+        titleInputRow.type = "text";
+        titleInputRow.className = "form-control form-control-sm";
+        titleInputRow.style.minWidth = "220px";
+        titleInputRow.placeholder = "Title";
+        titleInputRow.value = String((item && item.title) || "");
+
+        var thumbInputRow = document.createElement("input");
+        thumbInputRow.type = "file";
+        thumbInputRow.accept = "image/*";
+        thumbInputRow.className = "form-control form-control-sm";
+        thumbInputRow.style.maxWidth = "220px";
+
+        var saveBtnRow = document.createElement("button");
+        saveBtnRow.type = "button";
+        saveBtnRow.className = "btn btn-sm btn-primary";
+        saveBtnRow.textContent = "Save";
+
+        var deleteBtnRow = document.createElement("button");
+        deleteBtnRow.type = "button";
+        deleteBtnRow.className = "btn btn-sm btn-outline-danger";
+        deleteBtnRow.textContent = "Delete";
+
+        var statusRow = document.createElement("span");
+        statusRow.className = "small";
+
+        saveBtnRow.addEventListener("click", async function () {
+          var listNow = extractVideoShareListFromHtml(getHtml());
+          if (!Array.isArray(listNow) || !listNow[idx]) return;
+
+          var nextImage = String((listNow[idx] && listNow[idx].image) || "");
+          var file = thumbInputRow.files && thumbInputRow.files[0];
+          if (file) {
+            statusRow.className = "small text-muted";
+            statusRow.textContent = "Uploading thumbnail…";
+            try {
+              var fd = new FormData();
+              fd.append("upload", file);
+              var upRes = await fetch("/api/upload/content-image", {
+                method: "POST",
+                body: fd,
+              });
+              var upData = await upRes.json();
+              if (!upData.url) {
+                throw new Error(
+                  (upData.error && upData.error.message) ||
+                    "Thumbnail upload failed"
+                );
+              }
+              nextImage = upData.url;
+            } catch (err) {
+              statusRow.className = "small text-danger";
+              statusRow.textContent = "✗ " + err.message;
+              return;
+            }
+          }
+
+          listNow[idx] = {
+            linkUrl: String(urlInputRow.value || "").trim(),
+            image: nextImage,
+            tag: groupSelectRow.value === "webinars" ? "Webinar" : "Video",
+            title: String(titleInputRow.value || "").trim(),
+          };
+
+          setHtml(setVideoShareListToHtml(getHtml(), listNow));
+          statusRow.className = "small text-success";
+          statusRow.textContent = "✓ Saved";
+          setTimeout(recheck, 120);
+        });
+
+        deleteBtnRow.addEventListener("click", function () {
+          var listNow = extractVideoShareListFromHtml(getHtml());
+          if (!Array.isArray(listNow) || idx >= listNow.length) return;
+          listNow.splice(idx, 1);
+          setHtml(setVideoShareListToHtml(getHtml(), listNow));
+          setTimeout(recheck, 120);
+        });
+
+        controlsRow.appendChild(urlInputRow);
+        controlsRow.appendChild(groupSelectRow);
+        controlsRow.appendChild(titleInputRow);
+        controlsRow.appendChild(thumbInputRow);
+        controlsRow.appendChild(saveBtnRow);
+        controlsRow.appendChild(deleteBtnRow);
+        controlsRow.appendChild(statusRow);
+
+        row.appendChild(previewRow);
+        row.appendChild(badgeRow);
+        row.appendChild(controlsRow);
+        container.appendChild(row);
+      });
+    }
 
     addBtn.addEventListener("click", function () {
       var manualRow = document.createElement("div");
@@ -399,7 +701,7 @@
 
       var badge = document.createElement("span");
       badge.className = "badge bg-info";
-      badge.textContent = "YouTube - New item";
+      badge.textContent = "Video share - New item";
 
       var controls = document.createElement("div");
       controls.className = "d-flex align-items-center gap-2 flex-wrap w-100";
@@ -407,9 +709,9 @@
       var urlInput = document.createElement("input");
       urlInput.type = "text";
       urlInput.className = "form-control form-control-sm";
-      urlInput.style.minWidth = "260px";
+      urlInput.style.minWidth = "300px";
       urlInput.style.flex = "1";
-      urlInput.placeholder = "Paste YouTube URL";
+      urlInput.placeholder = "Paste video share URL (YouTube / TikTok)";
 
       var groupSelect = document.createElement("select");
       groupSelect.className = "form-select form-select-sm";
@@ -428,7 +730,7 @@
       titleInput.placeholder = "Title (optional)";
 
       var shouldAutoFillTitle = true;
-      var lastResolvedVideoId = "";
+      var lastResolvedUrl = "";
       var hydrateTitleTimer = null;
 
       titleInput.addEventListener("input", function () {
@@ -437,29 +739,24 @@
 
       async function hydrateTitleFromUrl() {
         var inputUrl = (urlInput.value || "").trim();
-        var videoId = extractYoutubeIdFromUrl(inputUrl);
-        if (!videoId) return;
+        if (!inputUrl) return;
 
-        // Avoid duplicate fetches for the same URL/video when title exists.
-        if (
-          videoId === lastResolvedVideoId &&
-          (titleInput.value || "").trim()
-        ) {
+        // Avoid duplicate fetches for the same URL when title exists.
+        if (inputUrl === lastResolvedUrl && (titleInput.value || "").trim()) {
           return;
         }
 
         try {
           status.className = "small text-muted";
           status.textContent = "Fetching title\u2026";
-          var oembedUrl =
-            "https://www.youtube.com/oembed?url=https://youtu.be/" +
-            encodeURIComponent(videoId) +
-            "&format=json";
-          var resp = await fetch(oembedUrl);
-          if (!resp.ok) return;
+          var meta = await resolveVideoMetaFromUrl(inputUrl);
+          if (!meta) {
+            status.className = "small text-danger";
+            status.textContent = "\u2717 Unsupported or invalid video URL";
+            return;
+          }
 
-          var meta = await resp.json();
-          var fetchedTitle = (meta.title || "").trim();
+          var fetchedTitle = meta.title;
           if (
             fetchedTitle &&
             (shouldAutoFillTitle || !(titleInput.value || "").trim())
@@ -468,9 +765,17 @@
             shouldAutoFillTitle = true;
           }
 
+          var hasThumbFile = !!(thumbInput.files && thumbInput.files.length);
+          if (meta.thumbnailUrl && !hasThumbFile) {
+            preview.textContent = "";
+            preview.style.backgroundImage = "url('" + meta.thumbnailUrl + "')";
+            preview.style.backgroundSize = "cover";
+            preview.style.backgroundPosition = "center";
+          }
+
           status.textContent = "";
           status.className = "small";
-          lastResolvedVideoId = videoId;
+          lastResolvedUrl = inputUrl;
         } catch {
           // Ignore lookup failures; user can still add with manual title.
         }
@@ -512,10 +817,10 @@
 
       addItemBtn.addEventListener("click", async function () {
         var inputUrl = (urlInput.value || "").trim();
-        var videoId = extractYoutubeIdFromUrl(inputUrl);
-        if (!videoId) {
+        var resolvedMeta = await resolveVideoMetaFromUrl(inputUrl);
+        if (!resolvedMeta) {
           status.className = "small text-danger";
-          status.textContent = "\u2717 Invalid YouTube URL";
+          status.textContent = "\u2717 Invalid or unsupported video URL";
           return;
         }
 
@@ -526,20 +831,10 @@
 
         var title = (titleInput.value || "").trim();
         if (!title) {
-          try {
-            var oembedUrl =
-              "https://www.youtube.com/oembed?url=https://youtu.be/" +
-              encodeURIComponent(videoId) +
-              "&format=json";
-            var resp = await fetch(oembedUrl);
-            if (resp.ok) {
-              var meta = await resp.json();
-              title = (meta.title || "").trim();
-            }
-          } catch {
-            // Ignore oEmbed failures and keep default title fallback.
-          }
+          title = resolvedMeta.title || "";
         }
+
+        var tag = groupSelect.value === "webinars" ? "Webinar" : "Video";
 
         var customThumbnailUrl = null;
         var thumbFile = thumbInput.files && thumbInput.files[0];
@@ -569,12 +864,12 @@
           }
         }
 
-        var updatedHtml = appendYoutubeCardToHtml(
+        var updatedHtml = appendVideoShareDataToHtml(
           getHtml(),
-          videoId,
-          groupSelect.value,
+          resolvedMeta,
+          customThumbnailUrl || resolvedMeta.thumbnailUrl,
           title || "Video Title Goes Here",
-          customThumbnailUrl
+          tag
         );
         setHtml(updatedHtml);
 

@@ -37,6 +37,60 @@ function resolveAllowedImageHosts(req) {
   return [...new Set(candidates.map(extractHost).filter(Boolean))];
 }
 
+function normalizeVideoShareItem(item) {
+  if (!item || typeof item !== "object") return null;
+  const linkUrl = String(item.linkUrl || item.url || "").trim();
+  const image = String(item.image || item.thumbnail || "").trim();
+  const tag = String(item.tag || "").trim();
+  const title = String(item.title || "").trim();
+
+  if (!linkUrl && !image && !tag && !title) return null;
+  return { linkUrl, image, tag, title };
+}
+
+function parseVideoShareListPayload(raw) {
+  if (Array.isArray(raw)) {
+    return raw.map(normalizeVideoShareItem).filter(Boolean);
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(normalizeVideoShareItem).filter(Boolean);
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function extractVideoShareListFromContent(html) {
+  const source = String(html || "");
+  if (!source) return [];
+  const match = source.match(
+    /<script[^>]*data-video-share-list=["']1["'][^>]*>([\s\S]*?)<\/script>/i
+  );
+  if (!match || !match[1]) return [];
+  return parseVideoShareListPayload(match[1]);
+}
+
+function resolveVideoShareList(body) {
+  const fromPayload = parseVideoShareListPayload(body.videoShareList);
+  if (fromPayload.length) return fromPayload;
+  return extractVideoShareListFromContent(body.content);
+}
+
+function withVideoShareList(group) {
+  if (!group || typeof group !== "object") return group;
+  return {
+    ...group,
+    videoShareList: Array.isArray(group.videoShareList)
+      ? group.videoShareList
+      : [],
+  };
+}
+
 exports.toggleStatus = async (req, res) => {
   const group = await groupService.toggleStatus(req.params.id);
   res.json({ success: true, isStatus: group.isStatus });
@@ -82,7 +136,8 @@ exports.index = async (req, res) => {
   }
 
   const paged = paginateArray(groups, params);
-  res.json({ groups: paged.items, pagination: paged.pagination });
+  const normalizedItems = paged.items.map(withVideoShareList);
+  res.json({ groups: normalizedItems, pagination: paged.pagination });
 };
 
 /* ===== GET NEXT ORDER ===== */
@@ -116,20 +171,27 @@ exports.createForm = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
+    const incomingType = String(req.body.type || "-").trim();
+    const videoShareList =
+      incomingType === "link-share-video"
+        ? resolveVideoShareList(req.body)
+        : [];
     const contentForValidation = String(req.body.content || "");
-    const contentImageCheck = validateContentImageSources(
-      contentForValidation,
-      {
-        allowedHosts: resolveAllowedImageHosts(req),
+    if (incomingType !== "link-share-video") {
+      const contentImageCheck = validateContentImageSources(
+        contentForValidation,
+        {
+          allowedHosts: resolveAllowedImageHosts(req),
+        }
+      );
+      if (!contentImageCheck.isValid) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Content contains image/PDF source(s) not hosted on this server. Please upload & replace before saving.",
+          invalidImageSources: contentImageCheck.invalidSources,
+        });
       }
-    );
-    if (!contentImageCheck.isValid) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Content contains image/PDF source(s) not hosted on this server. Please upload & replace before saving.",
-        invalidImageSources: contentImageCheck.invalidSources,
-      });
     }
 
     // Chỉ lấy listParents từ form (không cần menuId)
@@ -166,11 +228,14 @@ exports.create = async (req, res) => {
 
     const created = await groupService.createGroup({
       ...req.body,
+      type: incomingType,
+      content: incomingType === "link-share-video" ? "" : contentForValidation,
+      videoShareList,
       listParents,
       image,
       listButtons,
     });
-    res.status(201).json({ success: true, group: created });
+    res.status(201).json({ success: true, group: withVideoShareList(created) });
   } catch (err) {
     res
       .status(500)
@@ -195,20 +260,27 @@ exports.editForm = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
+    const incomingType = String(req.body.type || "-").trim();
+    const videoShareList =
+      incomingType === "link-share-video"
+        ? resolveVideoShareList(req.body)
+        : undefined;
     const contentForValidation = String(req.body.content || "");
-    const contentImageCheck = validateContentImageSources(
-      contentForValidation,
-      {
-        allowedHosts: resolveAllowedImageHosts(req),
+    if (incomingType !== "link-share-video") {
+      const contentImageCheck = validateContentImageSources(
+        contentForValidation,
+        {
+          allowedHosts: resolveAllowedImageHosts(req),
+        }
+      );
+      if (!contentImageCheck.isValid) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Content contains image/PDF source(s) not hosted on this server. Please upload & replace before updating.",
+          invalidImageSources: contentImageCheck.invalidSources,
+        });
       }
-    );
-    if (!contentImageCheck.isValid) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Content contains image/PDF source(s) not hosted on this server. Please upload & replace before updating.",
-        invalidImageSources: contentImageCheck.invalidSources,
-      });
     }
 
     const previousGroup = await groupService.getGroupById(req.params.id);
@@ -260,7 +332,12 @@ exports.update = async (req, res) => {
     }
     // console.log("Group update - incoming listButtons:", listButtons);
 
-    const payload = { ...req.body };
+    const payload = {
+      ...req.body,
+      type: incomingType,
+      content: incomingType === "link-share-video" ? "" : contentForValidation,
+    };
+    if (videoShareList !== undefined) payload.videoShareList = videoShareList;
     if (listParents !== undefined) payload.listParents = listParents;
     if (image !== undefined) payload.image = image;
     if (listButtons !== undefined) payload.listButtons = listButtons;
@@ -271,7 +348,7 @@ exports.update = async (req, res) => {
       await removeUnusedContentImages(previousGroup.content, updated?.content);
     }
 
-    res.json({ success: true, group: updated });
+    res.json({ success: true, group: withVideoShareList(updated) });
   } catch (err) {
     console.error("Group update failed", err);
     res
@@ -327,10 +404,11 @@ exports.showGroupByMenu = async (req, res) => {
   }
   const groups = await groupService.getGroupsByParent(menuId);
   const paged = paginateArray(groups, params);
+  const normalizedItems = paged.items.map(withVideoShareList);
   res.json({
     success: true,
     menuId,
-    groups: paged.items,
+    groups: normalizedItems,
     pagination: paged.pagination,
   });
 };
@@ -343,5 +421,5 @@ exports.getById = async (req, res) => {
   const group = await groupService.getGroupById(id);
   if (!group)
     return res.status(404).json({ success: false, message: "Not found" });
-  res.json({ success: true, group });
+  res.json({ success: true, group: withVideoShareList(group) });
 };

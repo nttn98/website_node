@@ -50,6 +50,7 @@
           <select name="type" id="typeSelect" class="select-clean-sm">
             <option value="-" selected>-</option>
             <option value="html">HTML Block</option>
+            <option value="link-share-video">Link Share Video</option>
             <option value="editor">Rich Text Editor</option>
           </select>
         </div>
@@ -189,6 +190,13 @@
         return;
       }
 
+      if (type === "link-share-video") {
+        // Do not show raw HTML input for link-share-video.
+        htmlBlock.classList.add("d-none");
+        editorBlock.classList.add("d-none");
+        return;
+      }
+
       // type === 'editor'
       htmlBlock.classList.add("d-none");
       editorBlock.classList.remove("d-none");
@@ -202,21 +210,28 @@
         });
       }
     }
-    typeSelect.addEventListener("change", (e) => toggleType(e.target.value));
+    typeSelect.addEventListener("change", (e) => {
+      toggleType(e.target.value);
+      ContentImgChecker.recheck();
+    });
     // initialize UI according to current value
     toggleType(typeSelect.value || '-');
 
     // CONTENT IMAGE CHECKER
     var _contentTextarea = document.querySelector('[name="content"]');
-    ContentImgChecker.init({
+    var imgChecker = ContentImgChecker.init({
       textarea: _contentTextarea,
       getHtml: function () { return _contentTextarea.value; },
       setHtml: function (html) {
         _contentTextarea.value = html;
         if (editor) editor.setData(html);
       },
-      warningContainerId: 'localImgWarning'
+      warningContainerId: 'localImgWarning',
+      alwaysShowPanel: function () {
+        return (typeSelect && typeSelect.value) === 'link-share-video';
+      }
     });
+    imgChecker.recheck();
 
     // 5. IMAGE PREVIEW
     document

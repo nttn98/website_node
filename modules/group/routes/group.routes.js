@@ -31,6 +31,31 @@ const router = express.Router();
  *     responses:
  *       200:
  *         description: Danh sách group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 groups:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       videoShareList:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             linkUrl:
+ *                               type: string
+ *                             image:
+ *                               type: string
+ *                             tag:
+ *                               type: string
+ *                             title:
+ *                               type: string
+ *                 pagination:
+ *                   type: object
  */
 router.get("/", controller.index);
 
@@ -210,6 +235,29 @@ router.get("/menu/:menuId", controller.showGroupByMenu);
  *     responses:
  *       200:
  *         description: Thông tin group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 group:
+ *                   type: object
+ *                   properties:
+ *                     videoShareList:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           linkUrl:
+ *                             type: string
+ *                           image:
+ *                             type: string
+ *                           tag:
+ *                             type: string
+ *                           title:
+ *                             type: string
  */
 router.get("/:id", controller.getById);
 

@@ -157,6 +157,7 @@ exports.getDetail = async (parentId) => {
         route: g.route || null,
         order: parentEntry?.order || 0,
         type: g.type,
+        videoShareList: Array.isArray(g.videoShareList) ? g.videoShareList : [],
         isStatus: g.isStatus,
         isActive: g.isActive,
         buttons: g.listButtons,

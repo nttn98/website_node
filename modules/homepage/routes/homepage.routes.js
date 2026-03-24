@@ -24,6 +24,34 @@ const homepageController = require("../controllers/homepage.controllers");
  *     responses:
  *       200:
  *         description: All homepage data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     heroGroup:
+ *                       type: object
+ *                       properties:
+ *                         videoShareList:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               linkUrl:
+ *                                 type: string
+ *                               image:
+ *                                 type: string
+ *                               tag:
+ *                                 type: string
+ *                               title:
+ *                                 type: string
+ *                 pagination:
+ *                   type: object
  *       500:
  *         description: Server error
  */
@@ -106,6 +134,29 @@ router.get("/bottom-menus", homepageController.getBottomMenus);
  *     responses:
  *       200:
  *         description: Hero group data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     videoShareList:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           linkUrl:
+ *                             type: string
+ *                           image:
+ *                             type: string
+ *                           tag:
+ *                             type: string
+ *                           title:
+ *                             type: string
  *       500:
  *         description: Server error
  */
@@ -410,6 +461,20 @@ router.get("/menu-children-tree/:id", homepageController.getMenuChildrenTree);
  *                   type: array
  *                   items:
  *                     type: object
+ *                     properties:
+ *                       videoShareList:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             linkUrl:
+ *                               type: string
+ *                             image:
+ *                               type: string
+ *                             tag:
+ *                               type: string
+ *                             title:
+ *                               type: string
  *       404:
  *         description: Invalid ID format
  *       500:

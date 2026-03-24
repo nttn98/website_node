@@ -151,10 +151,27 @@ exports.createGroup = async (data) => {
       };
     })
     .filter(Boolean);
+  let videoShareList = [];
+  if (Array.isArray(data.videoShareList)) {
+    videoShareList = data.videoShareList;
+  } else if (typeof data.videoShareList === "string") {
+    try {
+      const parsed = JSON.parse(data.videoShareList);
+      videoShareList = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      videoShareList = [];
+    }
+  }
+
+  const resolvedType = data.type || "-";
+  const resolvedContent =
+    resolvedType === "link-share-video" ? "" : data.content || "";
+
   return Group.create({
     listParents,
-    type: data.type || "-",
-    content: data.content,
+    type: resolvedType,
+    content: resolvedContent,
+    videoShareList,
     title: {
       en: data.title_en,
       vi: data.title_vi || data.title_en,
@@ -316,6 +333,20 @@ exports.updateGroup = async (id, data) => {
     })
     .filter(Boolean);
 
+  let videoShareList;
+  if (data.videoShareList !== undefined) {
+    if (Array.isArray(data.videoShareList)) {
+      videoShareList = data.videoShareList;
+    } else if (typeof data.videoShareList === "string") {
+      try {
+        const parsed = JSON.parse(data.videoShareList);
+        videoShareList = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        videoShareList = [];
+      }
+    }
+  }
+
   const updateObj = {
     content: data.content,
     title: {
@@ -338,7 +369,11 @@ exports.updateGroup = async (id, data) => {
     if (updateObj.type === "-") {
       updateObj.content = "";
     }
+    if (updateObj.type === "link-share-video") {
+      updateObj.content = "";
+    }
   }
+  if (videoShareList !== undefined) updateObj.videoShareList = videoShareList;
   if (listParents !== undefined) updateObj.listParents = listParents;
   if (image !== undefined) updateObj.image = image;
   if (data.listButtons !== undefined) updateObj.listButtons = listButtons;

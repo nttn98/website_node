@@ -117,6 +117,7 @@
           <div class="d-flex align-items-center gap-2">
             <label for="typeSelect" class="form-label mb-0 small">Type:</label>
             <select name="type" id="typeSelect" class="select-clean-sm">              <option value="-" <%= (!group.type || group.type === '-') ? 'selected' : '' %>>-</option>              <option value="html" <%= group.type === 'html' ? 'selected' : '' %>>HTML Block</option>
+              <option value="link-share-video" <%= group.type === 'link-share-video' ? 'selected' : '' %>>Link Share Video</option>
               <option value="editor" <%= group.type === 'editor' ? 'selected' : '' %>>Rich Text Editor</option>
             </select>
           </div>
@@ -250,6 +251,13 @@
         return;
       }
 
+      if (type === 'link-share-video') {
+        // Do not show raw HTML input for link-share-video.
+        $html.addClass('d-none');
+        $editor.addClass('d-none');
+        return;
+      }
+
       // editor
       $html.addClass('d-none');
       $editor.removeClass('d-none');
@@ -267,12 +275,26 @@
     }
     $('#typeSelect').on('change', function () {
       toggleType(this.value);
+      ContentImgChecker.recheck();
     });
     // initialize according to current value
     toggleType($('#typeSelect').val() || '-');
 
     // CONTENT IMAGE CHECKER
     var _contentTextarea = document.querySelector('[name="content"]');
+    var existingVideoShareList = <%- JSON.stringify(group.videoShareList || []) %>;
+    if (
+      ($('#typeSelect').val() === 'link-share-video') &&
+      _contentTextarea &&
+      Array.isArray(existingVideoShareList) &&
+      existingVideoShareList.length
+    ) {
+      _contentTextarea.value =
+        '<script type="application/json" data-video-share-list="1">' +
+        JSON.stringify(existingVideoShareList, null, 2) +
+        '<\/script>';
+    }
+
     var imgChecker = ContentImgChecker.init({
       textarea: _contentTextarea,
       getHtml: function () { return _contentTextarea.value; },
@@ -280,7 +302,10 @@
         _contentTextarea.value = html;
         if (editor) editor.setData(html);
       },
-      warningContainerId: 'localImgWarning'
+      warningContainerId: 'localImgWarning',
+      alwaysShowPanel: function () {
+        return ($('#typeSelect').val() === 'link-share-video');
+      }
     });
     // Check existing content on load (edit page)
     imgChecker.recheck();

@@ -24,6 +24,16 @@ function sortByCreatedAtDesc(items) {
   );
 }
 
+function withVideoShareList(group) {
+  if (!group || typeof group !== "object") return group;
+  return {
+    ...group,
+    videoShareList: Array.isArray(group.videoShareList)
+      ? group.videoShareList
+      : [],
+  };
+}
+
 // Get all homepage data in one call
 exports.getHomepageData = async (req, res) => {
   try {
@@ -64,7 +74,7 @@ exports.getHomepageData = async (req, res) => {
       data: {
         topMenus,
         bottomMenus,
-        heroGroup,
+        heroGroup: withVideoShareList(heroGroup),
         solutionsMenus: solutions.items,
         industryMenus: industry.items,
         insightsMenus: insights.items,
@@ -138,7 +148,7 @@ exports.getHeroGroup = async (req, res) => {
     const group = await homepageService.getHeroGroup();
     res.json({
       success: true,
-      data: group,
+      data: withVideoShareList(group),
     });
   } catch (error) {
     console.error("Error fetching hero group:", error);
@@ -343,7 +353,7 @@ exports.getDetail = async (req, res) => {
     const paged = paginateArray(groups, params);
     res.json({
       success: true,
-      data: paged.items,
+      data: paged.items.map(withVideoShareList),
       pagination: paged.pagination,
     });
   } catch (error) {

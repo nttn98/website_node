@@ -18,7 +18,7 @@ const GroupSchema = new mongoose.Schema(
     /* ===== CONTENT TYPE ===== */
     type: {
       type: String,
-      enum: ["-", "html", "editor"],
+      enum: ["-", "html", "editor", "link-share-video"],
       default: "-",
       required: true,
     },
@@ -28,6 +28,28 @@ const GroupSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    videoShareList: [
+      {
+        linkUrl: {
+          type: String,
+          default: "",
+        },
+        image: {
+          type: String,
+          default: "",
+        },
+        tag: {
+          type: String,
+          default: "",
+        },
+        title: {
+          type: String,
+          default: "",
+        },
+        _id: false,
+      },
+    ],
 
     /* ===== RELATION ===== */
     listParents: [
