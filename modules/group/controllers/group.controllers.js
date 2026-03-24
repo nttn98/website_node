@@ -81,6 +81,45 @@ function resolveVideoShareList(body) {
   return extractVideoShareListFromContent(body.content);
 }
 
+function detectVideoPlatform(url) {
+  const value = String(url || "").toLowerCase();
+  if (/youtu\.be|youtube\.com/.test(value)) return "youtube";
+  if (/tiktok\.com/.test(value)) return "tiktok";
+  return "unknown";
+}
+
+function validateVideoShareList(list) {
+  const items = Array.isArray(list) ? list : [];
+  const invalidItems = [];
+
+  items.forEach((item, index) => {
+    const row = item && typeof item === "object" ? item : {};
+    const linkUrl = String(row.linkUrl || "").trim();
+    const title = String(row.title || "").trim();
+    const image = String(row.image || "").trim();
+    const platform = detectVideoPlatform(linkUrl);
+
+    const missing = [];
+    if (!linkUrl) missing.push("linkUrl");
+    if (platform === "unknown") {
+      if (!title) missing.push("title");
+      if (!image) missing.push("image");
+    }
+
+    if (missing.length) {
+      invalidItems.push({
+        index,
+        fields: missing,
+      });
+    }
+  });
+
+  return {
+    isValid: invalidItems.length === 0,
+    invalidItems,
+  };
+}
+
 function withVideoShareList(group) {
   if (!group || typeof group !== "object") return group;
   return {
@@ -176,6 +215,17 @@ exports.create = async (req, res) => {
       incomingType === "link-share-video"
         ? resolveVideoShareList(req.body)
         : [];
+    if (incomingType === "link-share-video") {
+      const videoShareValidation = validateVideoShareList(videoShareList);
+      if (!videoShareValidation.isValid) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "For non-YouTube/TikTok URLs, title and image are required before saving.",
+          invalidVideoShareItems: videoShareValidation.invalidItems,
+        });
+      }
+    }
     const contentForValidation = String(req.body.content || "");
     if (incomingType !== "link-share-video") {
       const contentImageCheck = validateContentImageSources(
@@ -265,6 +315,17 @@ exports.update = async (req, res) => {
       incomingType === "link-share-video"
         ? resolveVideoShareList(req.body)
         : undefined;
+    if (incomingType === "link-share-video") {
+      const videoShareValidation = validateVideoShareList(videoShareList);
+      if (!videoShareValidation.isValid) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "For non-YouTube/TikTok URLs, title and image are required before updating.",
+          invalidVideoShareItems: videoShareValidation.invalidItems,
+        });
+      }
+    }
     const contentForValidation = String(req.body.content || "");
     if (incomingType !== "link-share-video") {
       const contentImageCheck = validateContentImageSources(

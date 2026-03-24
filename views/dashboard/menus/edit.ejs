@@ -160,6 +160,27 @@
       </div>
     </div>
 
+    <div class="switch-card mb-3" id="caseStudiesCard" style="display: none">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <span class="fw-700 small text-navy d-block">CASE STUDIES</span>
+          <small class="text-muted" style="font-size: 0.6rem;">Mark this menu for case studies section</small>
+        </div>
+        <div>
+          <input type="checkbox" name="caseStudies" id="caseStudies" style="display: none" <%= menu.caseStudies ? 'checked' : '' %>>
+          <button
+            type="button"
+            class="featured-star-btn <%= menu.caseStudies ? 'active' : '' %>"
+            id="caseStudiesStar"
+            aria-label="Toggle Case Studies"
+            aria-pressed="<%= menu.caseStudies ? 'true' : 'false' %>"
+          >
+            <%= menu.caseStudies ? '★' : '☆' %>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="switch-card mb-5">
       <div class="d-flex justify-content-between align-items-center">
         <div>
@@ -220,6 +241,9 @@
   const featuredInsightsCard = document.getElementById('featuredInsightsCard');
   const featuredInsightsCheckbox = document.getElementById('featuredInsights');
   const featuredInsightsStar = document.getElementById('featuredInsightsStar');
+  const caseStudiesCard = document.getElementById('caseStudiesCard');
+  const caseStudiesCheckbox = document.getElementById('caseStudies');
+  const caseStudiesStar = document.getElementById('caseStudiesStar');
 
   function syncTypeWithParent() {
     const selected = parentSelect.options[parentSelect.selectedIndex];
@@ -246,6 +270,17 @@
       'aria-pressed',
       featuredInsightsCheckbox.checked ? 'true' : 'false'
     );
+
+    caseStudiesCard.style.display = isInsightsMenu ? 'block' : 'none';
+    if (!isInsightsMenu) {
+      caseStudiesCheckbox.checked = false;
+    }
+    caseStudiesStar.classList.toggle('active', caseStudiesCheckbox.checked);
+    caseStudiesStar.textContent = caseStudiesCheckbox.checked ? '★' : '☆';
+    caseStudiesStar.setAttribute(
+      'aria-pressed',
+      caseStudiesCheckbox.checked ? 'true' : 'false'
+    );
   }
 
   featuredInsightsStar.addEventListener('click', function () {
@@ -256,6 +291,17 @@
     featuredInsightsStar.setAttribute(
       'aria-pressed',
       featuredInsightsCheckbox.checked ? 'true' : 'false'
+    );
+  });
+
+  caseStudiesStar.addEventListener('click', function () {
+    if (parentSelect.value !== INSIGHTS_PARENT_ID) return;
+    caseStudiesCheckbox.checked = !caseStudiesCheckbox.checked;
+    caseStudiesStar.classList.toggle('active', caseStudiesCheckbox.checked);
+    caseStudiesStar.textContent = caseStudiesCheckbox.checked ? '★' : '☆';
+    caseStudiesStar.setAttribute(
+      'aria-pressed',
+      caseStudiesCheckbox.checked ? 'true' : 'false'
     );
   });
 
@@ -369,6 +415,10 @@
     formData.set(
       'featuredInsights',
       parentSelect.value === INSIGHTS_PARENT_ID && featuredInsightsCheckbox.checked
+    );
+    formData.set(
+      'caseStudies',
+      parentSelect.value === INSIGHTS_PARENT_ID && caseStudiesCheckbox.checked
     );
     // Note: showHomePage is NOT included here - it's handled separately via toggle-homepage endpoint
 

@@ -48,6 +48,11 @@ const MenuSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    
+    caseStudies: {
+      type: Boolean,
+      default: false,
+    },
 
     tagId: {
       type: mongoose.Schema.Types.ObjectId,

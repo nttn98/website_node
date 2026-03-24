@@ -155,6 +155,9 @@ router.get("/:id/children-tree", controller.getChildrenTree);
  *               showHomePage:
  *                 type: boolean
  *                 description: Show on homepage (only for non-root menus)
+ *               caseStudies:
+ *                 type: boolean
+ *                 description: Mark menu as Case Studies item
  *     responses:
  *       201:
  *         description: Menu created successfully
@@ -210,6 +213,8 @@ router.post("/", upload.single("image"), controller.createMenu);
  *               isButton:
  *                 type: boolean
  *               showHomePage:
+ *                 type: boolean
+ *               caseStudies:
  *                 type: boolean
  *     responses:
  *       200:
@@ -331,5 +336,33 @@ router.patch(
   "/:id/toggle-featured-insights",
   controller.toggleFeaturedInsights
 );
+
+/**
+ * @swagger
+ * /api/menus/{id}/toggle-case-studies:
+ *   patch:
+ *     summary: Đổi trạng thái Case Studies
+ *     tags:
+ *       - Menu
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Đổi trạng thái thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 caseStudies:
+ *                   type: boolean
+ */
+router.patch("/:id/toggle-case-studies", controller.toggleCaseStudies);
 
 module.exports = router;

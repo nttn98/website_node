@@ -123,6 +123,29 @@
       </div>
     </div>
 
+    <div class="switch-card mb-3" id="caseStudiesCard" style="display: none">
+      <div class="d-flex justify-content-between">
+        <span class="fw-700 small text-navy">CASE STUDIES</span>
+        <div>
+          <input
+            type="checkbox"
+            name="caseStudies"
+            id="caseStudies"
+            style="display: none"
+          />
+          <button
+            type="button"
+            class="featured-star-btn"
+            id="caseStudiesStar"
+            aria-label="Toggle Case Studies"
+            aria-pressed="false"
+          >
+            ☆
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="switch-card mb-5">
       <div class="d-flex justify-content-between">
         <span class="fw-700 small text-navy">DISPLAY AS BUTTON</span>
@@ -229,6 +252,9 @@
     const featuredInsightsStar = document.getElementById(
       "featuredInsightsStar"
     );
+    const caseStudiesCard = document.getElementById("caseStudiesCard");
+    const caseStudiesCheckbox = document.getElementById("caseStudies");
+    const caseStudiesStar = document.getElementById("caseStudiesStar");
     const isInsightsMenu = this.value === INSIGHTS_PARENT_ID;
 
     if (this.value && parentType) {
@@ -260,6 +286,17 @@
       "aria-pressed",
       featuredInsightsCheckbox.checked ? "true" : "false"
     );
+
+    caseStudiesCard.style.display = isInsightsMenu ? "block" : "none";
+    if (!isInsightsMenu) {
+      caseStudiesCheckbox.checked = false;
+    }
+    caseStudiesStar.classList.toggle("active", caseStudiesCheckbox.checked);
+    caseStudiesStar.textContent = caseStudiesCheckbox.checked ? "★" : "☆";
+    caseStudiesStar.setAttribute(
+      "aria-pressed",
+      caseStudiesCheckbox.checked ? "true" : "false"
+    );
   });
 
   const featuredInsightsCheckbox = document.getElementById("featuredInsights");
@@ -279,6 +316,21 @@
     featuredInsightsStar.setAttribute(
       "aria-pressed",
       featuredInsightsCheckbox.checked ? "true" : "false"
+    );
+  });
+
+  const caseStudiesCheckbox = document.getElementById("caseStudies");
+  const caseStudiesStar = document.getElementById("caseStudiesStar");
+  caseStudiesStar.addEventListener("click", function () {
+    if (document.getElementById("parentId").value !== INSIGHTS_PARENT_ID) {
+      return;
+    }
+    caseStudiesCheckbox.checked = !caseStudiesCheckbox.checked;
+    caseStudiesStar.classList.toggle("active", caseStudiesCheckbox.checked);
+    caseStudiesStar.textContent = caseStudiesCheckbox.checked ? "★" : "☆";
+    caseStudiesStar.setAttribute(
+      "aria-pressed",
+      caseStudiesCheckbox.checked ? "true" : "false"
     );
   });
 
@@ -311,6 +363,11 @@
         "featuredInsights",
         document.getElementById("parentId").value === INSIGHTS_PARENT_ID &&
           document.getElementById("featuredInsights").checked
+      );
+      formData.set(
+        "caseStudies",
+        document.getElementById("parentId").value === INSIGHTS_PARENT_ID &&
+          document.getElementById("caseStudies").checked
       );
 
       console.log(

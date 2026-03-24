@@ -38,18 +38,7 @@ const homepageController = require("../controllers/homepage.controllers");
  *                       type: object
  *                       properties:
  *                         videoShareList:
- *                           type: array
- *                           items:
- *                             type: object
- *                             properties:
- *                               linkUrl:
- *                                 type: string
- *                               image:
- *                                 type: string
- *                               tag:
- *                                 type: string
- *                               title:
- *                                 type: string
+ *                           $ref: '#/components/schemas/VideoShareList'
  *                 pagination:
  *                   type: object
  *       500:
@@ -145,18 +134,7 @@ router.get("/bottom-menus", homepageController.getBottomMenus);
  *                   type: object
  *                   properties:
  *                     videoShareList:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           linkUrl:
- *                             type: string
- *                           image:
- *                             type: string
- *                           tag:
- *                             type: string
- *                           title:
- *                             type: string
+ *                       $ref: '#/components/schemas/VideoShareList'
  *       500:
  *         description: Server error
  */
@@ -311,6 +289,12 @@ router.get("/solutions", homepageController.getSolutionsMenus);
  *           type: boolean
  *         description: Optional filter by featuredInsights (true/false)
  *       - in: query
+ *         name: caseStudies
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by caseStudies (true/false)
+ *       - in: query
  *         name: tag
  *         required: false
  *         schema:
@@ -355,6 +339,36 @@ router.get("/insights", homepageController.getInsightsMenus);
  *         schema:
  *           type: boolean
  *         description: Optional filter by showHomePage (true/false)
+ *       - in: query
+ *         name: featuredInsights
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by featuredInsights (true/false)
+ *       - in: query
+ *         name: caseStudies
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by caseStudies (true/false)
+ *       - in: query
+ *         name: showHomePage
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by showHomePage (true/false)
+ *       - in: query
+ *         name: featuredInsights
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by featuredInsights (true/false)
+ *       - in: query
+ *         name: caseStudies
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Optional filter by caseStudies (true/false)
  *       - in: query
  *         name: tag
  *         required: false
@@ -463,18 +477,7 @@ router.get("/menu-children-tree/:id", homepageController.getMenuChildrenTree);
  *                     type: object
  *                     properties:
  *                       videoShareList:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             linkUrl:
- *                               type: string
- *                             image:
- *                               type: string
- *                             tag:
- *                               type: string
- *                             title:
- *                               type: string
+ *                         $ref: '#/components/schemas/VideoShareList'
  *       404:
  *         description: Invalid ID format
  *       500:

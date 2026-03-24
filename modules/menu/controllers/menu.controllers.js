@@ -95,3 +95,13 @@ exports.toggleFeaturedInsights = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
+exports.toggleCaseStudies = async (req, res) => {
+  try {
+    const menu = await menuService.toggleCaseStudies(req.params.id);
+    res.json({ success: true, caseStudies: menu.caseStudies });
+  } catch (err) {
+    console.error("Toggle case studies error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};

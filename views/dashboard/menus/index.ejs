@@ -73,11 +73,12 @@
             <tr>
               <th width="30%">Details</th>
               <th width="10%" class="text-center">Order</th>
-              <th width="14%">Parent</th>
+              <th width="12%">Parent</th>
               <th width="10%" class="text-center">Homepage</th>
+              <th width="8%" class="text-center">Case Studies</th>
               <th width="12%" class="text-center">Featured Insights</th>
-              <th width="10%" class="text-center">Status</th>
-              <th width="14%" class="text-end">Actions</th>
+              <th width="8%" class="text-center">Status</th>
+              <th width="10%" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>`;
@@ -111,11 +112,12 @@
             <tr>
               <th width="30%">Details</th>
               <th width="10%" class="text-center">Order</th>
-              <th width="14%">Parent</th>
+              <th width="12%">Parent</th>
               <th width="10%" class="text-center">Homepage</th>
+              <th width="8%" class="text-center">Case Studies</th>
               <th width="12%" class="text-center">Featured Insights</th>
-              <th width="10%" class="text-center">Status</th>
-              <th width="14%" class="text-end">Actions</th>
+              <th width="8%" class="text-center">Status</th>
+              <th width="10%" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>`;
@@ -297,6 +299,20 @@
           String(menu.parentId || "") === INSIGHTS_PARENT_ID
             ? `<button
           type="button"
+          class="featured-star-btn ${menu.caseStudies ? "active" : ""}"
+          aria-label="Toggle Case Studies"
+          title="Toggle Case Studies"
+          onclick="toggleCaseStudies('${menu._id}', this)">
+          ${menu.caseStudies ? "★" : "☆"}
+        </button>`
+            : '<span class="text-muted">&mdash;</span>'
+        }
+      </td>
+      <td class="text-center">
+        ${
+          String(menu.parentId || "") === INSIGHTS_PARENT_ID
+            ? `<button
+          type="button"
           class="featured-star-btn ${menu.featuredInsights ? "active" : ""}"
           aria-label="Toggle Featured Insights"
           title="Toggle Featured Insights"
@@ -457,6 +473,37 @@
         el.classList.toggle("active", wasActive);
         el.textContent = wasActive ? "★" : "☆";
         notify("Toggle Featured Insights failed: " + err.message, true);
+      });
+  }
+
+  function toggleCaseStudies(id, el) {
+    const wasActive = el.classList.contains("active");
+    el.disabled = true;
+
+    fetch(`/api/menus/${id}/toggle-case-studies`, {
+      method: "PATCH",
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        el.disabled = false;
+        if (!data.success) {
+          throw new Error(data.message || "Toggle failed");
+        }
+        el.classList.toggle("active", !!data.caseStudies);
+        el.textContent = data.caseStudies ? "★" : "☆";
+        notify("Case Studies updated");
+      })
+      .catch((err) => {
+        console.error("Toggle case studies failed:", err);
+        el.disabled = false;
+        el.classList.toggle("active", wasActive);
+        el.textContent = wasActive ? "★" : "☆";
+        notify("Toggle Case Studies failed: " + err.message, true);
       });
   }
 

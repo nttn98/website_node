@@ -617,6 +617,15 @@
           var listNow = extractVideoShareListFromHtml(getHtml());
           if (!Array.isArray(listNow) || !listNow[idx]) return;
 
+          var nextLinkUrl = String(urlInputRow.value || "").trim();
+          if (!nextLinkUrl) {
+            statusRow.className = "small text-danger";
+            statusRow.textContent = "\u2717 Link URL is required";
+            return;
+          }
+          var nextTitle = String(titleInputRow.value || "").trim();
+          var platform = detectVideoPlatform(nextLinkUrl);
+
           var nextImage = String((listNow[idx] && listNow[idx].image) || "");
           var file = thumbInputRow.files && thumbInputRow.files[0];
           if (file) {
@@ -644,11 +653,26 @@
             }
           }
 
+          if (platform === "unknown") {
+            if (!nextTitle) {
+              statusRow.className = "small text-danger";
+              statusRow.textContent =
+                "\u2717 Title is required for non-YouTube/TikTok URLs";
+              return;
+            }
+            if (!nextImage) {
+              statusRow.className = "small text-danger";
+              statusRow.textContent =
+                "\u2717 Thumbnail is required for non-YouTube/TikTok URLs";
+              return;
+            }
+          }
+
           listNow[idx] = {
-            linkUrl: String(urlInputRow.value || "").trim(),
+            linkUrl: nextLinkUrl,
             image: nextImage,
             tag: groupSelectRow.value === "webinars" ? "Webinar" : "Video",
-            title: String(titleInputRow.value || "").trim(),
+            title: nextTitle,
           };
 
           setHtml(setVideoShareListToHtml(getHtml(), listNow));
@@ -751,8 +775,9 @@
           status.textContent = "Fetching title\u2026";
           var meta = await resolveVideoMetaFromUrl(inputUrl);
           if (!meta) {
-            status.className = "small text-danger";
-            status.textContent = "\u2717 Unsupported or invalid video URL";
+            status.className = "small text-warning";
+            status.textContent =
+              "Unsupported URL: enter title and upload thumbnail manually";
             return;
           }
 
@@ -817,11 +842,16 @@
 
       addItemBtn.addEventListener("click", async function () {
         var inputUrl = (urlInput.value || "").trim();
-        var resolvedMeta = await resolveVideoMetaFromUrl(inputUrl);
-        if (!resolvedMeta) {
+        if (!inputUrl) {
           status.className = "small text-danger";
-          status.textContent = "\u2717 Invalid or unsupported video URL";
+          status.textContent = "\u2717 Link URL is required";
           return;
+        }
+
+        var platform = detectVideoPlatform(inputUrl);
+        var resolvedMeta = null;
+        if (platform !== "unknown") {
+          resolvedMeta = await resolveVideoMetaFromUrl(inputUrl);
         }
 
         addItemBtn.disabled = true;
@@ -831,7 +861,7 @@
 
         var title = (titleInput.value || "").trim();
         if (!title) {
-          title = resolvedMeta.title || "";
+          title = (resolvedMeta && resolvedMeta.title) || "";
         }
 
         var tag = groupSelect.value === "webinars" ? "Webinar" : "Video";
@@ -864,10 +894,40 @@
           }
         }
 
+        var resolvedImage =
+          customThumbnailUrl ||
+          String((resolvedMeta && resolvedMeta.thumbnailUrl) || "").trim();
+
+        if (platform === "unknown") {
+          if (!title) {
+            status.className = "small text-danger";
+            status.textContent =
+              "\u2717 Title is required for non-YouTube/TikTok URLs";
+            addItemBtn.disabled = false;
+            addItemBtn.textContent = "Add item";
+            return;
+          }
+          if (!resolvedImage) {
+            status.className = "small text-danger";
+            status.textContent =
+              "\u2717 Thumbnail is required for non-YouTube/TikTok URLs";
+            addItemBtn.disabled = false;
+            addItemBtn.textContent = "Add item";
+            return;
+          }
+        }
+
+        var metaForSave = resolvedMeta || {
+          url: inputUrl,
+          thumbnailUrl: "",
+          videoId: null,
+          provider: "Video",
+        };
+
         var updatedHtml = appendVideoShareDataToHtml(
           getHtml(),
-          resolvedMeta,
-          customThumbnailUrl || resolvedMeta.thumbnailUrl,
+          metaForSave,
+          resolvedImage,
           title || "Video Title Goes Here",
           tag
         );

@@ -31,6 +31,10 @@ function isInsightsChild(parentId) {
   return String(parentId || "") === INSIGHTS_PARENT_ID;
 }
 
+function toBool(input) {
+  return input === "on" || input === "true" || input === true;
+}
+
 /* ===== DASHBOARD ===== */
 
 exports.getAllMenus = () => {
@@ -122,18 +126,15 @@ exports.createMenu = async (data) => {
     order: Number(data.order) || 0,
     type: data.type || "top",
     isButton: data.isButton === "on" || data.isButton === true,
+    caseStudies: isInsightsMenu && toBool(data.caseStudies),
     // Only set showHomePage to true if menu has a parent
     showHomePage:
       (data.parentId &&
-        (data.showHomePage === "on" ||
-          data.showHomePage === "true" ||
-          data.showHomePage === true)) ||
+        toBool(data.showHomePage)) ||
       false,
     featuredInsights:
       isInsightsMenu &&
-      (data.featuredInsights === "on" ||
-        data.featuredInsights === "true" ||
-        data.featuredInsights === true),
+      toBool(data.featuredInsights),
     image: image,
     tagId: selectedTag.tagId,
     tagName: selectedTag.tagName,
@@ -167,22 +168,19 @@ exports.updateMenu = async (id, data) => {
   if (data.type !== undefined) update.type = data.type;
   if (data.isButton !== undefined)
     update.isButton = data.isButton === "on" || data.isButton === true;
+  if (data.caseStudies !== undefined) {
+    update.caseStudies = isInsightsMenu && toBool(data.caseStudies);
+  } else if (!isInsightsMenu) {
+    // Ensure old caseStudies flag is cleared if menu is moved outside Insights.
+    update.caseStudies = false;
+  }
   if (data.showHomePage !== undefined) {
     // Only set showHomePage to true if menu has a parent
-    update.showHomePage =
-      (finalParentId &&
-        (data.showHomePage === "on" ||
-          data.showHomePage === "true" ||
-          data.showHomePage === true)) ||
-      false;
+    update.showHomePage = (finalParentId && toBool(data.showHomePage)) || false;
   }
 
   if (data.featuredInsights !== undefined) {
-    update.featuredInsights =
-      isInsightsMenu &&
-      (data.featuredInsights === "on" ||
-        data.featuredInsights === "true" ||
-        data.featuredInsights === true);
+    update.featuredInsights = isInsightsMenu && toBool(data.featuredInsights);
   } else if (!isInsightsMenu) {
     // Ensure old featured flag is cleared if menu is moved outside Insights.
     update.featuredInsights = false;
@@ -293,4 +291,20 @@ exports.toggleFeaturedInsights = async (id) => {
   );
   invalidateMenuCache();
   return { ...menu, featuredInsights: nextFeaturedInsights };
+};
+
+exports.toggleCaseStudies = async (id) => {
+  const menu = await Menu.findById(id).select("parentId caseStudies").lean();
+  if (!menu) {
+    throw new Error("Menu not found");
+  }
+
+  if (!isInsightsChild(menu.parentId)) {
+    throw new Error("Case Studies is only available for Insights child menus");
+  }
+
+  const nextCaseStudies = !menu.caseStudies;
+  await Menu.updateOne({ _id: id }, { $set: { caseStudies: nextCaseStudies } });
+  invalidateMenuCache();
+  return { ...menu, caseStudies: nextCaseStudies };
 };

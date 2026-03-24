@@ -96,6 +96,7 @@ exports.getMenuChildrenTree = async (
   parentId,
   showHomePage,
   featuredInsights,
+  caseStudies,
   tag
 ) => {
   const query = {
@@ -110,6 +111,10 @@ exports.getMenuChildrenTree = async (
 
   if (typeof featuredInsights === "boolean") {
     query.featuredInsights = featuredInsights;
+  }
+
+  if (typeof caseStudies === "boolean") {
+    query.caseStudies = caseStudies;
   }
 
   const normalizedTag = String(tag || "").trim();

@@ -228,11 +228,13 @@ exports.getInsightsMenus = async (req, res) => {
     });
     const showHomePage = parseOptionalBoolean(req.query.showHomePage);
     const featuredInsights = parseOptionalBoolean(req.query.featuredInsights);
+    const caseStudies = parseOptionalBoolean(req.query.caseStudies);
     const tag = String(req.query.tag || "").trim();
     const menus = await homepageService.getMenuChildrenTree(
       "698191a46ea27a5d8ccbf724",
       showHomePage,
       featuredInsights,
+      caseStudies,
       tag
     );
     const paged = paginateArray(
@@ -314,11 +316,13 @@ exports.getMenuChildrenTree = async (req, res) => {
     });
     const showHomePage = parseOptionalBoolean(req.query.showHomePage);
     const featuredInsights = parseOptionalBoolean(req.query.featuredInsights);
+    const caseStudies = parseOptionalBoolean(req.query.caseStudies);
     const tag = String(req.query.tag || "").trim();
     const menus = await homepageService.getMenuChildrenTree(
       parentId,
       showHomePage,
       featuredInsights,
+      caseStudies,
       tag
     );
     const paged = paginateArray(menus, params);

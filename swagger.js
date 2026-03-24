@@ -10,6 +10,25 @@ const options = {
       description:
         "API documentation for U&I Logistics website management system",
     },
+    components: {
+      schemas: {
+        VideoShareItem: {
+          type: "object",
+          properties: {
+            linkUrl: { type: "string" },
+            image: { type: "string" },
+            tag: { type: "string" },
+            title: { type: "string" },
+          },
+        },
+        VideoShareList: {
+          type: "array",
+          items: {
+            $ref: "#/components/schemas/VideoShareItem",
+          },
+        },
+      },
+    },
     tags: [
       { name: "Homepage", description: "Homepage API for frontend" },
       { name: "Menu", description: "Menu management" },

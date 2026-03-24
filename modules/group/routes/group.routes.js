@@ -42,18 +42,7 @@ const router = express.Router();
  *                     type: object
  *                     properties:
  *                       videoShareList:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             linkUrl:
- *                               type: string
- *                             image:
- *                               type: string
- *                             tag:
- *                               type: string
- *                             title:
- *                               type: string
+ *                         $ref: '#/components/schemas/VideoShareList'
  *                 pagination:
  *                   type: object
  */
@@ -246,18 +235,7 @@ router.get("/menu/:menuId", controller.showGroupByMenu);
  *                   type: object
  *                   properties:
  *                     videoShareList:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           linkUrl:
- *                             type: string
- *                           image:
- *                             type: string
- *                           tag:
- *                             type: string
- *                           title:
- *                             type: string
+ *                       $ref: '#/components/schemas/VideoShareList'
  */
 router.get("/:id", controller.getById);
 
