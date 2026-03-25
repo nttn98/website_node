@@ -3,6 +3,8 @@ const Group = require("../../group/models/Group");
 const Social = require("../../social/models/Social");
 const formService = require("../../form/services/form.services");
 
+const INSIGHTS_PARENT_ID = "698191a46ea27a5d8ccbf724";
+
 /* ===== HOMEPAGE API SERVICES ===== */
 
 // Get top menus (root header menus shown on homepage)
@@ -97,7 +99,8 @@ exports.getMenuChildrenTree = async (
   showHomePage,
   featuredInsights,
   caseStudies,
-  tag
+  tag,
+  options = {}
 ) => {
   const query = {
     isActive: true,
@@ -121,12 +124,12 @@ exports.getMenuChildrenTree = async (
   if (normalizedTag) {
     if (/^[a-fA-F0-9]{24}$/.test(normalizedTag)) {
       query.tagId = normalizedTag;
-    } else {
+    } else if (options.allowTagName === true) {
       query.tagName = { $regex: normalizedTag, $options: "i" };
     }
   }
 
-  const menus = await Menu.find(query).sort({ createdAt: -1, order: 1 }).lean();
+  const menus = await Menu.find(query).sort({ order: 1 }).lean();
 
   return menus.map((g) => ({
     ...g,
@@ -193,4 +196,76 @@ exports.getDetail = async (parentId) => {
   }
 
   return filteredGroups;
+};
+
+exports.getRelatedPostsById = async (id, limit = 3) => {
+  const currentPost = await Menu.findOne({
+    _id: id,
+    isActive: true,
+    isStatus: true,
+  }).lean();
+
+  if (!currentPost) {
+    return null;
+  }
+
+  const safeLimit = Math.max(Number(limit) || 3, 1);
+  const resolvedParentId = currentPost.parentId
+    ? currentPost.parentId
+    : String(currentPost._id) === INSIGHTS_PARENT_ID
+    ? currentPost._id
+    : null;
+
+  if (!resolvedParentId) {
+    return [];
+  }
+
+  const baseQuery = {
+    _id: { $ne: currentPost._id },
+    isActive: true,
+    isStatus: true,
+    parentId: resolvedParentId,
+  };
+
+  const results = [];
+  const seenIds = new Set();
+
+  const appendUnique = (items) => {
+    for (const item of items) {
+      const itemId = String(item._id);
+      if (seenIds.has(itemId)) {
+        continue;
+      }
+
+      seenIds.add(itemId);
+      results.push(item);
+
+      if (results.length >= safeLimit) {
+        break;
+      }
+    }
+  };
+
+  const hasTagId = /^[a-fA-F0-9]{24}$/.test(String(currentPost.tagId || ""));
+
+  if (hasTagId) {
+    return Menu.find({
+      ...baseQuery,
+      tagId: currentPost.tagId,
+    })
+      .sort({ createdAt: -1, order: 1 })
+      .limit(safeLimit)
+      .lean();
+  }
+
+  if (results.length < safeLimit) {
+    const siblingPosts = await Menu.find(baseQuery)
+      .sort({ createdAt: -1, order: 1 })
+      .limit(safeLimit * 2)
+      .lean();
+
+    appendUnique(siblingPosts);
+  }
+
+  return results.slice(0, safeLimit);
 };

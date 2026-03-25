@@ -237,12 +237,6 @@ router.get("/menu-parents", homepageController.getMenuParents);
  *         schema:
  *           type: boolean
  *         description: Optional filter by showHomePage (true/false)
- *       - in: query
- *         name: tag
- *         required: false
- *         schema:
- *           type: string
- *         description: Optional filter by tagId or tagName
  *     responses:
  *       200:
  *         description: Solutions menu tree
@@ -299,7 +293,7 @@ router.get("/solutions", homepageController.getSolutionsMenus);
  *         required: false
  *         schema:
  *           type: string
- *         description: Optional filter by tagId or tagName
+ *         description: Optional filter by tagId
  *     responses:
  *       200:
  *         description: Insights menu tree
@@ -351,30 +345,6 @@ router.get("/insights", homepageController.getInsightsMenus);
  *         schema:
  *           type: boolean
  *         description: Optional filter by caseStudies (true/false)
- *       - in: query
- *         name: showHomePage
- *         required: false
- *         schema:
- *           type: boolean
- *         description: Optional filter by showHomePage (true/false)
- *       - in: query
- *         name: featuredInsights
- *         required: false
- *         schema:
- *           type: boolean
- *         description: Optional filter by featuredInsights (true/false)
- *       - in: query
- *         name: caseStudies
- *         required: false
- *         schema:
- *           type: boolean
- *         description: Optional filter by caseStudies (true/false)
- *       - in: query
- *         name: tag
- *         required: false
- *         schema:
- *           type: string
- *         description: Optional filter by tagId or tagName
  *     responses:
  *       200:
  *         description: Industry menu tree
@@ -419,7 +389,7 @@ router.get("/industry", homepageController.getIndustryMenus);
  *         required: false
  *         schema:
  *           type: string
- *         description: Optional filter by tagId or tagName
+ *         description: Optional filter by tagId
  *     responses:
  *       200:
  *         description: Menu children tree
@@ -484,6 +454,39 @@ router.get("/menu-children-tree/:id", homepageController.getMenuChildrenTree);
  *         description: Server error
  */
 router.get("/detail/:id", homepageController.getDetail);
+
+/**
+ * @swagger
+ * /api/homepage/related-posts/{id}:
+ *   get:
+ *     summary: Get related posts by current post ID
+ *     description: Returns related posts for the selected article. Priority is same tag, then same parent category, excluding the current article.
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Current post ID
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 3
+ *         description: Maximum number of related posts returned
+ *     responses:
+ *       200:
+ *         description: Related posts list
+ *       404:
+ *         description: Invalid ID format or post not found
+ *       500:
+ *         description: Server error
+ */
+router.get("/related-posts/:id", homepageController.getRelatedPosts);
 
 /**
  * @swagger

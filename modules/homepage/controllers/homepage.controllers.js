@@ -172,6 +172,7 @@ exports.getSolutionsMenus = async (req, res) => {
       "697c0c9e7d88fcfff27bfb46",
       showHomePage,
       undefined,
+      undefined,
       tag
     );
     const paged = paginateArray(menus, params);
@@ -201,6 +202,7 @@ exports.getIndustryMenus = async (req, res) => {
     const menus = await homepageService.getMenuChildrenTree(
       "698aa02d84b05fe995a079a7",
       showHomePage,
+      undefined,
       undefined,
       tag
     );
@@ -235,7 +237,8 @@ exports.getInsightsMenus = async (req, res) => {
       showHomePage,
       featuredInsights,
       caseStudies,
-      tag
+      tag,
+      { allowTagName: true }
     );
     const paged = paginateArray(
       [...menus].sort(
@@ -365,6 +368,40 @@ exports.getDetail = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch detail groups",
+    });
+  }
+};
+
+exports.getRelatedPosts = async (req, res) => {
+  const postId = req.params.id;
+  if (!/^[a-fA-F0-9]{24}$/.test(postId)) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid ID format" });
+  }
+
+  try {
+    const limit = Number(req.query.limit) || 3;
+    const relatedPosts = await homepageService.getRelatedPostsById(
+      postId,
+      limit
+    );
+
+    if (!relatedPosts) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+    }
+
+    res.json({
+      success: true,
+      data: sortByCreatedAtDesc(relatedPosts),
+    });
+  } catch (error) {
+    console.error("Error fetching related posts:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch related posts",
     });
   }
 };
