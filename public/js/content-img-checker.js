@@ -364,6 +364,179 @@
     );
     return wrapper.innerHTML;
   }
+
+  function isPdfHrefValue(href) {
+    var value = String(href || "").trim();
+    if (!value) return false;
+    var path = value;
+    if (/^https?:\/\//i.test(value)) {
+      try {
+        path = new URL(value).pathname || "";
+      } catch {
+        path = value;
+      }
+    }
+    path = path.split("?")[0].split("#")[0].toLowerCase();
+    return path.endsWith(".pdf");
+  }
+
+  function getPdfArticleCards(wrapper) {
+    var cards = Array.from(
+      wrapper.querySelectorAll(
+        "article.whitepaper-card, article.card.card-horizontal"
+      )
+    );
+    return cards.filter(function (card) {
+      var anchor = card.querySelector("a.card-link[href], a[href]");
+      var href = anchor ? anchor.getAttribute("href") || "" : "";
+      return isPdfHrefValue(href);
+    });
+  }
+
+  function getArticleCardsInParent(parent) {
+    if (!parent) return [];
+    return Array.from(
+      parent.querySelectorAll(
+        "article.whitepaper-card, article.card.card-horizontal"
+      )
+    );
+  }
+
+  function getPrimaryPdfArticleGroupCards(wrapper) {
+    var pdfCards = getPdfArticleCards(wrapper);
+    if (!pdfCards.length) return [];
+
+    var firstCard = pdfCards[0];
+    var parent = firstCard.parentElement;
+    if (!parent) return [firstCard];
+
+    var siblingCards = getArticleCardsInParent(parent);
+    return siblingCards.length ? siblingCards : [firstCard];
+  }
+
+  function extractPdfArticleItems(html) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    return getPrimaryPdfArticleGroupCards(wrapper).map(function (card) {
+      var imgEl = card.querySelector(".card-thumb img, img");
+      var tagEl = card.querySelector(".card-tag");
+      var titleEl = card.querySelector(".card-title");
+      var descEl = card.querySelector(".card-desc");
+      var linkEl = card.querySelector("a.card-link, a[href], a");
+
+      return {
+        imageUrl: String((imgEl && imgEl.getAttribute("src")) || "").trim(),
+        tag: String((tagEl && tagEl.textContent) || "").trim(),
+        title: String((titleEl && titleEl.textContent) || "").trim(),
+        desc: String((descEl && descEl.textContent) || "").trim(),
+        pdfUrl: String((linkEl && linkEl.getAttribute("href")) || "").trim(),
+        linkText: String((linkEl && linkEl.textContent) || "").trim(),
+      };
+    });
+  }
+
+  function detectPdfArticleGroup(html) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var cards = getPrimaryPdfArticleGroupCards(wrapper);
+    if (!cards.length) return null;
+
+    return {
+      count: cards.length,
+      hasWhitepaperClass: !!cards[0].matches(".whitepaper-card"),
+    };
+  }
+
+  function buildPdfCardHtml(payload, useWhitepaperClass, cardClassOverride) {
+    var cardClass = String(cardClassOverride || "").trim();
+    if (!cardClass) {
+      cardClass = useWhitepaperClass
+        ? "card card-horizontal whitepaper-card"
+        : "card card-horizontal";
+    }
+
+    return (
+      '<article class="' +
+      cardClass +
+      '">' +
+      '<div class="card-body">' +
+      '<div class="card-thumb">' +
+      '<img src="' +
+      escapeHtml(payload.imageUrl) +
+      '" alt="Whitepaper Thumbnail">' +
+      "</div>" +
+      '<div class="card-content">' +
+      '<span class="card-tag">' +
+      escapeHtml(payload.tag || "Customs") +
+      "</span>" +
+      '<h3 class="card-title">' +
+      escapeHtml(payload.title) +
+      "</h3>" +
+      '<p class="card-desc">' +
+      escapeHtml(payload.desc) +
+      "</p>" +
+      '<a href="' +
+      escapeHtml(payload.pdfUrl) +
+      '" class="card-link">' +
+      escapeHtml(payload.linkText || "Download PDF") +
+      "</a>" +
+      "</div>" +
+      "</div>" +
+      "</article>"
+    );
+  }
+
+  function appendPdfCardToHtml(html, payload) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var cards = getPrimaryPdfArticleGroupCards(wrapper);
+    if (!cards.length) {
+      return wrapper.innerHTML;
+    }
+
+    var firstCard = cards[0];
+    var anchorCard = cards.length ? cards[cards.length - 1] : firstCard;
+
+    anchorCard.insertAdjacentHTML(
+      "afterend",
+      buildPdfCardHtml(payload, !!firstCard.matches(".whitepaper-card"))
+    );
+
+    return wrapper.innerHTML;
+  }
+
+  function updatePdfArticleInHtml(html, index, payload) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var cards = getPrimaryPdfArticleGroupCards(wrapper);
+    var target = cards[index];
+    if (!target) return wrapper.innerHTML;
+
+    var currentClass = String(target.getAttribute("class") || "").trim();
+    target.outerHTML = buildPdfCardHtml(
+      payload,
+      target.matches(".whitepaper-card"),
+      currentClass
+    );
+
+    return wrapper.innerHTML;
+  }
+
+  function deletePdfArticleInHtml(html, index) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var cards = getPrimaryPdfArticleGroupCards(wrapper);
+    var target = cards[index];
+    if (!target) return wrapper.innerHTML;
+
+    target.remove();
+    return wrapper.innerHTML;
+  }
   // ─────────────────────────────────────────────────────────────────────────────
 
   function extractUnresolvedServerImgs(html) {
@@ -500,6 +673,21 @@
     container.innerHTML = "";
     if (!assets.length && !forceShowPanel) return;
 
+    var pdfGroupForHtml = !forceShowPanel
+      ? detectPdfArticleGroup(getHtml())
+      : null;
+    var pdfGroupItemsForHtml =
+      !forceShowPanel && pdfGroupForHtml
+        ? extractPdfArticleItems(getHtml())
+        : [];
+    var hiddenAssetSources = {};
+    pdfGroupItemsForHtml.forEach(function (item) {
+      var imageSrc = String((item && item.imageUrl) || "").trim();
+      var pdfSrc = String((item && item.pdfUrl) || "").trim();
+      if (imageSrc) hiddenAssetSources[imageSrc] = true;
+      if (pdfSrc) hiddenAssetSources[pdfSrc] = true;
+    });
+
     var localCount = assets.filter(function (x) {
       return x.isLocal;
     }).length;
@@ -526,17 +714,485 @@
     }
     container.appendChild(header);
 
-    var addBar = document.createElement("div");
-    addBar.className = "d-flex justify-content-end mb-2";
+    if (!forceShowPanel) {
+      var pdfGroup = pdfGroupForHtml;
+      if (pdfGroup) {
+        var existingPdfItems = pdfGroupItemsForHtml;
 
-    var addBtn = document.createElement("button");
-    addBtn.type = "button";
-    addBtn.className = "btn btn-sm btn-primary";
-    addBtn.textContent = "Add";
-    addBar.appendChild(addBtn);
-    container.appendChild(addBar);
+        var pdfBuilder = document.createElement("div");
+        pdfBuilder.className = "border rounded p-3 bg-white mb-2";
+
+        var pdfBuilderTitle = document.createElement("div");
+        pdfBuilderTitle.className = "fw-semibold mb-1";
+        pdfBuilderTitle.textContent = "PDF Article Group";
+
+        var pdfBuilderSub = document.createElement("div");
+        pdfBuilderSub.className = "small text-muted mb-2";
+        pdfBuilderSub.textContent =
+          "Detected " +
+          pdfGroup.count +
+          " PDF card(s). Add new card to the same HTML group.";
+
+        var existingWrap = document.createElement("div");
+        existingWrap.className = "mb-3";
+
+        var existingTitle = document.createElement("div");
+        existingTitle.className = "small fw-semibold mb-2";
+        existingTitle.textContent = "Existing PDF Articles";
+
+        var existingList = document.createElement("div");
+        existingList.className = "d-flex flex-column gap-2";
+
+        existingPdfItems.forEach(function (item, idx) {
+          var itemRow = document.createElement("div");
+          itemRow.className =
+            "d-flex align-items-start gap-2 p-2 border rounded bg-light flex-wrap";
+
+          var thumb = document.createElement("img");
+          thumb.alt = "PDF article thumbnail";
+          thumb.style.width = "64px";
+          thumb.style.height = "44px";
+          thumb.style.objectFit = "cover";
+          thumb.style.border = "1px solid #dee2e6";
+          thumb.style.borderRadius = "4px";
+          thumb.style.background = "#f8f9fa";
+          thumb.style.flexShrink = "0";
+          if (item.imageUrl) {
+            thumb.src = item.imageUrl;
+          } else {
+            thumb.style.display = "none";
+          }
+
+          var editor = document.createElement("div");
+          editor.className = "d-flex flex-column gap-2";
+          editor.style.flex = "1";
+          editor.style.minWidth = "320px";
+
+          var heading = document.createElement("div");
+          heading.className = "small fw-semibold";
+          heading.textContent = "#" + (idx + 1);
+
+          var firstRow = document.createElement("div");
+          firstRow.className = "d-flex align-items-center gap-2 flex-wrap";
+
+          var tagInputRow = document.createElement("input");
+          tagInputRow.type = "text";
+          tagInputRow.className = "form-control form-control-sm";
+          tagInputRow.placeholder = "Tag";
+          tagInputRow.value = item.tag || "";
+          tagInputRow.style.maxWidth = "160px";
+
+          var titleInputRow = document.createElement("input");
+          titleInputRow.type = "text";
+          titleInputRow.className = "form-control form-control-sm";
+          titleInputRow.placeholder = "Title";
+          titleInputRow.value = item.title || "";
+          titleInputRow.style.minWidth = "220px";
+          titleInputRow.style.flex = "1";
+
+          var descInputRow = document.createElement("textarea");
+          descInputRow.className = "form-control form-control-sm";
+          descInputRow.placeholder = "Description";
+          descInputRow.rows = 2;
+          descInputRow.value = item.desc || "";
+
+          var secondRow = document.createElement("div");
+          secondRow.className = "d-flex align-items-center gap-2 flex-wrap";
+
+          var imageUrlInputRow = document.createElement("input");
+          imageUrlInputRow.type = "text";
+          imageUrlInputRow.className = "form-control form-control-sm";
+          imageUrlInputRow.placeholder = "Thumbnail URL";
+          imageUrlInputRow.value = item.imageUrl || "";
+          imageUrlInputRow.style.minWidth = "220px";
+          imageUrlInputRow.style.flex = "1";
+
+          var imageFileInputRow = document.createElement("input");
+          imageFileInputRow.type = "file";
+          imageFileInputRow.accept = "image/*";
+          imageFileInputRow.className = "form-control form-control-sm";
+          imageFileInputRow.style.maxWidth = "220px";
+
+          var thirdRow = document.createElement("div");
+          thirdRow.className = "d-flex align-items-center gap-2 flex-wrap";
+
+          var pdfUrlInputRow = document.createElement("input");
+          pdfUrlInputRow.type = "text";
+          pdfUrlInputRow.className = "form-control form-control-sm";
+          pdfUrlInputRow.placeholder = "PDF URL";
+          pdfUrlInputRow.value = item.pdfUrl || "";
+          pdfUrlInputRow.style.minWidth = "220px";
+          pdfUrlInputRow.style.flex = "1";
+
+          var pdfFileInputRow = document.createElement("input");
+          pdfFileInputRow.type = "file";
+          pdfFileInputRow.accept = ".pdf,application/pdf";
+          pdfFileInputRow.className = "form-control form-control-sm";
+          pdfFileInputRow.style.maxWidth = "220px";
+
+          var linkTextInputRow = document.createElement("input");
+          linkTextInputRow.type = "text";
+          linkTextInputRow.className = "form-control form-control-sm";
+          linkTextInputRow.placeholder = "Link text";
+          linkTextInputRow.value = item.linkText || "Download PDF";
+          linkTextInputRow.style.maxWidth = "180px";
+
+          var actionRowExisting = document.createElement("div");
+          actionRowExisting.className = "d-flex align-items-center gap-2";
+
+          var saveBtnExisting = document.createElement("button");
+          saveBtnExisting.type = "button";
+          saveBtnExisting.className = "btn btn-sm btn-primary";
+          saveBtnExisting.textContent = "Save";
+
+          var deleteBtnExisting = document.createElement("button");
+          deleteBtnExisting.type = "button";
+          deleteBtnExisting.className = "btn btn-sm btn-outline-danger";
+          deleteBtnExisting.textContent = "Delete";
+
+          var statusExisting = document.createElement("span");
+          statusExisting.className = "small";
+
+          saveBtnExisting.addEventListener("click", async function () {
+            var nextTitle = String(titleInputRow.value || "").trim();
+            var nextDesc = String(descInputRow.value || "").trim();
+            var nextTag = String(tagInputRow.value || "").trim();
+            var nextImageUrl = String(imageUrlInputRow.value || "").trim();
+            var nextPdfUrl = String(pdfUrlInputRow.value || "").trim();
+            var nextLinkText =
+              String(linkTextInputRow.value || "").trim() || "Download PDF";
+
+            if (!nextTitle || !nextDesc) {
+              statusExisting.className = "small text-danger";
+              statusExisting.textContent = "Title and description are required";
+              return;
+            }
+
+            saveBtnExisting.disabled = true;
+            saveBtnExisting.textContent = "Saving…";
+            statusExisting.className = "small text-muted";
+            statusExisting.textContent = "Preparing data…";
+
+            try {
+              var imageFile =
+                imageFileInputRow.files && imageFileInputRow.files[0];
+              if (imageFile) {
+                statusExisting.textContent = "Uploading thumbnail…";
+                var imageFd = new FormData();
+                imageFd.append("upload", imageFile);
+                var imageRes = await fetch("/api/upload/content-image", {
+                  method: "POST",
+                  body: imageFd,
+                });
+                var imageData = await imageRes.json();
+                if (!imageData.url) {
+                  throw new Error(
+                    (imageData.error && imageData.error.message) ||
+                      "Thumbnail upload failed"
+                  );
+                }
+                nextImageUrl = imageData.url;
+              }
+
+              var pdfFile = pdfFileInputRow.files && pdfFileInputRow.files[0];
+              if (pdfFile) {
+                statusExisting.textContent = "Uploading PDF…";
+                var pdfFd = new FormData();
+                pdfFd.append("upload", pdfFile);
+                var pdfRes = await fetch("/api/upload/content-pdf", {
+                  method: "POST",
+                  body: pdfFd,
+                });
+                var pdfData = await pdfRes.json();
+                if (!pdfData.url) {
+                  throw new Error(
+                    (pdfData.error && pdfData.error.message) ||
+                      "PDF upload failed"
+                  );
+                }
+                nextPdfUrl = pdfData.url;
+              }
+
+              if (!nextImageUrl) {
+                throw new Error(
+                  "Thumbnail URL or thumbnail upload is required"
+                );
+              }
+              if (!nextPdfUrl || !isPdfHrefValue(nextPdfUrl)) {
+                throw new Error("Valid PDF URL or PDF upload is required");
+              }
+
+              var updatedHtml = updatePdfArticleInHtml(getHtml(), idx, {
+                title: nextTitle,
+                desc: nextDesc,
+                tag: nextTag,
+                imageUrl: nextImageUrl,
+                pdfUrl: nextPdfUrl,
+                linkText: nextLinkText,
+              });
+
+              setHtml(updatedHtml);
+              statusExisting.className = "small text-success";
+              statusExisting.textContent = "✓ Saved";
+              setTimeout(recheck, 120);
+            } catch (err) {
+              statusExisting.className = "small text-danger";
+              statusExisting.textContent = "✗ " + err.message;
+            } finally {
+              saveBtnExisting.disabled = false;
+              saveBtnExisting.textContent = "Save";
+            }
+          });
+
+          deleteBtnExisting.addEventListener("click", function () {
+            var updatedHtml = deletePdfArticleInHtml(getHtml(), idx);
+            setHtml(updatedHtml);
+            setTimeout(recheck, 120);
+          });
+
+          firstRow.appendChild(tagInputRow);
+          firstRow.appendChild(titleInputRow);
+
+          secondRow.appendChild(imageUrlInputRow);
+          secondRow.appendChild(imageFileInputRow);
+
+          thirdRow.appendChild(pdfUrlInputRow);
+          thirdRow.appendChild(pdfFileInputRow);
+          thirdRow.appendChild(linkTextInputRow);
+
+          actionRowExisting.appendChild(saveBtnExisting);
+          actionRowExisting.appendChild(deleteBtnExisting);
+          actionRowExisting.appendChild(statusExisting);
+
+          editor.appendChild(heading);
+          editor.appendChild(firstRow);
+          editor.appendChild(descInputRow);
+          editor.appendChild(secondRow);
+          editor.appendChild(thirdRow);
+          editor.appendChild(actionRowExisting);
+
+          itemRow.appendChild(thumb);
+          itemRow.appendChild(editor);
+          existingList.appendChild(itemRow);
+        });
+
+        existingWrap.appendChild(existingTitle);
+        existingWrap.appendChild(existingList);
+
+        var row = document.createElement("div");
+        row.className = "d-flex align-items-center gap-2 flex-wrap";
+
+        var tagInput = document.createElement("input");
+        tagInput.type = "text";
+        tagInput.className = "form-control form-control-sm";
+        tagInput.placeholder = "Tag";
+        tagInput.value = "Customs";
+        tagInput.style.maxWidth = "160px";
+
+        var titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.className = "form-control form-control-sm";
+        titleInput.placeholder = "Title";
+        titleInput.style.minWidth = "260px";
+        titleInput.style.flex = "1";
+
+        var descInput = document.createElement("textarea");
+        descInput.className = "form-control form-control-sm mt-2";
+        descInput.placeholder = "Description";
+        descInput.rows = 2;
+
+        var secondRow = document.createElement("div");
+        secondRow.className = "d-flex align-items-center gap-2 flex-wrap mt-2";
+
+        var imageUrlInput = document.createElement("input");
+        imageUrlInput.type = "text";
+        imageUrlInput.className = "form-control form-control-sm";
+        imageUrlInput.placeholder = "Thumbnail URL (optional if upload)";
+        imageUrlInput.style.minWidth = "260px";
+        imageUrlInput.style.flex = "1";
+
+        var imageFileInput = document.createElement("input");
+        imageFileInput.type = "file";
+        imageFileInput.accept = "image/*";
+        imageFileInput.className = "form-control form-control-sm";
+        imageFileInput.style.maxWidth = "240px";
+
+        var thirdRow = document.createElement("div");
+        thirdRow.className = "d-flex align-items-center gap-2 flex-wrap mt-2";
+
+        var pdfUrlInput = document.createElement("input");
+        pdfUrlInput.type = "text";
+        pdfUrlInput.className = "form-control form-control-sm";
+        pdfUrlInput.placeholder = "PDF URL (optional if upload)";
+        pdfUrlInput.style.minWidth = "260px";
+        pdfUrlInput.style.flex = "1";
+
+        var pdfFileInput = document.createElement("input");
+        pdfFileInput.type = "file";
+        pdfFileInput.accept = ".pdf,application/pdf";
+        pdfFileInput.className = "form-control form-control-sm";
+        pdfFileInput.style.maxWidth = "240px";
+
+        var linkTextInput = document.createElement("input");
+        linkTextInput.type = "text";
+        linkTextInput.className = "form-control form-control-sm";
+        linkTextInput.placeholder = "Link text";
+        linkTextInput.value = "Download PDF";
+        linkTextInput.style.maxWidth = "200px";
+
+        var actionRow = document.createElement("div");
+        actionRow.className = "d-flex align-items-center gap-2 mt-2";
+
+        var addPdfCardBtn = document.createElement("button");
+        addPdfCardBtn.type = "button";
+        addPdfCardBtn.className = "btn btn-sm btn-primary";
+        addPdfCardBtn.textContent = "Add PDF Card";
+
+        var resetBtn = document.createElement("button");
+        resetBtn.type = "button";
+        resetBtn.className = "btn btn-sm btn-outline-secondary";
+        resetBtn.textContent = "Reset";
+
+        var builderStatus = document.createElement("span");
+        builderStatus.className = "small";
+
+        resetBtn.addEventListener("click", function () {
+          titleInput.value = "";
+          descInput.value = "";
+          imageUrlInput.value = "";
+          pdfUrlInput.value = "";
+          imageFileInput.value = "";
+          pdfFileInput.value = "";
+          linkTextInput.value = "Download PDF";
+          builderStatus.className = "small text-muted";
+          builderStatus.textContent = "Form reset";
+        });
+
+        addPdfCardBtn.addEventListener("click", async function () {
+          var title = String(titleInput.value || "").trim();
+          var desc = String(descInput.value || "").trim();
+          var tag = String(tagInput.value || "").trim();
+          var linkText =
+            String(linkTextInput.value || "").trim() || "Download PDF";
+          var imageUrl = String(imageUrlInput.value || "").trim();
+          var pdfUrl = String(pdfUrlInput.value || "").trim();
+
+          if (!title || !desc) {
+            builderStatus.className = "small text-danger";
+            builderStatus.textContent = "Title and description are required";
+            return;
+          }
+
+          addPdfCardBtn.disabled = true;
+          addPdfCardBtn.textContent = "Adding…";
+          builderStatus.className = "small text-muted";
+          builderStatus.textContent = "Preparing card data…";
+
+          try {
+            var imageFile = imageFileInput.files && imageFileInput.files[0];
+            if (imageFile) {
+              builderStatus.textContent = "Uploading thumbnail…";
+              var imageFd = new FormData();
+              imageFd.append("upload", imageFile);
+              var imageRes = await fetch("/api/upload/content-image", {
+                method: "POST",
+                body: imageFd,
+              });
+              var imageData = await imageRes.json();
+              if (!imageData.url) {
+                throw new Error(
+                  (imageData.error && imageData.error.message) ||
+                    "Thumbnail upload failed"
+                );
+              }
+              imageUrl = imageData.url;
+            }
+
+            var pdfFile = pdfFileInput.files && pdfFileInput.files[0];
+            if (pdfFile) {
+              builderStatus.textContent = "Uploading PDF…";
+              var pdfFd = new FormData();
+              pdfFd.append("upload", pdfFile);
+              var pdfRes = await fetch("/api/upload/content-pdf", {
+                method: "POST",
+                body: pdfFd,
+              });
+              var pdfData = await pdfRes.json();
+              if (!pdfData.url) {
+                throw new Error(
+                  (pdfData.error && pdfData.error.message) ||
+                    "PDF upload failed"
+                );
+              }
+              pdfUrl = pdfData.url;
+            }
+
+            if (!imageUrl) {
+              throw new Error("Thumbnail URL or thumbnail upload is required");
+            }
+            if (!pdfUrl || !isPdfHrefValue(pdfUrl)) {
+              throw new Error("Valid PDF URL or PDF upload is required");
+            }
+
+            var nextHtml = appendPdfCardToHtml(getHtml(), {
+              title: title,
+              desc: desc,
+              tag: tag,
+              imageUrl: imageUrl,
+              pdfUrl: pdfUrl,
+              linkText: linkText,
+            });
+
+            setHtml(nextHtml);
+            builderStatus.className = "small text-success";
+            builderStatus.textContent = "✓ Added new PDF card";
+            setTimeout(recheck, 120);
+          } catch (err) {
+            builderStatus.className = "small text-danger";
+            builderStatus.textContent = "✗ " + err.message;
+          } finally {
+            addPdfCardBtn.disabled = false;
+            addPdfCardBtn.textContent = "Add PDF Card";
+          }
+        });
+
+        row.appendChild(tagInput);
+        row.appendChild(titleInput);
+
+        secondRow.appendChild(imageUrlInput);
+        secondRow.appendChild(imageFileInput);
+
+        thirdRow.appendChild(pdfUrlInput);
+        thirdRow.appendChild(pdfFileInput);
+        thirdRow.appendChild(linkTextInput);
+
+        actionRow.appendChild(addPdfCardBtn);
+        actionRow.appendChild(resetBtn);
+        actionRow.appendChild(builderStatus);
+
+        pdfBuilder.appendChild(pdfBuilderTitle);
+        pdfBuilder.appendChild(pdfBuilderSub);
+        pdfBuilder.appendChild(existingWrap);
+        pdfBuilder.appendChild(row);
+        pdfBuilder.appendChild(descInput);
+        pdfBuilder.appendChild(secondRow);
+        pdfBuilder.appendChild(thirdRow);
+        pdfBuilder.appendChild(actionRow);
+        container.appendChild(pdfBuilder);
+      }
+    }
 
     if (forceShowPanel) {
+      var addBar = document.createElement("div");
+      addBar.className = "d-flex justify-content-end mb-2";
+
+      var addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "btn btn-sm btn-primary";
+      addBtn.textContent = "Add";
+      addBar.appendChild(addBtn);
+      container.appendChild(addBar);
+
       var existingList = extractVideoShareListFromHtml(getHtml());
       existingList.forEach(function (item, idx) {
         var row = document.createElement("div");
@@ -702,257 +1358,264 @@
         row.appendChild(controlsRow);
         container.appendChild(row);
       });
+
+      addBtn.addEventListener("click", function () {
+        var manualRow = document.createElement("div");
+        manualRow.className =
+          "d-flex align-items-start gap-2 mt-2 flex-wrap border rounded p-2 bg-white";
+
+        var preview = document.createElement("span");
+        preview.style.width = "80px";
+        preview.style.height = "56px";
+        preview.style.borderRadius = "4px";
+        preview.style.border = "1px solid #e9ecef";
+        preview.style.background = "#f8f9fa";
+        preview.style.display = "inline-flex";
+        preview.style.alignItems = "center";
+        preview.style.justifyContent = "center";
+        preview.style.fontSize = "12px";
+        preview.style.fontWeight = "600";
+        preview.style.color = "#495057";
+        preview.textContent = "New";
+
+        var badge = document.createElement("span");
+        badge.className = "badge bg-info";
+        badge.textContent = "Video share - New item";
+
+        var controls = document.createElement("div");
+        controls.className = "d-flex align-items-center gap-2 flex-wrap w-100";
+
+        var urlInput = document.createElement("input");
+        urlInput.type = "text";
+        urlInput.className = "form-control form-control-sm";
+        urlInput.style.minWidth = "300px";
+        urlInput.style.flex = "1";
+        urlInput.placeholder = "Paste video share URL (YouTube / TikTok)";
+
+        var groupSelect = document.createElement("select");
+        groupSelect.className = "form-select form-select-sm";
+        groupSelect.style.cssText = "width:auto;min-width:110px";
+        ["video", "webinars"].forEach(function (g) {
+          var opt = document.createElement("option");
+          opt.value = g;
+          opt.textContent = g.charAt(0).toUpperCase() + g.slice(1);
+          groupSelect.appendChild(opt);
+        });
+
+        var titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.className = "form-control form-control-sm";
+        titleInput.style.minWidth = "220px";
+        titleInput.placeholder = "Title (optional)";
+
+        var shouldAutoFillTitle = true;
+        var lastResolvedUrl = "";
+        var hydrateTitleTimer = null;
+
+        titleInput.addEventListener("input", function () {
+          shouldAutoFillTitle = !(titleInput.value || "").trim();
+        });
+
+        async function hydrateTitleFromUrl() {
+          var inputUrl = (urlInput.value || "").trim();
+          if (!inputUrl) return;
+
+          // Avoid duplicate fetches for the same URL when title exists.
+          if (inputUrl === lastResolvedUrl && (titleInput.value || "").trim()) {
+            return;
+          }
+
+          try {
+            status.className = "small text-muted";
+            status.textContent = "Fetching title\u2026";
+            var meta = await resolveVideoMetaFromUrl(inputUrl);
+            if (!meta) {
+              status.className = "small text-warning";
+              status.textContent =
+                "Unsupported URL: enter title and upload thumbnail manually";
+              return;
+            }
+
+            var fetchedTitle = meta.title;
+            if (
+              fetchedTitle &&
+              (shouldAutoFillTitle || !(titleInput.value || "").trim())
+            ) {
+              titleInput.value = fetchedTitle;
+              shouldAutoFillTitle = true;
+            }
+
+            var hasThumbFile = !!(thumbInput.files && thumbInput.files.length);
+            if (meta.thumbnailUrl && !hasThumbFile) {
+              preview.textContent = "";
+              preview.style.backgroundImage =
+                "url('" + meta.thumbnailUrl + "')";
+              preview.style.backgroundSize = "cover";
+              preview.style.backgroundPosition = "center";
+            }
+
+            status.textContent = "";
+            status.className = "small";
+            lastResolvedUrl = inputUrl;
+          } catch {
+            // Ignore lookup failures; user can still add with manual title.
+          }
+        }
+
+        function queueHydrateTitleFromUrl() {
+          if (hydrateTitleTimer) clearTimeout(hydrateTitleTimer);
+          hydrateTitleTimer = setTimeout(hydrateTitleFromUrl, 180);
+        }
+
+        urlInput.addEventListener("change", queueHydrateTitleFromUrl);
+        urlInput.addEventListener("blur", queueHydrateTitleFromUrl);
+        urlInput.addEventListener("paste", function () {
+          setTimeout(queueHydrateTitleFromUrl, 0);
+        });
+
+        var thumbInput = document.createElement("input");
+        thumbInput.type = "file";
+        thumbInput.accept = "image/*";
+        thumbInput.className = "form-control form-control-sm";
+        thumbInput.style.maxWidth = "220px";
+
+        var addItemBtn = document.createElement("button");
+        addItemBtn.type = "button";
+        addItemBtn.className = "btn btn-sm btn-success";
+        addItemBtn.textContent = "Add item";
+
+        var cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "btn btn-sm btn-outline-secondary";
+        cancelBtn.textContent = "Cancel";
+
+        var status = document.createElement("span");
+        status.className = "small";
+
+        cancelBtn.addEventListener("click", function () {
+          manualRow.remove();
+        });
+
+        addItemBtn.addEventListener("click", async function () {
+          var inputUrl = (urlInput.value || "").trim();
+          if (!inputUrl) {
+            status.className = "small text-danger";
+            status.textContent = "\u2717 Link URL is required";
+            return;
+          }
+
+          var platform = detectVideoPlatform(inputUrl);
+          var resolvedMeta = null;
+          if (platform !== "unknown") {
+            resolvedMeta = await resolveVideoMetaFromUrl(inputUrl);
+          }
+
+          addItemBtn.disabled = true;
+          addItemBtn.textContent = "Adding\u2026";
+          status.className = "small text-muted";
+          status.textContent = "Preparing video data\u2026";
+
+          var title = (titleInput.value || "").trim();
+          if (!title) {
+            title = (resolvedMeta && resolvedMeta.title) || "";
+          }
+
+          var tag = groupSelect.value === "webinars" ? "Webinar" : "Video";
+
+          var customThumbnailUrl = null;
+          var thumbFile = thumbInput.files && thumbInput.files[0];
+          if (thumbFile) {
+            status.textContent = "Uploading thumbnail\u2026";
+            try {
+              var fd = new FormData();
+              fd.append("upload", thumbFile);
+              var upRes = await fetch("/api/upload/content-image", {
+                method: "POST",
+                body: fd,
+              });
+              var upData = await upRes.json();
+              if (!upData.url) {
+                throw new Error(
+                  (upData.error && upData.error.message) ||
+                    "Thumbnail upload failed"
+                );
+              }
+              customThumbnailUrl = upData.url;
+            } catch (err) {
+              status.className = "small text-danger";
+              status.textContent = "\u2717 " + err.message;
+              addItemBtn.disabled = false;
+              addItemBtn.textContent = "Add item";
+              return;
+            }
+          }
+
+          var resolvedImage =
+            customThumbnailUrl ||
+            String((resolvedMeta && resolvedMeta.thumbnailUrl) || "").trim();
+
+          if (platform === "unknown") {
+            if (!title) {
+              status.className = "small text-danger";
+              status.textContent =
+                "\u2717 Title is required for non-YouTube/TikTok URLs";
+              addItemBtn.disabled = false;
+              addItemBtn.textContent = "Add item";
+              return;
+            }
+            if (!resolvedImage) {
+              status.className = "small text-danger";
+              status.textContent =
+                "\u2717 Thumbnail is required for non-YouTube/TikTok URLs";
+              addItemBtn.disabled = false;
+              addItemBtn.textContent = "Add item";
+              return;
+            }
+          }
+
+          var metaForSave = resolvedMeta || {
+            url: inputUrl,
+            thumbnailUrl: "",
+            videoId: null,
+            provider: "Video",
+          };
+
+          var updatedHtml = appendVideoShareDataToHtml(
+            getHtml(),
+            metaForSave,
+            resolvedImage,
+            title || "Video Title Goes Here",
+            tag
+          );
+          setHtml(updatedHtml);
+
+          status.className = "small text-success";
+          status.textContent = "\u2713 Added";
+          setTimeout(recheck, 200);
+        });
+
+        controls.appendChild(urlInput);
+        controls.appendChild(groupSelect);
+        controls.appendChild(titleInput);
+        controls.appendChild(thumbInput);
+        controls.appendChild(addItemBtn);
+        controls.appendChild(cancelBtn);
+        controls.appendChild(status);
+
+        manualRow.appendChild(preview);
+        manualRow.appendChild(badge);
+        manualRow.appendChild(controls);
+        addBar.insertAdjacentElement("afterend", manualRow);
+      });
     }
 
-    addBtn.addEventListener("click", function () {
-      var manualRow = document.createElement("div");
-      manualRow.className =
-        "d-flex align-items-start gap-2 mt-2 flex-wrap border rounded p-2 bg-white";
-
-      var preview = document.createElement("span");
-      preview.style.width = "80px";
-      preview.style.height = "56px";
-      preview.style.borderRadius = "4px";
-      preview.style.border = "1px solid #e9ecef";
-      preview.style.background = "#f8f9fa";
-      preview.style.display = "inline-flex";
-      preview.style.alignItems = "center";
-      preview.style.justifyContent = "center";
-      preview.style.fontSize = "12px";
-      preview.style.fontWeight = "600";
-      preview.style.color = "#495057";
-      preview.textContent = "New";
-
-      var badge = document.createElement("span");
-      badge.className = "badge bg-info";
-      badge.textContent = "Video share - New item";
-
-      var controls = document.createElement("div");
-      controls.className = "d-flex align-items-center gap-2 flex-wrap w-100";
-
-      var urlInput = document.createElement("input");
-      urlInput.type = "text";
-      urlInput.className = "form-control form-control-sm";
-      urlInput.style.minWidth = "300px";
-      urlInput.style.flex = "1";
-      urlInput.placeholder = "Paste video share URL (YouTube / TikTok)";
-
-      var groupSelect = document.createElement("select");
-      groupSelect.className = "form-select form-select-sm";
-      groupSelect.style.cssText = "width:auto;min-width:110px";
-      ["video", "webinars"].forEach(function (g) {
-        var opt = document.createElement("option");
-        opt.value = g;
-        opt.textContent = g.charAt(0).toUpperCase() + g.slice(1);
-        groupSelect.appendChild(opt);
-      });
-
-      var titleInput = document.createElement("input");
-      titleInput.type = "text";
-      titleInput.className = "form-control form-control-sm";
-      titleInput.style.minWidth = "220px";
-      titleInput.placeholder = "Title (optional)";
-
-      var shouldAutoFillTitle = true;
-      var lastResolvedUrl = "";
-      var hydrateTitleTimer = null;
-
-      titleInput.addEventListener("input", function () {
-        shouldAutoFillTitle = !(titleInput.value || "").trim();
-      });
-
-      async function hydrateTitleFromUrl() {
-        var inputUrl = (urlInput.value || "").trim();
-        if (!inputUrl) return;
-
-        // Avoid duplicate fetches for the same URL when title exists.
-        if (inputUrl === lastResolvedUrl && (titleInput.value || "").trim()) {
-          return;
-        }
-
-        try {
-          status.className = "small text-muted";
-          status.textContent = "Fetching title\u2026";
-          var meta = await resolveVideoMetaFromUrl(inputUrl);
-          if (!meta) {
-            status.className = "small text-warning";
-            status.textContent =
-              "Unsupported URL: enter title and upload thumbnail manually";
-            return;
-          }
-
-          var fetchedTitle = meta.title;
-          if (
-            fetchedTitle &&
-            (shouldAutoFillTitle || !(titleInput.value || "").trim())
-          ) {
-            titleInput.value = fetchedTitle;
-            shouldAutoFillTitle = true;
-          }
-
-          var hasThumbFile = !!(thumbInput.files && thumbInput.files.length);
-          if (meta.thumbnailUrl && !hasThumbFile) {
-            preview.textContent = "";
-            preview.style.backgroundImage = "url('" + meta.thumbnailUrl + "')";
-            preview.style.backgroundSize = "cover";
-            preview.style.backgroundPosition = "center";
-          }
-
-          status.textContent = "";
-          status.className = "small";
-          lastResolvedUrl = inputUrl;
-        } catch {
-          // Ignore lookup failures; user can still add with manual title.
-        }
-      }
-
-      function queueHydrateTitleFromUrl() {
-        if (hydrateTitleTimer) clearTimeout(hydrateTitleTimer);
-        hydrateTitleTimer = setTimeout(hydrateTitleFromUrl, 180);
-      }
-
-      urlInput.addEventListener("change", queueHydrateTitleFromUrl);
-      urlInput.addEventListener("blur", queueHydrateTitleFromUrl);
-      urlInput.addEventListener("paste", function () {
-        setTimeout(queueHydrateTitleFromUrl, 0);
-      });
-
-      var thumbInput = document.createElement("input");
-      thumbInput.type = "file";
-      thumbInput.accept = "image/*";
-      thumbInput.className = "form-control form-control-sm";
-      thumbInput.style.maxWidth = "220px";
-
-      var addItemBtn = document.createElement("button");
-      addItemBtn.type = "button";
-      addItemBtn.className = "btn btn-sm btn-success";
-      addItemBtn.textContent = "Add item";
-
-      var cancelBtn = document.createElement("button");
-      cancelBtn.type = "button";
-      cancelBtn.className = "btn btn-sm btn-outline-secondary";
-      cancelBtn.textContent = "Cancel";
-
-      var status = document.createElement("span");
-      status.className = "small";
-
-      cancelBtn.addEventListener("click", function () {
-        manualRow.remove();
-      });
-
-      addItemBtn.addEventListener("click", async function () {
-        var inputUrl = (urlInput.value || "").trim();
-        if (!inputUrl) {
-          status.className = "small text-danger";
-          status.textContent = "\u2717 Link URL is required";
-          return;
-        }
-
-        var platform = detectVideoPlatform(inputUrl);
-        var resolvedMeta = null;
-        if (platform !== "unknown") {
-          resolvedMeta = await resolveVideoMetaFromUrl(inputUrl);
-        }
-
-        addItemBtn.disabled = true;
-        addItemBtn.textContent = "Adding\u2026";
-        status.className = "small text-muted";
-        status.textContent = "Preparing video data\u2026";
-
-        var title = (titleInput.value || "").trim();
-        if (!title) {
-          title = (resolvedMeta && resolvedMeta.title) || "";
-        }
-
-        var tag = groupSelect.value === "webinars" ? "Webinar" : "Video";
-
-        var customThumbnailUrl = null;
-        var thumbFile = thumbInput.files && thumbInput.files[0];
-        if (thumbFile) {
-          status.textContent = "Uploading thumbnail\u2026";
-          try {
-            var fd = new FormData();
-            fd.append("upload", thumbFile);
-            var upRes = await fetch("/api/upload/content-image", {
-              method: "POST",
-              body: fd,
-            });
-            var upData = await upRes.json();
-            if (!upData.url) {
-              throw new Error(
-                (upData.error && upData.error.message) ||
-                  "Thumbnail upload failed"
-              );
-            }
-            customThumbnailUrl = upData.url;
-          } catch (err) {
-            status.className = "small text-danger";
-            status.textContent = "\u2717 " + err.message;
-            addItemBtn.disabled = false;
-            addItemBtn.textContent = "Add item";
-            return;
-          }
-        }
-
-        var resolvedImage =
-          customThumbnailUrl ||
-          String((resolvedMeta && resolvedMeta.thumbnailUrl) || "").trim();
-
-        if (platform === "unknown") {
-          if (!title) {
-            status.className = "small text-danger";
-            status.textContent =
-              "\u2717 Title is required for non-YouTube/TikTok URLs";
-            addItemBtn.disabled = false;
-            addItemBtn.textContent = "Add item";
-            return;
-          }
-          if (!resolvedImage) {
-            status.className = "small text-danger";
-            status.textContent =
-              "\u2717 Thumbnail is required for non-YouTube/TikTok URLs";
-            addItemBtn.disabled = false;
-            addItemBtn.textContent = "Add item";
-            return;
-          }
-        }
-
-        var metaForSave = resolvedMeta || {
-          url: inputUrl,
-          thumbnailUrl: "",
-          videoId: null,
-          provider: "Video",
-        };
-
-        var updatedHtml = appendVideoShareDataToHtml(
-          getHtml(),
-          metaForSave,
-          resolvedImage,
-          title || "Video Title Goes Here",
-          tag
-        );
-        setHtml(updatedHtml);
-
-        status.className = "small text-success";
-        status.textContent = "\u2713 Added";
-        setTimeout(recheck, 200);
-      });
-
-      controls.appendChild(urlInput);
-      controls.appendChild(groupSelect);
-      controls.appendChild(titleInput);
-      controls.appendChild(thumbInput);
-      controls.appendChild(addItemBtn);
-      controls.appendChild(cancelBtn);
-      controls.appendChild(status);
-
-      manualRow.appendChild(preview);
-      manualRow.appendChild(badge);
-      manualRow.appendChild(controls);
-      addBar.insertAdjacentElement("afterend", manualRow);
+    var assetsToRender = assets.filter(function (asset) {
+      var src = String((asset && asset.src) || "").trim();
+      if (!src) return true;
+      return !hiddenAssetSources[src];
     });
 
-    assets.forEach(function (asset) {
+    assetsToRender.forEach(function (asset) {
       var src = asset.src;
       var row = document.createElement("div");
       row.className =
