@@ -96,6 +96,20 @@
       </div>
     </div>
 
+    <div class="switch-card mb-3" id="showFooterCard" style="display: none">
+      <div class="d-flex justify-content-between">
+        <span class="fw-700 small text-navy">SHOW ON FOOTER</span>
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="showFooter"
+            id="showFooter"
+          />
+        </div>
+      </div>
+    </div>
+
     <div
       class="switch-card mb-3"
       id="featuredInsightsCard"
@@ -244,6 +258,7 @@
     const parentType = selectedOption.dataset.type;
     const typeSelect = document.getElementById("typeSelect");
     const showHomePageCard = document.getElementById("showHomePageCard");
+    const showFooterCard = document.getElementById("showFooterCard");
     const featuredInsightsCard = document.getElementById(
       "featuredInsightsCard"
     );
@@ -263,12 +278,15 @@
       typeSelect.style.opacity = "0.5";
       // Show homepage toggle only if parent is selected
       showHomePageCard.style.display = "block";
+      showFooterCard.style.display = "block";
     } else {
       typeSelect.style.pointerEvents = "auto";
       typeSelect.style.opacity = "1";
       // Hide homepage toggle if no parent selected (root menu)
       showHomePageCard.style.display = "none";
+      showFooterCard.style.display = "none";
       document.getElementById("showHomePage").checked = false;
+      document.getElementById("showFooter").checked = false;
     }
 
     featuredInsightsCard.style.display = isInsightsMenu ? "block" : "none";
@@ -317,6 +335,15 @@
       "aria-pressed",
       featuredInsightsCheckbox.checked ? "true" : "false"
     );
+
+    if (featuredInsightsCheckbox.checked) {
+      const caseStudiesCheckbox = document.getElementById("caseStudies");
+      const caseStudiesStar = document.getElementById("caseStudiesStar");
+      caseStudiesCheckbox.checked = false;
+      caseStudiesStar.classList.remove("active");
+      caseStudiesStar.textContent = "☆";
+      caseStudiesStar.setAttribute("aria-pressed", "false");
+    }
   });
 
   const caseStudiesCheckbox = document.getElementById("caseStudies");
@@ -332,6 +359,19 @@
       "aria-pressed",
       caseStudiesCheckbox.checked ? "true" : "false"
     );
+
+    if (caseStudiesCheckbox.checked) {
+      const featuredInsightsCheckbox = document.getElementById(
+        "featuredInsights"
+      );
+      const featuredInsightsStar = document.getElementById(
+        "featuredInsightsStar"
+      );
+      featuredInsightsCheckbox.checked = false;
+      featuredInsightsStar.classList.remove("active");
+      featuredInsightsStar.textContent = "☆";
+      featuredInsightsStar.setAttribute("aria-pressed", "false");
+    }
   });
 
   // 3. Image Preview
@@ -360,6 +400,10 @@
         document.getElementById("showHomePage").checked
       );
       formData.set(
+        "showFooter",
+        document.getElementById("showFooter").checked
+      );
+      formData.set(
         "featuredInsights",
         document.getElementById("parentId").value === INSIGHTS_PARENT_ID &&
           document.getElementById("featuredInsights").checked
@@ -377,6 +421,10 @@
       console.log(
         "Form data - showHomePage:",
         document.getElementById("showHomePage").checked
+      );
+      console.log(
+        "Form data - showFooter:",
+        document.getElementById("showFooter").checked
       );
       console.log(
         "Form data - parentId:",

@@ -89,6 +89,10 @@ exports.createMenu = async (data) => {
 
   const selectedTag = await resolveTagPayload(data.tagId);
   const isInsightsMenu = isInsightsChild(data.parentId);
+  const featuredInsightsInput = isInsightsMenu && toBool(data.featuredInsights);
+  const caseStudiesInput = isInsightsMenu && toBool(data.caseStudies);
+  const featuredInsights = featuredInsightsInput;
+  const caseStudies = caseStudiesInput && !featuredInsightsInput;
 
   // Handle image path normalization
   let image = "";
@@ -126,15 +130,11 @@ exports.createMenu = async (data) => {
     order: Number(data.order) || 0,
     type: data.type || "top",
     isButton: data.isButton === "on" || data.isButton === true,
-    caseStudies: isInsightsMenu && toBool(data.caseStudies),
+    caseStudies,
     // Only set showHomePage to true if menu has a parent
-    showHomePage:
-      (data.parentId &&
-        toBool(data.showHomePage)) ||
-      false,
-    featuredInsights:
-      isInsightsMenu &&
-      toBool(data.featuredInsights),
+    showHomePage: (data.parentId && toBool(data.showHomePage)) || false,
+    showFooter: (data.parentId && toBool(data.showFooter)) || false,
+    featuredInsights,
     image: image,
     tagId: selectedTag.tagId,
     tagName: selectedTag.tagName,
@@ -179,11 +179,30 @@ exports.updateMenu = async (id, data) => {
     update.showHomePage = (finalParentId && toBool(data.showHomePage)) || false;
   }
 
+  if (data.showFooter !== undefined) {
+    update.showFooter = (finalParentId && toBool(data.showFooter)) || false;
+  }
+
   if (data.featuredInsights !== undefined) {
     update.featuredInsights = isInsightsMenu && toBool(data.featuredInsights);
   } else if (!isInsightsMenu) {
     // Ensure old featured flag is cleared if menu is moved outside Insights.
     update.featuredInsights = false;
+  }
+
+  if (isInsightsMenu) {
+    const nextFeaturedInsights =
+      data.featuredInsights !== undefined
+        ? update.featuredInsights
+        : !!currentMenu.featuredInsights;
+    const nextCaseStudies =
+      data.caseStudies !== undefined
+        ? update.caseStudies
+        : !!currentMenu.caseStudies;
+
+    if (nextFeaturedInsights && nextCaseStudies) {
+      update.caseStudies = false;
+    }
   }
 
   if (data.tagId !== undefined) {
@@ -270,9 +289,24 @@ exports.toggleShowHomePage = async (id) => {
   return { ...menu, showHomePage: nextShowHomePage };
 };
 
+exports.toggleShowFooter = async (id) => {
+  const menu = await Menu.findById(id).select("parentId showFooter").lean();
+  if (!menu) {
+    throw new Error("Menu not found");
+  }
+  if (!menu.parentId) {
+    throw new Error("Only non-root menus can be shown on footer");
+  }
+
+  const nextShowFooter = !menu.showFooter;
+  await Menu.updateOne({ _id: id }, { $set: { showFooter: nextShowFooter } });
+  invalidateMenuCache();
+  return { ...menu, showFooter: nextShowFooter };
+};
+
 exports.toggleFeaturedInsights = async (id) => {
   const menu = await Menu.findById(id)
-    .select("parentId featuredInsights")
+    .select("parentId featuredInsights caseStudies")
     .lean();
   if (!menu) {
     throw new Error("Menu not found");
@@ -287,14 +321,25 @@ exports.toggleFeaturedInsights = async (id) => {
   const nextFeaturedInsights = !menu.featuredInsights;
   await Menu.updateOne(
     { _id: id },
-    { $set: { featuredInsights: nextFeaturedInsights } }
+    {
+      $set: {
+        featuredInsights: nextFeaturedInsights,
+        caseStudies: nextFeaturedInsights ? false : menu.caseStudies,
+      },
+    }
   );
   invalidateMenuCache();
-  return { ...menu, featuredInsights: nextFeaturedInsights };
+  return {
+    ...menu,
+    featuredInsights: nextFeaturedInsights,
+    caseStudies: nextFeaturedInsights ? false : menu.caseStudies,
+  };
 };
 
 exports.toggleCaseStudies = async (id) => {
-  const menu = await Menu.findById(id).select("parentId caseStudies").lean();
+  const menu = await Menu.findById(id)
+    .select("parentId caseStudies featuredInsights")
+    .lean();
   if (!menu) {
     throw new Error("Menu not found");
   }
@@ -304,7 +349,19 @@ exports.toggleCaseStudies = async (id) => {
   }
 
   const nextCaseStudies = !menu.caseStudies;
-  await Menu.updateOne({ _id: id }, { $set: { caseStudies: nextCaseStudies } });
+  await Menu.updateOne(
+    { _id: id },
+    {
+      $set: {
+        caseStudies: nextCaseStudies,
+        featuredInsights: nextCaseStudies ? false : menu.featuredInsights,
+      },
+    }
+  );
   invalidateMenuCache();
-  return { ...menu, caseStudies: nextCaseStudies };
+  return {
+    ...menu,
+    caseStudies: nextCaseStudies,
+    featuredInsights: nextCaseStudies ? false : menu.featuredInsights,
+  };
 };

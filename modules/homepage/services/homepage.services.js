@@ -93,15 +93,11 @@ exports.getMenuParents = () => {
     .lean();
 };
 
-// Get menus for a given parentId with optional showHomePage/featuredInsights/tag filter
-exports.getMenuChildrenTree = async (
-  parentId,
-  showHomePage,
-  featuredInsights,
-  caseStudies,
-  tag,
-  options = {}
-) => {
+// Get menus for a given parentId with optional filters
+exports.getMenuChildrenTree = async (parentId, filters = {}, options = {}) => {
+  const { showHomePage, featuredInsights, caseStudies, showFooter, tag } =
+    filters;
+
   const query = {
     isActive: true,
     isStatus: true,
@@ -118,6 +114,10 @@ exports.getMenuChildrenTree = async (
 
   if (typeof caseStudies === "boolean") {
     query.caseStudies = caseStudies;
+  }
+
+  if (typeof showFooter === "boolean") {
+    query.showFooter = showFooter;
   }
 
   const normalizedTag = String(tag || "").trim();

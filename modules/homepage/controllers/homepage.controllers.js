@@ -179,14 +179,10 @@ exports.getSolutionsMenus = async (req, res) => {
       defaultLimit: 12,
       maxLimit: 100,
     });
-    const showHomePage = parseOptionalBoolean(req.query.showHomePage);
     const tag = String(req.query.tag || "").trim();
     const menus = await homepageService.getMenuChildrenTree(
       "697c0c9e7d88fcfff27bfb46",
-      showHomePage,
-      undefined,
-      undefined,
-      tag
+      { tag }
     );
     const paged = paginateArray(menus, params);
     res.json({
@@ -203,6 +199,59 @@ exports.getSolutionsMenus = async (req, res) => {
   }
 };
 
+exports.getSolutionsFooterMenus = async (req, res) => {
+  try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      "697c0c9e7d88fcfff27bfb46",
+      { showFooter: true, tag }
+    );
+    const paged = paginateArray(menus, params);
+    res.json({
+      success: true,
+      data: paged.items,
+      pagination: paged.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching footer solutions menus:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch footer solutions menus",
+    });
+  }
+};
+
+// Get Solutions menus for homepage only (showHomePage = true)
+exports.getSolutionsHomePageMenus = async (req, res) => {
+  try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      "697c0c9e7d88fcfff27bfb46",
+      { showHomePage: true, tag }
+    );
+    const paged = paginateArray(menus, params);
+    res.json({
+      success: true,
+      data: paged.items,
+      pagination: paged.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching homepage solutions menus:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch homepage solutions menus",
+    });
+  }
+};
+
 // Get Industry menus (ID: 698aa02d84b05fe995a079a7)
 exports.getIndustryMenus = async (req, res) => {
   try {
@@ -210,12 +259,62 @@ exports.getIndustryMenus = async (req, res) => {
       defaultLimit: 12,
       maxLimit: 100,
     });
-    const showHomePage = parseOptionalBoolean(req.query.showHomePage);
     const tag = String(req.query.tag || "").trim();
     const menus = await homepageService.getMenuChildrenTree(
       "698aa02d84b05fe995a079a7",
-      showHomePage,
-      tag
+      { tag }
+    );
+    const paged = paginateArray(menus, params);
+    res.json({
+      success: true,
+      data: paged.items,
+      pagination: paged.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching industry menus:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch industry menus",
+    });
+  }
+};
+
+exports.getIndustryFooterMenus = async (req, res) => {
+  try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      "698aa02d84b05fe995a079a7",
+      { showFooter: true, tag }
+    );
+    const paged = paginateArray(menus, params);
+    res.json({
+      success: true,
+      data: paged.items,
+      pagination: paged.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching footer industry menus:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch footer industry menus",
+    });
+  }
+};
+
+exports.getIndustryHomePageMenus = async (req, res) => {
+  try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      "698aa02d84b05fe995a079a7",
+      { showHomePage: true, tag }
     );
     const paged = paginateArray(menus, params);
     res.json({
@@ -251,10 +350,7 @@ exports.getInsightsMenus = async (req, res) => {
     const tag = String(req.query.tag || "").trim();
     const menus = await homepageService.getMenuChildrenTree(
       "698191a46ea27a5d8ccbf724",
-      showHomePage,
-      featuredInsights,
-      caseStudies,
-      tag,
+      { showHomePage, featuredInsights, caseStudies, tag },
       { allowTagName: true }
     );
     const paged = paginateArray(
@@ -273,6 +369,170 @@ exports.getInsightsMenus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch insights menus",
+    });
+  }
+};
+
+exports.getInsightsFooterMenus = async (req, res) => {
+  try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      "698191a46ea27a5d8ccbf724",
+      { showFooter: true, tag },
+      { allowTagName: true }
+    );
+    const paged = paginateArray(
+      [...menus].sort(
+        (a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0)
+      ),
+      params
+    );
+    res.json({
+      success: true,
+      data: paged.items,
+      pagination: paged.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching footer insights menus:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch footer insights menus",
+    });
+  }
+};
+
+// Get Insights menus for homepage only (showHomePage = true)
+exports.getInsightsHomePageMenus = async (req, res) => {
+  try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      "698191a46ea27a5d8ccbf724",
+      { showHomePage: true, tag },
+      { allowTagName: true }
+    );
+    const paged = paginateArray(
+      [...menus].sort(
+        (a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0)
+      ),
+      params
+    );
+    res.json({
+      success: true,
+      data: paged.items,
+      pagination: paged.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching homepage insights menus:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch homepage insights menus",
+    });
+  }
+};
+
+// Get Insights menus filtered by featuredInsights = true
+exports.getInsightsFeaturedInsightsMenus = async (req, res) => {
+  try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      "698191a46ea27a5d8ccbf724",
+      { featuredInsights: true, caseStudies: false, tag },
+      { allowTagName: true }
+    );
+    const paged = paginateArray(
+      [...menus].sort(
+        (a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0)
+      ),
+      params
+    );
+    res.json({
+      success: true,
+      data: paged.items,
+      pagination: paged.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching featured insights menus:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch featured insights menus",
+    });
+  }
+};
+
+// Get Insights menus filtered by caseStudies = true
+exports.getInsightsCaseStudiesMenus = async (req, res) => {
+  try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      "698191a46ea27a5d8ccbf724",
+      { featuredInsights: false, caseStudies: true, tag },
+      { allowTagName: true }
+    );
+    const paged = paginateArray(
+      [...menus].sort(
+        (a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0)
+      ),
+      params
+    );
+    res.json({
+      success: true,
+      data: paged.items,
+      pagination: paged.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching case studies menus:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch case studies menus",
+    });
+  }
+};
+
+// Get latest Insights articles sorted by createdAt desc
+exports.getInsightsLatestArticles = async (req, res) => {
+  try {
+    const params = getPaginationParams(req, {
+      defaultLimit: 12,
+      maxLimit: 100,
+    });
+    const tag = String(req.query.tag || "").trim();
+    const menus = await homepageService.getMenuChildrenTree(
+      "698191a46ea27a5d8ccbf724",
+      { featuredInsights: false, caseStudies: false, tag },
+      { allowTagName: true }
+    );
+    const paged = paginateArray(
+      [...menus].sort(
+        (a, b) => new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0)
+      ),
+      params
+    );
+    res.json({
+      success: true,
+      data: paged.items,
+      pagination: paged.pagination,
+    });
+  } catch (error) {
+    console.error("Error fetching latest insights articles:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch latest insights articles",
     });
   }
 };
@@ -337,14 +597,15 @@ exports.getMenuChildrenTree = async (req, res) => {
     const showHomePage = parseOptionalBoolean(req.query.showHomePage);
     const featuredInsights = parseOptionalBoolean(req.query.featuredInsights);
     const caseStudies = parseOptionalBoolean(req.query.caseStudies);
+    const showFooter = parseOptionalBoolean(req.query.showFooter);
     const tag = String(req.query.tag || "").trim();
-    const menus = await homepageService.getMenuChildrenTree(
-      parentId,
+    const menus = await homepageService.getMenuChildrenTree(parentId, {
       showHomePage,
       featuredInsights,
       caseStudies,
-      tag
-    );
+      showFooter,
+      tag,
+    });
     const paged = paginateArray(menus, params);
     res.json({
       success: true,

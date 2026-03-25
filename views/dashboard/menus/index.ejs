@@ -47,6 +47,50 @@
     return (a.order || 0) - (b.order || 0);
   }
 
+  function patchMenuInMemory(menuId, patch) {
+    const target = allMenusData.find((m) => String(m._id) === String(menuId));
+    if (!target) return;
+    Object.assign(target, patch || {});
+  }
+
+  function syncSidebarInsightsBranchCounts() {
+    const insightsChildren = allMenusData.filter(
+      (m) => String(m.parentId || "") === INSIGHTS_PARENT_ID
+    );
+    const caseStudiesCount = insightsChildren.filter(
+      (m) => !!m.caseStudies
+    ).length;
+    const featuredCount = insightsChildren.filter(
+      (m) => !!m.featuredInsights
+    ).length;
+
+    const caseNode = document.querySelector(
+      '.menu-branch-node[data-branch-key="insights-case-studies"]'
+    );
+    const featuredNode = document.querySelector(
+      '.menu-branch-node[data-branch-key="insights-featured-insights"]'
+    );
+    const caseCountNode = document.querySelector(
+      '.branch-count[data-branch-count="insights-case-studies"]'
+    );
+    const featuredCountNode = document.querySelector(
+      '.branch-count[data-branch-count="insights-featured-insights"]'
+    );
+
+    if (caseCountNode) {
+      caseCountNode.textContent = String(caseStudiesCount);
+    }
+    if (featuredCountNode) {
+      featuredCountNode.textContent = String(featuredCount);
+    }
+    if (caseNode) {
+      caseNode.style.display = caseStudiesCount > 0 ? "" : "none";
+    }
+    if (featuredNode) {
+      featuredNode.style.display = featuredCount > 0 ? "" : "none";
+    }
+  }
+
   function renderMenus(menus) {
     const listContainer = document.getElementById("menu-list");
     if (!menus || !menus.length) {
@@ -72,13 +116,14 @@
           <thead>
             <tr>
               <th width="30%">Details</th>
-              <th width="10%" class="text-center">Order</th>
-              <th width="12%">Parent</th>
-              <th width="10%" class="text-center">Homepage</th>
+              <th width="9%" class="text-center">Order</th>
+              <th width="11%">Parent</th>
+              <th width="9%" class="text-center">Homepage</th>
+              <th width="9%" class="text-center">Footer</th>
               <th width="8%" class="text-center">Case Studies</th>
               <th width="12%" class="text-center">Featured Insights</th>
               <th width="8%" class="text-center">Status</th>
-              <th width="10%" class="text-end">Actions</th>
+              <th width="12%" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>`;
@@ -111,13 +156,14 @@
           <thead>
             <tr>
               <th width="30%">Details</th>
-              <th width="10%" class="text-center">Order</th>
-              <th width="12%">Parent</th>
-              <th width="10%" class="text-center">Homepage</th>
+              <th width="9%" class="text-center">Order</th>
+              <th width="11%">Parent</th>
+              <th width="9%" class="text-center">Homepage</th>
+              <th width="9%" class="text-center">Footer</th>
               <th width="8%" class="text-center">Case Studies</th>
               <th width="12%" class="text-center">Featured Insights</th>
               <th width="8%" class="text-center">Status</th>
-              <th width="10%" class="text-end">Actions</th>
+              <th width="12%" class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>`;
@@ -281,7 +327,7 @@
             ? `<div class="status-toggle-group">
           <span class="status-dot ${
             menu.showHomePage ? "dot-active" : "dot-hidden"
-          }" style="background: ${
+          } homepage-dot" style="background: ${
                 menu.showHomePage ? "#2ecc71" : "#bdc3c7"
               };"></span>
           <div class="form-check form-switch m-0">
@@ -289,6 +335,25 @@
               menu.showHomePage ? "checked" : ""
             } 
               onchange="toggleShowHomePage('${menu._id}', this)" />
+          </div>
+        </div>`
+            : ""
+        }
+      </td>
+      <td class="text-center">
+        ${
+          menu.parentId
+            ? `<div class="status-toggle-group">
+          <span class="status-dot ${
+            menu.showFooter ? "dot-active" : "dot-hidden"
+          } footer-dot" style="background: ${
+                menu.showFooter ? "#2ecc71" : "#bdc3c7"
+              };"></span>
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" ${
+              menu.showFooter ? "checked" : ""
+            }
+              onchange="toggleShowFooter('${menu._id}', this)" />
           </div>
         </div>`
             : ""
@@ -326,7 +391,7 @@
         <div class="status-toggle-group">
           <span class="status-dot ${
             menu.isStatus ? "dot-active" : "dot-hidden"
-          }"></span>
+          } menu-status-dot"></span>
           <div class="form-check form-switch m-0">
             <input class="form-check-input" type="checkbox" ${
               menu.isStatus ? "checked" : ""
@@ -387,8 +452,8 @@
         const dot = el.closest("tr").querySelector(".status-dot");
         if (dot) {
           dot.className = data.isStatus
-            ? "status-dot dot-active"
-            : "status-dot dot-hidden";
+            ? "status-dot dot-active menu-status-dot"
+            : "status-dot dot-hidden menu-status-dot";
         }
         notify("Menu status updated");
       })
@@ -421,12 +486,11 @@
           // Update checkbox to reflect new state
           el.checked = data.showHomePage;
           const row = el.closest("tr");
-          const dots = row.querySelectorAll(".status-dot");
-          if (dots.length > 0) {
-            const homepageDot = dots[0];
+          const homepageDot = row.querySelector(".homepage-dot");
+          if (homepageDot) {
             homepageDot.className = data.showHomePage
-              ? "status-dot dot-active"
-              : "status-dot dot-hidden";
+              ? "status-dot dot-active homepage-dot"
+              : "status-dot dot-hidden homepage-dot";
             homepageDot.style.background = data.showHomePage
               ? "#2ecc71"
               : "#bdc3c7";
@@ -442,6 +506,47 @@
         el.disabled = false;
         notify("Toggle failed: " + err.message, true);
         el.checked = currentState; // rollback
+      });
+  }
+
+  function toggleShowFooter(id, el) {
+    const currentState = el.checked;
+    el.disabled = true;
+
+    fetch(`/api/menus/${id}/toggle-footer`, {
+      method: "PATCH",
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        el.disabled = false;
+        if (data.success) {
+          el.checked = data.showFooter;
+          const row = el.closest("tr");
+          const footerDot = row.querySelector(".footer-dot");
+          if (footerDot) {
+            footerDot.className = data.showFooter
+              ? "status-dot dot-active footer-dot"
+              : "status-dot dot-hidden footer-dot";
+            footerDot.style.background = data.showFooter
+              ? "#2ecc71"
+              : "#bdc3c7";
+          }
+          notify("Footer visibility updated");
+        } else {
+          notify("Toggle failed: " + (data.message || "Unknown error"), true);
+          el.checked = currentState;
+        }
+      })
+      .catch((err) => {
+        console.error("Toggle footer failed:", err);
+        el.disabled = false;
+        notify("Toggle failed: " + err.message, true);
+        el.checked = currentState;
       });
   }
 
@@ -463,8 +568,26 @@
         if (!data.success) {
           throw new Error(data.message || "Toggle failed");
         }
+
+        patchMenuInMemory(id, {
+          featuredInsights: !!data.featuredInsights,
+          caseStudies: !!data.caseStudies,
+        });
+
         el.classList.toggle("active", !!data.featuredInsights);
         el.textContent = data.featuredInsights ? "★" : "☆";
+
+        const row = el.closest("tr");
+        const caseStudiesBtn = row
+          ? row.querySelector('button[title="Toggle Case Studies"]')
+          : null;
+        if (caseStudiesBtn) {
+          caseStudiesBtn.classList.toggle("active", !!data.caseStudies);
+          caseStudiesBtn.textContent = data.caseStudies ? "★" : "☆";
+        }
+
+        syncSidebarInsightsBranchCounts();
+
         notify("Featured Insights updated");
       })
       .catch((err) => {
@@ -494,8 +617,29 @@
         if (!data.success) {
           throw new Error(data.message || "Toggle failed");
         }
+
+        patchMenuInMemory(id, {
+          caseStudies: !!data.caseStudies,
+          featuredInsights: !!data.featuredInsights,
+        });
+
         el.classList.toggle("active", !!data.caseStudies);
         el.textContent = data.caseStudies ? "★" : "☆";
+
+        const row = el.closest("tr");
+        const featuredInsightsBtn = row
+          ? row.querySelector('button[title="Toggle Featured Insights"]')
+          : null;
+        if (featuredInsightsBtn) {
+          featuredInsightsBtn.classList.toggle(
+            "active",
+            !!data.featuredInsights
+          );
+          featuredInsightsBtn.textContent = data.featuredInsights ? "★" : "☆";
+        }
+
+        syncSidebarInsightsBranchCounts();
+
         notify("Case Studies updated");
       })
       .catch((err) => {

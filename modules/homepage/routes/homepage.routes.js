@@ -231,12 +231,6 @@ router.get("/menu-parents", homepageController.getMenuParents);
  *           minimum: 1
  *           default: 12
  *         description: Number of items per page
- *       - in: query
- *         name: showHomePage
- *         required: false
- *         schema:
- *           type: boolean
- *         description: Optional filter by showHomePage (true/false)
  *     responses:
  *       200:
  *         description: Solutions menu tree
@@ -244,6 +238,72 @@ router.get("/menu-parents", homepageController.getMenuParents);
  *         description: Server error
  */
 router.get("/solutions", homepageController.getSolutionsMenus);
+
+/**
+ * @swagger
+ * /api/homepage/solutionsFooterMenus:
+ *   get:
+ *     summary: "Get Solutions menu tree for footer only"
+ *     description: Returns the Solutions menu tree filtered with showFooter=true
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Solutions menu tree for footer
+ *       500:
+ *         description: Server error
+ */
+router.get("/solutionsFooterMenus", homepageController.getSolutionsFooterMenus);
+
+/**
+ * @swagger
+ * /api/homepage/solutionsHomePage:
+ *   get:
+ *     summary: "Get Solutions menu tree for homepage only"
+ *     description: Returns the Solutions menu tree filtered with showHomePage=true
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Solutions menu tree for homepage
+ *       500:
+ *         description: Server error
+ */
+router.get("/solutionsHomePage", homepageController.getSolutionsHomePageMenus);
 
 /**
  * @swagger
@@ -306,6 +366,183 @@ router.get("/insights", homepageController.getInsightsMenus);
 
 /**
  * @swagger
+ * /api/homepage/insightsFooterMenus:
+ *   get:
+ *     summary: "Get Insights menu tree for footer only"
+ *     description: Returns Insights menus filtered with showFooter=true
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Insights menu tree for footer
+ *       500:
+ *         description: Server error
+ */
+router.get("/insightsFooterMenus", homepageController.getInsightsFooterMenus);
+
+/**
+ * @swagger
+ * /api/homepage/insightsHomePageMenus:
+ *   get:
+ *     summary: "Get Insights menu tree for homepage only"
+ *     description: Returns Insights menus filtered with showHomePage=true
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Insights menu tree for homepage
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  "/insightsHomePageMenus",
+  homepageController.getInsightsHomePageMenus
+);
+
+/**
+ * @swagger
+ * /api/homepage/insightsFeaturedInsights:
+ *   get:
+ *     summary: "Get Insights with featuredInsights=true"
+ *     description: Returns Insights menus filtered by featuredInsights=true
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Featured insights menu tree
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  "/insightsFeaturedInsights",
+  homepageController.getInsightsFeaturedInsightsMenus
+);
+
+/**
+ * @swagger
+ * /api/homepage/insightsCaseStudies:
+ *   get:
+ *     summary: "Get Insights with caseStudies=true"
+ *     description: Returns Insights menus filtered by caseStudies=true
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Case studies insights menu tree
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  "/insightsCaseStudies",
+  homepageController.getInsightsCaseStudiesMenus
+);
+
+/**
+ * @swagger
+ * /api/homepage/insightsLatestArticles:
+ *   get:
+ *     summary: "Get latest Insights articles"
+ *     description: Returns Insights menus sorted by latest createdAt
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Latest insights articles
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  "/insightsLatestArticles",
+  homepageController.getInsightsLatestArticles
+);
+
+/**
+ * @swagger
  * /api/homepage/industry:
  *   get:
  *     summary: "Get Industry menu tree (ID: 698aa02d84b05fe995a079a7)"
@@ -329,21 +566,79 @@ router.get("/insights", homepageController.getInsightsMenus);
  *           minimum: 1
  *           default: 12
  *         description: Number of items per page
- *       - in: query
- *         name: showHomePage
- *         required: false
- *         schema:
- *           type: boolean
- *         description: Optional filter by showHomePage (true/false)
  *     responses:
- *       400:
- *         description: featuredInsights and caseStudies are required boolean query parameters
  *       200:
  *         description: Industry menu tree
  *       500:
  *         description: Server error
  */
 router.get("/industry", homepageController.getIndustryMenus);
+
+/**
+ * @swagger
+ * /api/homepage/industryFooterMenus:
+ *   get:
+ *     summary: "Get Industry menu tree for footer only"
+ *     description: Returns the Industry menu tree filtered with showFooter=true
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Industry menu tree for footer
+ *       500:
+ *         description: Server error
+ */
+router.get("/industryFooterMenus", homepageController.getIndustryFooterMenus);
+
+/**
+ * @swagger
+ * /api/homepage/industryHomePage:
+ *   get:
+ *     summary: "Get Industry menu tree for homepage only"
+ *     description: Returns the Industry menu tree filtered with showHomePage=true
+ *     tags:
+ *       - Homepage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 12
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Industry menu tree for homepage
+ *       500:
+ *         description: Server error
+ */
+router.get("/industryHomePage", homepageController.getIndustryHomePageMenus);
 
 /**
  * @swagger

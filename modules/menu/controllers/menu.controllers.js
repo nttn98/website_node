@@ -86,10 +86,24 @@ exports.toggleShowHomePage = async (req, res) => {
   }
 };
 
+exports.toggleShowFooter = async (req, res) => {
+  try {
+    const menu = await menuService.toggleShowFooter(req.params.id);
+    res.json({ success: true, showFooter: menu.showFooter });
+  } catch (err) {
+    console.error("Toggle footer error:", err);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
 exports.toggleFeaturedInsights = async (req, res) => {
   try {
     const menu = await menuService.toggleFeaturedInsights(req.params.id);
-    res.json({ success: true, featuredInsights: menu.featuredInsights });
+    res.json({
+      success: true,
+      featuredInsights: menu.featuredInsights,
+      caseStudies: menu.caseStudies,
+    });
   } catch (err) {
     console.error("Toggle featured insights error:", err);
     res.status(400).json({ success: false, message: err.message });
@@ -99,7 +113,11 @@ exports.toggleFeaturedInsights = async (req, res) => {
 exports.toggleCaseStudies = async (req, res) => {
   try {
     const menu = await menuService.toggleCaseStudies(req.params.id);
-    res.json({ success: true, caseStudies: menu.caseStudies });
+    res.json({
+      success: true,
+      caseStudies: menu.caseStudies,
+      featuredInsights: menu.featuredInsights,
+    });
   } catch (err) {
     console.error("Toggle case studies error:", err);
     res.status(400).json({ success: false, message: err.message });

@@ -371,7 +371,7 @@
   <% } %>
 
   <% function renderInsightsBranch(label, branchKey, items, level) { if (!items.length) return; var shouldOpen = hasActiveMenuInList(items); %>
-  <li class="nav-item menu-node menu-branch-node" data-menu-title="<%= ('insights ' + label).toLowerCase() %>">
+  <li class="nav-item menu-node menu-branch-node" data-menu-title="<%= ('insights ' + label).toLowerCase() %>" data-branch-key="<%= branchKey %>">
     <div class="d-flex align-items-center menu-node-row nav-child-item menu-branch-row" data-nav-level="<%= level %>">
       <span class="indent-marker branch-indent">+</span>
       <div class="nav-link nav-parent-text nav-branch-label flex-grow-1">
@@ -379,7 +379,7 @@
           <span class="branch-copy">
             <span class="branch-title"><%= label %> </span>
           </span>
-          <span class="branch-count"><%= items.length %></span>
+          <span class="branch-count" data-branch-count="<%= branchKey %>"><%= items.length %></span>
         </div>
       </div>
       <button class="toggle-btn <%= shouldOpen ? 'open' : '' %>" data-target="children-<%= branchKey %>" type="button" title="Expand/Collapse" aria-expanded="<%= shouldOpen ? 'true' : 'false' %>">

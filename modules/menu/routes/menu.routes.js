@@ -155,6 +155,9 @@ router.get("/:id/children-tree", controller.getChildrenTree);
  *               showHomePage:
  *                 type: boolean
  *                 description: Show on homepage (only for non-root menus)
+ *               showFooter:
+ *                 type: boolean
+ *                 description: Show on footer (only for non-root menus)
  *               caseStudies:
  *                 type: boolean
  *                 description: Mark menu as Case Studies item
@@ -213,6 +216,8 @@ router.post("/", upload.single("image"), controller.createMenu);
  *               isButton:
  *                 type: boolean
  *               showHomePage:
+ *                 type: boolean
+ *               showFooter:
  *                 type: boolean
  *               caseStudies:
  *                 type: boolean
@@ -305,6 +310,34 @@ router.patch("/:id/toggle", controller.toggleMenu);
  *                   type: boolean
  */
 router.patch("/:id/toggle-homepage", controller.toggleShowHomePage);
+
+/**
+ * @swagger
+ * /api/menus/{id}/toggle-footer:
+ *   patch:
+ *     summary: Đổi trạng thái hiển thị trên footer
+ *     tags:
+ *       - Menu
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Đổi trạng thái thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 showFooter:
+ *                   type: boolean
+ */
+router.patch("/:id/toggle-footer", controller.toggleShowFooter);
 
 /**
  * @swagger
