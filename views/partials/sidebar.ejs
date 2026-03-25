@@ -192,6 +192,78 @@
   .sidebar-wrapper .nav-link {
     padding-right: 6px !important;
   }
+
+  .menu-branch-node {
+    margin-top: 2px;
+  }
+
+  .menu-branch-row {
+    gap: 8px;
+  }
+
+  .nav-branch-label {
+    min-height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px 10px;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .branch-count {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.74);
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    padding: 2px 7px;
+    flex-shrink: 0;
+  }
+
+  .branch-indent {
+    color: rgba(184, 155, 94, 0.62);
+    font-size: 0.72rem;
+  }
+
+  .branch-content {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .branch-copy {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .branch-title {
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .menu-branch-node .toggle-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+  }
+
+  .menu-branch-node .toggle-btn:hover {
+    background: rgba(184, 155, 94, 0.12);
+  }
+
+  .menu-branch-node .children-list {
+    margin-top: 2px;
+  }
+
+  .menu-branch-node .nav-child-item[data-nav-level="2"] {
+    padding-left: 34px;
+  }
 </style>
 
 <ul class="nav flex-column pt-3">
@@ -236,7 +308,13 @@
   return (a.order || 0) - (b.order || 0);
   }); } %>
 
+  <% var INSIGHTS_PARENT_ID = '698191a46ea27a5d8ccbf724'; %>
   <% var menuById = {}; menus.forEach(function(m) { menuById[m._id.toString()] = m; }); %>
+
+  <% function getMenuTitle(menu) {
+      return (menu.title && menu.title.en) ? menu.title.en : 'Untitled';
+    }
+  %>
 
   <% function isInActivePath(menu) {
       if (!currentMenuId || !menu) return false;
@@ -251,7 +329,14 @@
     }
   %>
 
-  <% function renderTree(parentId, level, isChild) { var children = getChildren(parentId); children.forEach(function(menu) { var menuId = menu._id.toString(); var menuTitle = (menu.title && menu.title.en) ? menu.title.en : 'Untitled'; var hasKids = getChildren(menu._id).length > 0; var shouldOpen = hasKids && isInActivePath(menu); %>
+  <% function hasActiveMenuInList(items) {
+      return items.some(function(item) {
+        return isInActivePath(item);
+      });
+    }
+  %>
+
+  <% function renderMenuNode(menu, level, isChild) { var menuId = menu._id.toString(); var menuTitle = getMenuTitle(menu); var hasKids = getChildren(menu._id).length > 0; var shouldOpen = hasKids && isInActivePath(menu); %>
   <li class="nav-item menu-node" data-menu-title="<%= menuTitle.toLowerCase() %>">
     <div class="d-flex align-items-center menu-node-row <%= isChild ? 'nav-child-item' : '' %>" <%= isChild ? 'data-nav-level="' + level + '"' : '' %>>
       <% if (isChild) { %>
@@ -283,6 +368,45 @@
     </ul>
     <% } %>
   </li>
+  <% } %>
+
+  <% function renderInsightsBranch(label, branchKey, items, level) { if (!items.length) return; var shouldOpen = hasActiveMenuInList(items); %>
+  <li class="nav-item menu-node menu-branch-node" data-menu-title="<%= ('insights ' + label).toLowerCase() %>">
+    <div class="d-flex align-items-center menu-node-row nav-child-item menu-branch-row" data-nav-level="<%= level %>">
+      <span class="indent-marker branch-indent">+</span>
+      <div class="nav-link nav-parent-text nav-branch-label flex-grow-1">
+        <div class="branch-content">
+          <span class="branch-copy">
+            <span class="branch-title"><%= label %> </span>
+          </span>
+          <span class="branch-count"><%= items.length %></span>
+        </div>
+      </div>
+      <button class="toggle-btn <%= shouldOpen ? 'open' : '' %>" data-target="children-<%= branchKey %>" type="button" title="Expand/Collapse" aria-expanded="<%= shouldOpen ? 'true' : 'false' %>">
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8.5 6.5a.5.5 0 0 0-.707 0l-3 3a.5.5 0 0 0 .707.707L8 7.207l2.646 2.647a.5.5 0 0 0 .707-.707l-3-3z"/>
+        </svg>
+      </button>
+    </div>
+    <ul
+      class="nav flex-column ms-2 children-list <%= shouldOpen ? '' : 'd-none' %>"
+      id="children-<%= branchKey %>"
+    >
+      <% items.forEach(function(menu) { %>
+      <% renderMenuNode(menu, level + 1, true); %>
+      <% }); %>
+    </ul>
+  </li>
+  <% } %>
+
+  <% function renderTree(parentId, level, isChild) { var normalizedParentId = parentId ? parentId.toString() : null; if (normalizedParentId === INSIGHTS_PARENT_ID) { var insightChildren = getChildren(parentId); var caseStudyChildren = insightChildren.filter(function(menu) { return menu.caseStudies; }); var featuredChildren = insightChildren.filter(function(menu) { return menu.featuredInsights; }); var regularChildren = insightChildren.filter(function(menu) { return !menu.caseStudies && !menu.featuredInsights; }); %>
+  <% renderInsightsBranch('Case Studies', 'insights-case-studies', caseStudyChildren, level); %>
+  <% renderInsightsBranch('Featured Insights', 'insights-featured-insights', featuredChildren, level); %>
+  <% regularChildren.forEach(function(menu) { %>
+  <% renderMenuNode(menu, level, true); %>
+  <% }); %>
+  <% return; } var children = getChildren(parentId); children.forEach(function(menu) { %>
+  <% renderMenuNode(menu, level, isChild); %>
   <% }); } %>
 
   <!-- TOP MENUS -->

@@ -17,6 +17,19 @@ function parseOptionalBoolean(value) {
   return undefined;
 }
 
+function getRequiredBooleanQuery(req, res, name) {
+  const parsedValue = parseOptionalBoolean(req.query[name]);
+  if (typeof parsedValue === "boolean") {
+    return parsedValue;
+  }
+
+  res.status(400).json({
+    success: false,
+    message: `${name} query parameter is required and must be true or false`,
+  });
+  return null;
+}
+
 function sortByCreatedAtDesc(items) {
   const list = Array.isArray(items) ? items : [];
   return [...list].sort(
@@ -202,8 +215,6 @@ exports.getIndustryMenus = async (req, res) => {
     const menus = await homepageService.getMenuChildrenTree(
       "698aa02d84b05fe995a079a7",
       showHomePage,
-      undefined,
-      undefined,
       tag
     );
     const paged = paginateArray(menus, params);
@@ -229,8 +240,14 @@ exports.getInsightsMenus = async (req, res) => {
       maxLimit: 100,
     });
     const showHomePage = parseOptionalBoolean(req.query.showHomePage);
-    const featuredInsights = parseOptionalBoolean(req.query.featuredInsights);
-    const caseStudies = parseOptionalBoolean(req.query.caseStudies);
+    const featuredInsights = getRequiredBooleanQuery(
+      req,
+      res,
+      "featuredInsights"
+    );
+    if (featuredInsights === null) return;
+    const caseStudies = getRequiredBooleanQuery(req, res, "caseStudies");
+    if (caseStudies === null) return;
     const tag = String(req.query.tag || "").trim();
     const menus = await homepageService.getMenuChildrenTree(
       "698191a46ea27a5d8ccbf724",

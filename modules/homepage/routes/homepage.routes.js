@@ -278,16 +278,16 @@ router.get("/solutions", homepageController.getSolutionsMenus);
  *         description: Optional filter by showHomePage (true/false)
  *       - in: query
  *         name: featuredInsights
- *         required: false
+ *         required: true
  *         schema:
  *           type: boolean
- *         description: Optional filter by featuredInsights (true/false)
+ *         description: Required filter by featuredInsights (true/false)
  *       - in: query
  *         name: caseStudies
- *         required: false
+ *         required: true
  *         schema:
  *           type: boolean
- *         description: Optional filter by caseStudies (true/false)
+ *         description: Required filter by caseStudies (true/false)
  *       - in: query
  *         name: tag
  *         required: false
@@ -295,6 +295,8 @@ router.get("/solutions", homepageController.getSolutionsMenus);
  *           type: string
  *         description: Optional filter by tagId
  *     responses:
+ *       400:
+ *         description: featuredInsights and caseStudies are required boolean query parameters
  *       200:
  *         description: Insights menu tree
  *       500:
@@ -333,19 +335,9 @@ router.get("/insights", homepageController.getInsightsMenus);
  *         schema:
  *           type: boolean
  *         description: Optional filter by showHomePage (true/false)
- *       - in: query
- *         name: featuredInsights
- *         required: false
- *         schema:
- *           type: boolean
- *         description: Optional filter by featuredInsights (true/false)
- *       - in: query
- *         name: caseStudies
- *         required: false
- *         schema:
- *           type: boolean
- *         description: Optional filter by caseStudies (true/false)
  *     responses:
+ *       400:
+ *         description: featuredInsights and caseStudies are required boolean query parameters
  *       200:
  *         description: Industry menu tree
  *       500:
