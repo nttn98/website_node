@@ -3,6 +3,49 @@ const fs = require("fs");
 
 const fsp = fs.promises;
 
+function pushUnique(list, value) {
+  const item = String(value || "").trim();
+  if (!item || list.includes(item)) return;
+  list.push(item);
+}
+
+function extractCssUrlSources(html) {
+  const source = String(html || "");
+  if (!source) return [];
+
+  const result = [];
+  const declarationRegex =
+    /(?:^|[;{])\s*background(?:-image)?\s*:\s*([^;}{]+(?:\([^)]*\)[^;}{]*)*)/gi;
+  const pushFromCssText = (cssText) => {
+    const value = String(cssText || "");
+    if (!value) return;
+
+    let declarationMatch;
+    while ((declarationMatch = declarationRegex.exec(value)) !== null) {
+      const declarationValue = declarationMatch[1] || "";
+      const urlRegex = /url\(\s*(?:"([^"]+)"|'([^']+)'|([^)'"\s]+))\s*\)/gi;
+      let match;
+
+      while ((match = urlRegex.exec(declarationValue)) !== null) {
+        pushUnique(result, match[1] || match[2] || match[3] || "");
+      }
+    }
+  };
+
+  const styleBlockRegex = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+  let match;
+  while ((match = styleBlockRegex.exec(source)) !== null) {
+    pushFromCssText(match[1]);
+  }
+
+  const styleAttrRegex = /style\s*=\s*(["'])([\s\S]*?)\1/gi;
+  while ((match = styleAttrRegex.exec(source)) !== null) {
+    pushFromCssText(match[2]);
+  }
+
+  return result;
+}
+
 function normalizePublicImagePath(value) {
   let input = String(value || "")
     .trim()
@@ -40,6 +83,13 @@ function extractContentUploadPaths(html) {
       result.add(normalized);
     }
   }
+
+  extractCssUrlSources(source).forEach((value) => {
+    const normalized = normalizePublicImagePath(value);
+    if (normalized.startsWith("/uploads/content/")) {
+      result.add(normalized);
+    }
+  });
 
   return result;
 }
@@ -86,8 +136,13 @@ function extractImageSources(html) {
   while ((match = re.exec(source)) !== null) {
     const src = String(match[1] || "").trim();
     if (!src) continue;
-    if (!result.includes(src)) result.push(src);
+    pushUnique(result, src);
   }
+
+  extractCssUrlSources(source).forEach((src) => {
+    pushUnique(result, src);
+  });
+
   return result;
 }
 

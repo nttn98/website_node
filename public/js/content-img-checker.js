@@ -50,6 +50,160 @@
     return false;
   }
 
+  function escapeRegExp(value) {
+    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function normalizePathname(value) {
+    var input = String(value || "").trim();
+    if (!input) return "";
+
+    if (/^https?:\/\//i.test(input)) {
+      try {
+        var parsed = new URL(input);
+        input = parsed.pathname || "";
+      } catch {
+        return "";
+      }
+    }
+
+    input = input.split("?")[0].split("#")[0];
+    if (!input) return "";
+    if (!/^\//.test(input)) input = "/" + input;
+    return input;
+  }
+
+  function getSourceVariants(src) {
+    var variants = [];
+    var raw = String(src || "").trim();
+    if (!raw) return variants;
+
+    variants.push(raw);
+
+    var pathname = normalizePathname(raw);
+    if (pathname && variants.indexOf(pathname) === -1) {
+      variants.push(pathname);
+    }
+
+    return variants;
+  }
+
+  function replaceAssetSourceInHtml(html, oldSrc, newSrc) {
+    var nextHtml = String(html || "");
+    var replacement = String(newSrc || "").trim();
+    if (!nextHtml || !oldSrc || !replacement) return nextHtml;
+
+    getSourceVariants(oldSrc).forEach(function (candidate) {
+      var escaped = escapeRegExp(candidate);
+
+      nextHtml = nextHtml
+        .replace(new RegExp('"' + escaped + '"', "g"), '"' + replacement + '"')
+        .replace(new RegExp("'" + escaped + "'", "g"), "'" + replacement + "'")
+        .replace(
+          new RegExp("url\\(\\s*(\"|')?" + escaped + "(\"|')?\\s*\\)", "g"),
+          function (_, openQuote) {
+            var quote = openQuote || "";
+            return "url(" + quote + replacement + quote + ")";
+          }
+        );
+    });
+
+    return nextHtml;
+  }
+
+  function pushUniqueAsset(list, asset, options) {
+    var item = asset && typeof asset === "object" ? asset : null;
+    if (!item || !item.src) return;
+
+    var allowDuplicate = !!(options && options.allowDuplicate);
+    if (
+      !allowDuplicate &&
+      list.some(function (existing) {
+        return existing.src === item.src && existing.type === item.type;
+      })
+    ) {
+      return;
+    }
+
+    list.push(item);
+  }
+
+  function extractCssUrlValues(cssText) {
+    var source = String(cssText || "");
+    if (!source) return [];
+
+    var found = [];
+    var declarationRe =
+      /(?:^|[;{])\s*background(?:-image)?\s*:\s*([^;}{]+(?:\([^)]*\)[^;}{]*)*)/gi;
+    var declarationMatch;
+    while ((declarationMatch = declarationRe.exec(source)) !== null) {
+      var declarationValue = declarationMatch[1] || "";
+      var re = /url\(\s*(?:"([^"]+)"|'([^']+)'|([^)'"\s]+))\s*\)/gi;
+      var m;
+      while ((m = re.exec(declarationValue)) !== null) {
+        var src = String(m[1] || m[2] || m[3] || "").trim();
+        if (!src || /^data:/i.test(src)) continue;
+        if (found.indexOf(src) !== -1) continue;
+        found.push(src);
+      }
+    }
+    return found;
+  }
+
+  function extractCssBackgroundAssets(html) {
+    var source = String(html || "");
+    if (!source) return [];
+
+    var found = [];
+    var m;
+
+    function pushAssets(cssText) {
+      extractCssUrlValues(cssText).forEach(function (src) {
+        pushUniqueAsset(found, {
+          src: src,
+          isLocal: isLocalSrc(src),
+          type: "image",
+          assetKind: "background",
+        });
+      });
+    }
+
+    var styleBlockRe = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+    while ((m = styleBlockRe.exec(source)) !== null) {
+      pushAssets(m[1]);
+    }
+
+    var styleAttrRe = /style\s*=\s*(["'])([\s\S]*?)\1/gi;
+    while ((m = styleAttrRe.exec(source)) !== null) {
+      pushAssets(m[2]);
+    }
+
+    return found;
+  }
+
+  function extractImageAssets(html) {
+    var assets = [];
+
+    extractImgs(html).forEach(function (item) {
+      pushUniqueAsset(
+        assets,
+        {
+          src: item.src,
+          isLocal: item.isLocal,
+          type: "image",
+          assetKind: "image",
+        },
+        { allowDuplicate: isYoutubeThumbnailSrc(item.src) }
+      );
+    });
+
+    extractCssBackgroundAssets(html).forEach(function (item) {
+      pushUniqueAsset(assets, item);
+    });
+
+    return assets;
+  }
+
   /** Extract all unique <img src="..."> values from an HTML string */
   function extractImgs(html) {
     const found = [];
@@ -540,7 +694,7 @@
   // ─────────────────────────────────────────────────────────────────────────────
 
   function extractUnresolvedServerImgs(html) {
-    return extractImgs(html)
+    return extractImageAssets(html)
       .map(function (x) {
         return x.src;
       })
@@ -598,9 +752,7 @@
 
     function check() {
       var html = opts.getHtml() || "";
-      var images = extractImgs(html).map(function (x) {
-        return { src: x.src, isLocal: x.isLocal, type: "image" };
-      });
+      var images = extractImageAssets(html);
       var pdfLinks = extractPdfLinks(html);
       render(
         container,
@@ -1653,9 +1805,14 @@
       var typeBadge = document.createElement("span");
       typeBadge.className =
         "badge " + (asset.isLocal ? "bg-danger" : "bg-secondary");
+      var assetLabel = "Image";
+      if (asset.type === "pdf") {
+        assetLabel = "PDF";
+      } else if (asset.assetKind === "background") {
+        assetLabel = "Background Image";
+      }
       typeBadge.textContent =
-        (asset.type === "pdf" ? "PDF" : "Image") +
-        (asset.isLocal ? " - Local path" : " - Current source");
+        assetLabel + (asset.isLocal ? " - Local path" : " - Current source");
 
       var controls = document.createElement("div");
       controls.className = "d-flex align-items-center gap-2 flex-wrap w-100";
@@ -1704,13 +1861,9 @@
                 (data.error && data.error.message) || "Upload failed"
               );
 
-            // Replace old src in the HTML (handles both quote styles)
+            // Replace old asset path in HTML attributes and CSS url(...).
             var oldHtml = getHtml();
-            var newHtml = oldHtml
-              .split('"' + src + '"')
-              .join('"' + data.url + '"')
-              .split("'" + src + "'")
-              .join("'" + data.url + "'");
+            var newHtml = replaceAssetSourceInHtml(oldHtml, src, data.url);
             setHtml(newHtml);
 
             status.className = "small text-success";
