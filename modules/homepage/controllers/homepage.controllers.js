@@ -3,6 +3,7 @@ const {
   getPaginationParams,
   paginateArray,
 } = require("../../../utils/pagination");
+const { withDerivedGroupData } = require("../../../utils/group-content-data");
 
 /* ===== HOMEPAGE API CONTROLLERS ===== */
 
@@ -38,13 +39,7 @@ function sortByCreatedAtDesc(items) {
 }
 
 function withVideoShareList(group) {
-  if (!group || typeof group !== "object") return group;
-  return {
-    ...group,
-    videoShareList: Array.isArray(group.videoShareList)
-      ? group.videoShareList
-      : [],
-  };
+  return withDerivedGroupData(group);
 }
 
 // Get all homepage data in one call

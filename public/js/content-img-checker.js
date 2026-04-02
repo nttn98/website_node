@@ -386,6 +386,41 @@
       .replace(/'/g, "&#39;");
   }
 
+  function getTodayDisplayDate() {
+    var now = new Date();
+    var day = String(now.getDate()).padStart(2, "0");
+    var month = String(now.getMonth() + 1).padStart(2, "0");
+    var year = String(now.getFullYear());
+    return day + "/" + month + "/" + year;
+  }
+
+  function getYearFromDateValue(dateValue) {
+    var input = String(dateValue || "").trim();
+    if (!input) return String(new Date().getFullYear());
+
+    var slashMatch = input.match(/(?:^|\D)(\d{4})$/);
+    if (slashMatch && slashMatch[1]) return slashMatch[1];
+
+    var ymdMatch = input.match(/^(\d{4})[-/]/);
+    if (ymdMatch && ymdMatch[1]) return ymdMatch[1];
+
+    var nativeDate = new Date(input);
+    if (!Number.isNaN(nativeDate.getTime())) {
+      return String(nativeDate.getFullYear());
+    }
+
+    return String(new Date().getFullYear());
+  }
+
+  function toDisclosureTypeValue(tagName) {
+    var normalized = String(tagName || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9_-]/g, "");
+    return normalized || "announcement";
+  }
+
   function buildYoutubeCardHtml(videoId, group, title, thumbnailUrl) {
     var safeTitle = escapeHtml(title || "Video Title Goes Here");
     var safeGroup = group === "webinars" ? "webinars" : "video";
@@ -534,25 +569,376 @@
     return path.endsWith(".pdf");
   }
 
-  function getPdfArticleCards(wrapper) {
-    var cards = Array.from(
-      wrapper.querySelectorAll(
-        "article.whitepaper-card, article.card.card-horizontal"
-      )
+  function getPdfCardSelector() {
+    return ".whitepaper-card, article.card.card-horizontal, div.card.card-horizontal";
+  }
+
+  function getPdfCardsInContainer(container) {
+    return Array.from(container.querySelectorAll(getPdfCardSelector())).filter(
+      function (card) {
+        var anchor = card.querySelector("a.card-link[href], a[href]");
+        var href = anchor ? anchor.getAttribute("href") || "" : "";
+        return isPdfHrefValue(href);
+      }
     );
-    return cards.filter(function (card) {
-      var anchor = card.querySelector("a.card-link[href], a[href]");
-      var href = anchor ? anchor.getAttribute("href") || "" : "";
-      return isPdfHrefValue(href);
+  }
+
+  function findElementByExactId(root, id) {
+    var targetId = String(id || "").trim();
+    if (!root || !targetId) return null;
+    return (
+      Array.from(root.querySelectorAll("[id]")).find(function (node) {
+        return String(node.id || "") === targetId;
+      }) || null
+    );
+  }
+
+  function getIrReportTabsFromWrapper(wrapper) {
+    if (!wrapper) return [];
+
+    return Array.from(wrapper.querySelectorAll(".ir-tabs .ir-tab[data-tab]"))
+      .map(function (button) {
+        var tabId = String(button.getAttribute("data-tab") || "").trim();
+        if (!tabId) return null;
+
+        var listWrapper = findElementByExactId(wrapper, tabId);
+        if (
+          !listWrapper ||
+          !listWrapper.classList.contains("ir-list-wrapper")
+        ) {
+          return null;
+        }
+
+        var listEl = listWrapper.querySelector(".ir-list") || listWrapper;
+        return {
+          tabId: tabId,
+          tagName: String(button.textContent || "").trim(),
+          listWrapper: listWrapper,
+          listEl: listEl,
+          cards: getPdfCardsInContainer(listEl),
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function extractIrReportTabItems(html) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    return getIrReportTabsFromWrapper(wrapper).map(function (tab) {
+      return {
+        tabId: tab.tabId,
+        tagName: tab.tagName,
+        items: tab.cards.map(function (card) {
+          var imgEl = card.querySelector(".card-thumb img, img");
+          var titleEl = card.querySelector(".card-title");
+          var dateEl = card.querySelector(".card-meta");
+          var linkEl = card.querySelector("a.card-link, a[href], a");
+
+          return {
+            tagName: String(
+              (card.querySelector(".card-tag") &&
+                card.querySelector(".card-tag").textContent) ||
+                tab.tagName ||
+                ""
+            ).trim(),
+            title: String((titleEl && titleEl.textContent) || "").trim(),
+            date: String((dateEl && dateEl.textContent) || "").trim(),
+            img: String((imgEl && imgEl.getAttribute("src")) || "").trim(),
+            url: String((linkEl && linkEl.getAttribute("href")) || "").trim(),
+            linkText: String((linkEl && linkEl.textContent) || "").trim(),
+            displayStyle: String(card.getAttribute("style") || "").trim(),
+            className: String(card.getAttribute("class") || "").trim(),
+            tagNameLower: String(card.tagName || "div").toLowerCase(),
+          };
+        }),
+      };
+    });
+  }
+
+  // ── Card List PDF Group (no tag) ──────────────────────────────────────────
+  function detectCardListGroup(html) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+    var items = wrapper.querySelectorAll(".card-list");
+    if (!items.length) return null;
+    return { count: items.length };
+  }
+
+  function extractCardListItems(html) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+    var cards = wrapper.querySelectorAll(".card-list");
+
+    return Array.from(cards)
+      .map(function (card) {
+        var titleEl = card.querySelector(".card-title");
+        var dateEl = card.querySelector(".card-meta");
+        var linkEl = card.querySelector("a[href], a");
+
+        return {
+          title: String((titleEl && titleEl.textContent) || "").trim(),
+          date: String((dateEl && dateEl.textContent) || "").trim(),
+          url: String((linkEl && linkEl.getAttribute("href")) || "").trim(),
+        };
+      })
+      .filter(function (item) {
+        return item.url && item.url.toLowerCase().endsWith(".pdf");
+      });
+  }
+
+  function buildCardListItemHtml(payload) {
+    var title = String(payload.title || "").trim();
+    var date = String(payload.date || "").trim();
+    var url = String(payload.url || "").trim();
+
+    return (
+      '<div class="card-list">' +
+      '<h3 class="card-title">' +
+      escapeHtml(title) +
+      "</h3>" +
+      '<p class="card-meta">' +
+      escapeHtml(date) +
+      "</p>" +
+      '<a href="' +
+      escapeHtml(url) +
+      '" target="_blank" class="card-link">Download</a>' +
+      "</div>"
+    );
+  }
+
+  function appendCardListItemToHtml(html, payload) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var cards = wrapper.querySelectorAll(".card-list");
+    if (!cards.length) return wrapper.innerHTML;
+
+    var lastCard = cards[cards.length - 1];
+    lastCard.insertAdjacentHTML("afterend", buildCardListItemHtml(payload));
+
+    return wrapper.innerHTML;
+  }
+
+  function updateCardListItemInHtml(html, index, payload) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var cards = wrapper.querySelectorAll(".card-list");
+    var target = cards[index];
+    if (!target) return wrapper.innerHTML;
+
+    target.outerHTML = buildCardListItemHtml(payload);
+    return wrapper.innerHTML;
+  }
+
+  function deleteCardListItemInHtml(html, index) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var cards = wrapper.querySelectorAll(".card-list");
+    var target = cards[index];
+    if (!target) return wrapper.innerHTML;
+
+    target.remove();
+    return wrapper.innerHTML;
+  }
+
+  function detectDisclosureListGroup(html) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+    var root = wrapper.querySelector("#disclosureList.disclosure-grid");
+    if (!root) return null;
+    var items = root.querySelectorAll(".ir-disclosure-item");
+    if (!items.length) return null;
+    return { count: items.length };
+  }
+
+  function extractDisclosureListItems(html) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+    var root = wrapper.querySelector("#disclosureList.disclosure-grid");
+    if (!root) return [];
+
+    return Array.from(root.querySelectorAll(".ir-disclosure-item"))
+      .map(function (item) {
+        var dateEl = item.querySelector(".card-meta");
+        var titleEl =
+          item.querySelector(".disclosure-title") ||
+          Array.from(item.querySelectorAll("span")).find(function (span) {
+            return !span.classList.contains("card-meta");
+          });
+        var linkEl = item.querySelector("a[href], a");
+
+        return {
+          type: String(item.getAttribute("data-type") || "").trim(),
+          tagName: String(
+            item.getAttribute("data-tag-name") ||
+              item.getAttribute("data-type") ||
+              ""
+          ).trim(),
+          year:
+            String(item.getAttribute("data-year") || "").trim() ||
+            getYearFromDateValue(
+              String((dateEl && dateEl.textContent) || "").trim()
+            ),
+          date: String((dateEl && dateEl.textContent) || "").trim(),
+          title: String((titleEl && titleEl.textContent) || "").trim(),
+          url: String((linkEl && linkEl.getAttribute("href")) || "").trim(),
+          style: String(item.getAttribute("style") || "").trim(),
+          linkClass: String(
+            (linkEl && linkEl.getAttribute("class")) || ""
+          ).trim(),
+        };
+      })
+      .filter(function (item) {
+        return item.url && isPdfHrefValue(item.url);
+      });
+  }
+
+  function buildDisclosureListItemHtml(payload, template) {
+    var meta = template && typeof template === "object" ? template : {};
+    var type = String(
+      payload.type || toDisclosureTypeValue(payload.tagName || "")
+    ).trim();
+    var tagName = String(payload.tagName || payload.type || "").trim();
+    var date = String(payload.date || "").trim();
+    var year = String(payload.year || getYearFromDateValue(date)).trim();
+    var title = String(payload.title || "").trim();
+    var url = String(payload.url || "").trim();
+    var style = String(
+      payload.style ||
+        meta.style ||
+        "transition: opacity 0.25s; display: grid; opacity: 1;"
+    ).trim();
+    var linkClass = String(
+      payload.linkClass || meta.linkClass || "btn-outline"
+    ).trim();
+
+    return (
+      '<div class="ir-disclosure-item"' +
+      ' data-type="' +
+      escapeHtml(type) +
+      '"' +
+      (tagName ? ' data-tag-name="' + escapeHtml(tagName) + '"' : "") +
+      (year ? ' data-year="' + escapeHtml(year) + '"' : "") +
+      (style ? ' style="' + escapeHtml(style) + '"' : "") +
+      ">" +
+      '<span class="card-meta">' +
+      escapeHtml(date) +
+      "</span>" +
+      "<span>" +
+      escapeHtml(title) +
+      "</span>" +
+      '<a href="' +
+      escapeHtml(url) +
+      '" target="_blank" class="' +
+      escapeHtml(linkClass || "btn-outline") +
+      '">Download</a>' +
+      "</div>"
+    );
+  }
+
+  function appendDisclosureListItemToHtml(html, payload) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+    var root = wrapper.querySelector("#disclosureList.disclosure-grid");
+    if (!root) return wrapper.innerHTML;
+
+    var items = root.querySelectorAll(".ir-disclosure-item");
+    var last = items.length ? items[items.length - 1] : null;
+    if (last) {
+      last.insertAdjacentHTML(
+        "afterend",
+        buildDisclosureListItemHtml(payload, {
+          style: String(last.getAttribute("style") || "").trim(),
+          linkClass: String(
+            (
+              last.querySelector("a[href], a") || {
+                getAttribute: function () {
+                  return "btn-outline";
+                },
+              }
+            ).getAttribute("class") || ""
+          ).trim(),
+        })
+      );
+    } else {
+      root.insertAdjacentHTML(
+        "beforeend",
+        buildDisclosureListItemHtml(payload)
+      );
+    }
+
+    return wrapper.innerHTML;
+  }
+
+  function updateDisclosureListItemInHtml(html, index, payload) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+    var root = wrapper.querySelector("#disclosureList.disclosure-grid");
+    if (!root) return wrapper.innerHTML;
+
+    var items = root.querySelectorAll(".ir-disclosure-item");
+    var target = items[index];
+    if (!target) return wrapper.innerHTML;
+
+    target.outerHTML = buildDisclosureListItemHtml(payload, {
+      style: String(target.getAttribute("style") || "").trim(),
+      linkClass: String(
+        (
+          target.querySelector("a[href], a") || {
+            getAttribute: function () {
+              return "btn-outline";
+            },
+          }
+        ).getAttribute("class") || ""
+      ).trim(),
+    });
+    return wrapper.innerHTML;
+  }
+
+  function deleteDisclosureListItemInHtml(html, index) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+    var root = wrapper.querySelector("#disclosureList.disclosure-grid");
+    if (!root) return wrapper.innerHTML;
+
+    var items = root.querySelectorAll(".ir-disclosure-item");
+    var target = items[index];
+    if (!target) return wrapper.innerHTML;
+    target.remove();
+    return wrapper.innerHTML;
+  }
+
+  function detectIrReportTabs(html) {
+    var tabs = extractIrReportTabItems(html);
+    if (!tabs.length) return null;
+
+    return {
+      tabCount: tabs.length,
+      itemCount: tabs.reduce(function (total, tab) {
+        return total + tab.items.length;
+      }, 0),
+    };
+  }
+
+  function getPdfArticleCards(wrapper) {
+    return getPdfCardsInContainer(wrapper).filter(function (card) {
+      return card.matches(
+        "article.whitepaper-card, article.card.card-horizontal"
+      );
     });
   }
 
   function getArticleCardsInParent(parent) {
     if (!parent) return [];
-    return Array.from(
-      parent.querySelectorAll(
-        "article.whitepaper-card, article.card.card-horizontal"
-      )
+    return Array.from(parent.querySelectorAll(getPdfCardSelector())).filter(
+      function (card) {
+        return card.matches(
+          "article.whitepaper-card, article.card.card-horizontal"
+        );
+      }
     );
   }
 
@@ -691,6 +1077,1666 @@
     target.remove();
     return wrapper.innerHTML;
   }
+
+  function buildIrReportCardHtml(payload, templateItem) {
+    var template = templateItem || {};
+    var tagName = String(template.tagNameLower || "div").trim() || "div";
+    var className = String(template.className || "whitepaper-card").trim();
+    var styleValue = String(
+      payload.displayStyle || template.displayStyle || "display: flex;"
+    ).trim();
+    var linkText = String(
+      payload.linkText || template.linkText || "Download"
+    ).trim();
+
+    return (
+      "<" +
+      tagName +
+      ' class="' +
+      escapeHtml(className) +
+      '"' +
+      (styleValue ? ' style="' + escapeHtml(styleValue) + '"' : "") +
+      ">" +
+      '<div class="card-thumb">' +
+      '<img src="' +
+      escapeHtml(payload.img) +
+      '">' +
+      "</div>" +
+      '<div class="card-content">' +
+      "<div>" +
+      '<div class="card-tag">' +
+      escapeHtml(payload.tagName || "") +
+      "</div>" +
+      '<div class="card-title">' +
+      escapeHtml(payload.title) +
+      "</div>" +
+      '<div class="card-meta">' +
+      escapeHtml(payload.date) +
+      "</div>" +
+      "</div>" +
+      "<div>" +
+      '<a href="' +
+      escapeHtml(payload.url) +
+      '" target="_blank" class="card-link">' +
+      escapeHtml(linkText) +
+      "</a>" +
+      "</div>" +
+      "</div>" +
+      "</" +
+      tagName +
+      ">"
+    );
+  }
+
+  function appendIrReportItemToHtml(html, tabId, payload) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var tabs = getIrReportTabsFromWrapper(wrapper);
+    var tab = tabs.find(function (item) {
+      return item.tabId === tabId;
+    });
+    if (!tab || !tab.listEl) return wrapper.innerHTML;
+
+    tab.listEl.insertAdjacentHTML(
+      "beforeend",
+      buildIrReportCardHtml(payload, tab.cards[tab.cards.length - 1])
+    );
+    return wrapper.innerHTML;
+  }
+
+  function updateIrReportItemInHtml(html, tabId, index, payload) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var tabs = getIrReportTabsFromWrapper(wrapper);
+    var tab = tabs.find(function (item) {
+      return item.tabId === tabId;
+    });
+    var target = tab && tab.cards ? tab.cards[index] : null;
+    if (!target) return wrapper.innerHTML;
+
+    target.outerHTML = buildIrReportCardHtml(payload, {
+      className: String(target.getAttribute("class") || "").trim(),
+      displayStyle: String(target.getAttribute("style") || "").trim(),
+      tagNameLower: String(target.tagName || "div").toLowerCase(),
+      linkText: String(
+        (
+          target.querySelector("a.card-link, a[href], a") || {
+            textContent: "Download",
+          }
+        ).textContent || "Download"
+      ).trim(),
+    });
+
+    return wrapper.innerHTML;
+  }
+
+  function deleteIrReportItemInHtml(html, tabId, index) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var tabs = getIrReportTabsFromWrapper(wrapper);
+    var tab = tabs.find(function (item) {
+      return item.tabId === tabId;
+    });
+    var target = tab && tab.cards ? tab.cards[index] : null;
+    if (!target) return wrapper.innerHTML;
+
+    target.remove();
+    return wrapper.innerHTML;
+  }
+
+  var irTagOptionsPromise = null;
+  var irGroupTagOptions = [];
+
+  function getCurrentGroupIdFromLocation() {
+    var path = String(window.location.pathname || "");
+    var match = path.match(/\/dashboard\/groups\/([a-fA-F0-9]{24})\/edit/i);
+    return match ? String(match[1] || "").trim() : "";
+  }
+
+  function isObjectId(value) {
+    return /^[a-fA-F0-9]{24}$/.test(String(value || "").trim());
+  }
+
+  function setIrGroupTagOptions(tabs) {
+    var sourceTabs = Array.isArray(tabs) ? tabs : [];
+    var seen = {};
+
+    function pushTag(value) {
+      var name = String(value || "").trim();
+      if (!name) return;
+      var key = name.toLowerCase();
+      if (seen[key]) return;
+      seen[key] = true;
+    }
+
+    sourceTabs.forEach(function (tab) {
+      if (!tab || typeof tab !== "object") return;
+      pushTag(tab.tagName);
+      (Array.isArray(tab.items) ? tab.items : []).forEach(function (item) {
+        pushTag(item && item.tagName);
+      });
+    });
+
+    irTagOptionsPromise = null;
+  }
+
+  function loadIrTagOptions(forceRefresh) {
+    if (!forceRefresh && irTagOptionsPromise) {
+      return irTagOptionsPromise;
+    }
+
+    var groupId = getCurrentGroupIdFromLocation();
+    var params = new URLSearchParams({
+      targetType: "group",
+      limit: "300",
+    });
+    if (isObjectId(groupId)) {
+      params.set("specificId", groupId);
+    }
+
+    irTagOptionsPromise = fetch("/api/tags?" + params.toString())
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (payload) {
+        var dbItems = Array.isArray(payload && payload.data)
+          ? payload.data
+          : [];
+        var seen = {};
+        var merged = [];
+
+        function pushName(name) {
+          var normalized = String(name || "").trim();
+          if (!normalized) return;
+          var key = normalized.toLowerCase();
+          if (seen[key]) return;
+          seen[key] = true;
+          merged.push({ name: normalized });
+        }
+
+        dbItems.forEach(function (item) {
+          pushName(item && item.name);
+        });
+        irGroupTagOptions.forEach(pushName);
+
+        return merged;
+      })
+      .catch(function () {
+        return irGroupTagOptions.map(function (name) {
+          return { name: name };
+        });
+      });
+
+    return irTagOptionsPromise;
+  }
+
+  function getIrSelectedTagName(selectEl, inputEl, fallback) {
+    var manualValue = String((inputEl && inputEl.value) || "").trim();
+    if (manualValue) return manualValue;
+
+    var selectedValue = String((selectEl && selectEl.value) || "").trim();
+    if (selectedValue) return selectedValue;
+
+    return String(fallback || "").trim();
+  }
+
+  function fillIrTagSelect(selectEl, currentTagName) {
+    var currentValue = String(currentTagName || "").trim();
+
+    loadIrTagOptions().then(function (tags) {
+      if (!selectEl) return;
+
+      selectEl.innerHTML = "";
+
+      var matchedValue = "";
+      tags.forEach(function (tag) {
+        var name = String((tag && tag.name) || "").trim();
+        if (!name) return;
+        var option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        if (name.toLowerCase() === currentValue.toLowerCase()) {
+          matchedValue = name;
+        }
+        selectEl.appendChild(option);
+      });
+
+      selectEl.value = matchedValue || (tags[0] && tags[0].name) || "";
+    });
+  }
+
+  async function ensureIrTagExists(tagName) {
+    var normalizedName = String(tagName || "").trim();
+    if (!normalizedName) {
+      throw new Error("tagName is required");
+    }
+
+    var existingTags = await loadIrTagOptions();
+    var matched = existingTags.find(function (tag) {
+      return (
+        String((tag && tag.name) || "")
+          .trim()
+          .toLowerCase() === normalizedName.toLowerCase()
+      );
+    });
+    if (matched) {
+      return String(matched.name || normalizedName).trim();
+    }
+
+    var createRes = await fetch("/api/tags", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(
+        (function () {
+          var groupId = getCurrentGroupIdFromLocation();
+          if (isObjectId(groupId)) {
+            return {
+              name: normalizedName,
+              targetType: "group",
+              specificId: groupId,
+            };
+          }
+
+          return {
+            name: normalizedName,
+            targetType: "group",
+          };
+        })()
+      ),
+    });
+    var createData = await createRes.json().catch(function () {
+      return {};
+    });
+
+    // If it already exists in DB, continue with entered tag name.
+    if (!createRes.ok && createData.message !== "Tag already exists") {
+      throw new Error(createData.message || "Create tag failed");
+    }
+
+    if (
+      !irGroupTagOptions.some(function (name) {
+        return (
+          String(name || "")
+            .trim()
+            .toLowerCase() === normalizedName.toLowerCase()
+        );
+      })
+    ) {
+      irGroupTagOptions.push(normalizedName);
+    }
+    irTagOptionsPromise = null;
+    return String(
+      (createData && createData.data && createData.data.name) || normalizedName
+    ).trim();
+  }
+
+  function updateIrReportTabLabelInHtml(html, tabId, nextTagName) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = String(html || "");
+
+    var targetButton = Array.from(
+      wrapper.querySelectorAll(".ir-tabs .ir-tab[data-tab]")
+    ).find(function (button) {
+      return (
+        String(button.getAttribute("data-tab") || "").trim() ===
+        String(tabId || "").trim()
+      );
+    });
+
+    if (!targetButton) return wrapper.innerHTML;
+    targetButton.textContent = String(nextTagName || "").trim();
+    return wrapper.innerHTML;
+  }
+
+  function renderIrReportTabsEditor(
+    container,
+    tabs,
+    getHtml,
+    setHtml,
+    recheck
+  ) {
+    setIrGroupTagOptions(tabs);
+
+    var panel = document.createElement("div");
+    panel.className = "border rounded p-3 bg-white mb-2";
+
+    var heading = document.createElement("div");
+    heading.className = "fw-semibold mb-1";
+    heading.textContent = "Investor Report Tabs";
+
+    var subHeading = document.createElement("div");
+    subHeading.className = "small text-muted mb-3";
+    subHeading.textContent =
+      "Manage PDF items inside each tab and keep API data synchronized.";
+
+    panel.appendChild(heading);
+    panel.appendChild(subHeading);
+
+    tabs.forEach(function (tab) {
+      var section = document.createElement("div");
+      section.className = "border rounded p-3 mb-3 bg-light";
+
+      var title = document.createElement("div");
+      title.className =
+        "d-flex align-items-center justify-content-between mb-2";
+      title.innerHTML =
+        '<span class="fw-semibold">Existing PDFs</span>' +
+        '<span class="badge bg-secondary">' +
+        tab.items.length +
+        " PDF</span>";
+      section.appendChild(title);
+
+      var existingList = document.createElement("div");
+      existingList.className = "d-flex flex-column gap-2 mb-3";
+
+      if (!tab.items.length) {
+        var emptyState = document.createElement("div");
+        emptyState.className = "small text-muted";
+        emptyState.textContent = "No PDF items in this tab yet.";
+        existingList.appendChild(emptyState);
+      }
+
+      tab.items.forEach(function (item, idx) {
+        var itemRow = document.createElement("div");
+        itemRow.className =
+          "d-flex align-items-start gap-2 p-2 border rounded bg-white flex-wrap";
+
+        var thumb = document.createElement("img");
+        thumb.alt = "Report thumbnail";
+        thumb.style.width = "72px";
+        thumb.style.height = "48px";
+        thumb.style.objectFit = "cover";
+        thumb.style.border = "1px solid #dee2e6";
+        thumb.style.borderRadius = "4px";
+        thumb.style.background = "#f8f9fa";
+        thumb.style.flexShrink = "0";
+        if (item.img) {
+          thumb.src = item.img;
+        } else {
+          thumb.style.display = "none";
+        }
+
+        var editor = document.createElement("div");
+        editor.className = "d-flex flex-column gap-2";
+        editor.style.flex = "1";
+        editor.style.minWidth = "320px";
+
+        var tagRow = document.createElement("div");
+        tagRow.className = "d-flex align-items-center gap-2 flex-wrap";
+
+        var itemTagSelect = document.createElement("select");
+        itemTagSelect.className = "form-select form-select-sm";
+        itemTagSelect.style.maxWidth = "220px";
+
+        var itemTagInput = document.createElement("input");
+        itemTagInput.type = "text";
+        itemTagInput.className = "form-control form-control-sm";
+        itemTagInput.placeholder = "Choose or create new tagName";
+        itemTagInput.value = item.tagName || tab.tagName || "";
+        itemTagInput.style.maxWidth = "260px";
+
+        fillIrTagSelect(itemTagSelect, item.tagName || tab.tagName);
+        itemTagSelect.addEventListener("change", function () {
+          if (itemTagSelect.value) {
+            itemTagInput.value = itemTagSelect.value;
+          }
+        });
+
+        tagRow.appendChild(itemTagSelect);
+        tagRow.appendChild(itemTagInput);
+
+        var rowA = document.createElement("div");
+        rowA.className = "d-flex align-items-center gap-2 flex-wrap";
+
+        var titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.className = "form-control form-control-sm";
+        titleInput.placeholder = "Title";
+        titleInput.value = item.title || "";
+        titleInput.style.flex = "1";
+        titleInput.style.minWidth = "220px";
+
+        var dateInput = document.createElement("input");
+        dateInput.type = "text";
+        dateInput.className = "form-control form-control-sm";
+        dateInput.placeholder = "Date";
+        dateInput.value = item.date || "";
+        dateInput.style.maxWidth = "180px";
+
+        rowA.appendChild(titleInput);
+        rowA.appendChild(dateInput);
+
+        var rowB = document.createElement("div");
+        rowB.className = "d-flex align-items-center gap-2 flex-wrap";
+
+        var imageUrlInput = document.createElement("input");
+        imageUrlInput.type = "text";
+        imageUrlInput.className = "form-control form-control-sm";
+        imageUrlInput.placeholder = "Image URL";
+        imageUrlInput.value = item.img || "";
+        imageUrlInput.style.flex = "1";
+        imageUrlInput.style.minWidth = "220px";
+
+        var imageFileInput = document.createElement("input");
+        imageFileInput.type = "file";
+        imageFileInput.accept = "image/*";
+        imageFileInput.className = "form-control form-control-sm";
+        imageFileInput.style.maxWidth = "220px";
+
+        rowB.appendChild(imageUrlInput);
+        rowB.appendChild(imageFileInput);
+
+        var rowC = document.createElement("div");
+        rowC.className = "d-flex align-items-center gap-2 flex-wrap";
+
+        var pdfUrlInput = document.createElement("input");
+        pdfUrlInput.type = "text";
+        pdfUrlInput.className = "form-control form-control-sm";
+        pdfUrlInput.placeholder = "PDF URL";
+        pdfUrlInput.value = item.url || "";
+        pdfUrlInput.style.flex = "1";
+        pdfUrlInput.style.minWidth = "220px";
+
+        var pdfFileInput = document.createElement("input");
+        pdfFileInput.type = "file";
+        pdfFileInput.accept = ".pdf,application/pdf";
+        pdfFileInput.className = "form-control form-control-sm";
+        pdfFileInput.style.maxWidth = "220px";
+
+        rowC.appendChild(pdfUrlInput);
+        rowC.appendChild(pdfFileInput);
+
+        var actions = document.createElement("div");
+        actions.className = "d-flex align-items-center gap-2";
+
+        var saveBtn = document.createElement("button");
+        saveBtn.type = "button";
+        saveBtn.className = "btn btn-sm btn-primary";
+        saveBtn.textContent = "Save";
+
+        var deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "btn btn-sm btn-outline-danger";
+        deleteBtn.textContent = "Delete";
+
+        var status = document.createElement("span");
+        status.className = "small";
+
+        saveBtn.addEventListener("click", async function () {
+          var nextTitle = String(titleInput.value || "").trim();
+          var nextDate =
+            String(dateInput.value || "").trim() || getTodayDisplayDate();
+          var nextImageUrl = String(imageUrlInput.value || "").trim();
+          var nextPdfUrl = String(pdfUrlInput.value || "").trim();
+          var nextTagName = getIrSelectedTagName(
+            itemTagSelect,
+            itemTagInput,
+            item.tagName || tab.tagName
+          );
+
+          if (!nextTitle || !nextTagName) {
+            status.className = "small text-danger";
+            status.textContent = "Title and tagName are required";
+            return;
+          }
+
+          saveBtn.disabled = true;
+          saveBtn.textContent = "Saving...";
+          status.className = "small text-muted";
+          status.textContent = "Preparing data...";
+
+          try {
+            nextTagName = await ensureIrTagExists(nextTagName);
+
+            var imageFile = imageFileInput.files && imageFileInput.files[0];
+            if (imageFile) {
+              status.textContent = "Uploading image...";
+              var imageFd = new FormData();
+              imageFd.append("upload", imageFile);
+              var imageRes = await fetch("/api/upload/content-image", {
+                method: "POST",
+                body: imageFd,
+              });
+              var imageData = await imageRes.json();
+              if (!imageData.url) {
+                throw new Error(
+                  (imageData.error && imageData.error.message) ||
+                    "Image upload failed"
+                );
+              }
+              nextImageUrl = imageData.url;
+            }
+
+            var pdfFile = pdfFileInput.files && pdfFileInput.files[0];
+            if (pdfFile) {
+              status.textContent = "Uploading PDF...";
+              var pdfFd = new FormData();
+              pdfFd.append("upload", pdfFile);
+              var pdfRes = await fetch("/api/upload/content-pdf", {
+                method: "POST",
+                body: pdfFd,
+              });
+              var pdfData = await pdfRes.json();
+              if (!pdfData.url) {
+                throw new Error(
+                  (pdfData.error && pdfData.error.message) ||
+                    "PDF upload failed"
+                );
+              }
+              nextPdfUrl = pdfData.url;
+            }
+
+            if (!nextImageUrl) {
+              throw new Error("Image URL or upload is required");
+            }
+            if (!nextPdfUrl || !isPdfHrefValue(nextPdfUrl)) {
+              throw new Error("Valid PDF URL or PDF upload is required");
+            }
+
+            var nextHtml = updateIrReportItemInHtml(getHtml(), tab.tabId, idx, {
+              tagName: nextTagName,
+              title: nextTitle,
+              date: nextDate,
+              img: nextImageUrl,
+              url: nextPdfUrl,
+              linkText: item.linkText || "Download",
+              displayStyle: item.displayStyle,
+            });
+
+            setHtml(nextHtml);
+
+            status.className = "small text-success";
+            status.textContent = "Saved";
+            setTimeout(recheck, 120);
+          } catch (err) {
+            status.className = "small text-danger";
+            status.textContent = String(err.message || err);
+          } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Save";
+          }
+        });
+
+        deleteBtn.addEventListener("click", function () {
+          setHtml(deleteIrReportItemInHtml(getHtml(), tab.tabId, idx));
+          setTimeout(recheck, 120);
+        });
+
+        actions.appendChild(saveBtn);
+        actions.appendChild(deleteBtn);
+        actions.appendChild(status);
+
+        editor.appendChild(tagRow);
+        editor.appendChild(rowA);
+        editor.appendChild(rowB);
+        editor.appendChild(rowC);
+        editor.appendChild(actions);
+
+        itemRow.appendChild(thumb);
+        itemRow.appendChild(editor);
+        existingList.appendChild(itemRow);
+      });
+
+      section.appendChild(existingList);
+
+      var addWrap = document.createElement("div");
+      addWrap.className = "border-top pt-3";
+
+      var addTitle = document.createElement("div");
+      addTitle.className = "small fw-semibold mb-2";
+      addTitle.textContent = "Add PDF item";
+      addWrap.appendChild(addTitle);
+
+      var addTagRow = document.createElement("div");
+      addTagRow.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+      var newTagSelect = document.createElement("select");
+      newTagSelect.className = "form-select form-select-sm";
+      newTagSelect.style.maxWidth = "220px";
+
+      var newTagInput = document.createElement("input");
+      newTagInput.type = "text";
+      newTagInput.className = "form-control form-control-sm";
+      newTagInput.placeholder = "Choose or create new tagName";
+      newTagInput.value = tab.tagName || "";
+      newTagInput.style.maxWidth = "260px";
+
+      fillIrTagSelect(newTagSelect, tab.tagName);
+      newTagSelect.addEventListener("change", function () {
+        if (newTagSelect.value) {
+          newTagInput.value = newTagSelect.value;
+        }
+      });
+
+      addTagRow.appendChild(newTagSelect);
+      addTagRow.appendChild(newTagInput);
+
+      var addRowA = document.createElement("div");
+      addRowA.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+      var newTitleInput = document.createElement("input");
+      newTitleInput.type = "text";
+      newTitleInput.className = "form-control form-control-sm";
+      newTitleInput.placeholder = "Title";
+      newTitleInput.style.flex = "1";
+      newTitleInput.style.minWidth = "220px";
+
+      var newDateInput = document.createElement("input");
+      newDateInput.type = "text";
+      newDateInput.className = "form-control form-control-sm";
+      newDateInput.placeholder = "Date";
+      newDateInput.style.maxWidth = "180px";
+
+      addRowA.appendChild(newTitleInput);
+      addRowA.appendChild(newDateInput);
+
+      var addRowB = document.createElement("div");
+      addRowB.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+      var newImageUrlInput = document.createElement("input");
+      newImageUrlInput.type = "text";
+      newImageUrlInput.className = "form-control form-control-sm";
+      newImageUrlInput.placeholder = "Image URL";
+      newImageUrlInput.style.flex = "1";
+      newImageUrlInput.style.minWidth = "220px";
+
+      var newImageFileInput = document.createElement("input");
+      newImageFileInput.type = "file";
+      newImageFileInput.accept = "image/*";
+      newImageFileInput.className = "form-control form-control-sm";
+      newImageFileInput.style.maxWidth = "220px";
+
+      addRowB.appendChild(newImageUrlInput);
+      addRowB.appendChild(newImageFileInput);
+
+      var addRowC = document.createElement("div");
+      addRowC.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+      var newPdfUrlInput = document.createElement("input");
+      newPdfUrlInput.type = "text";
+      newPdfUrlInput.className = "form-control form-control-sm";
+      newPdfUrlInput.placeholder = "PDF URL";
+      newPdfUrlInput.style.flex = "1";
+      newPdfUrlInput.style.minWidth = "220px";
+
+      var newPdfFileInput = document.createElement("input");
+      newPdfFileInput.type = "file";
+      newPdfFileInput.accept = ".pdf,application/pdf";
+      newPdfFileInput.className = "form-control form-control-sm";
+      newPdfFileInput.style.maxWidth = "220px";
+
+      addRowC.appendChild(newPdfUrlInput);
+      addRowC.appendChild(newPdfFileInput);
+
+      var addActions = document.createElement("div");
+      addActions.className = "d-flex align-items-center gap-2";
+
+      var addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "btn btn-sm btn-primary";
+      addBtn.textContent = "Add PDF";
+
+      var addStatus = document.createElement("span");
+      addStatus.className = "small";
+
+      addBtn.addEventListener("click", async function () {
+        var nextTitle = String(newTitleInput.value || "").trim();
+        var nextDate =
+          String(newDateInput.value || "").trim() || getTodayDisplayDate();
+        var nextImageUrl = String(newImageUrlInput.value || "").trim();
+        var nextPdfUrl = String(newPdfUrlInput.value || "").trim();
+        var nextTagName = getIrSelectedTagName(
+          newTagSelect,
+          newTagInput,
+          tab.tagName
+        );
+
+        if (!nextTitle || !nextTagName) {
+          addStatus.className = "small text-danger";
+          addStatus.textContent = "Title and tagName are required";
+          return;
+        }
+
+        addBtn.disabled = true;
+        addBtn.textContent = "Adding...";
+        addStatus.className = "small text-muted";
+        addStatus.textContent = "Preparing data...";
+
+        try {
+          nextTagName = await ensureIrTagExists(nextTagName);
+
+          var imageFile = newImageFileInput.files && newImageFileInput.files[0];
+          if (imageFile) {
+            addStatus.textContent = "Uploading image...";
+            var imageFd = new FormData();
+            imageFd.append("upload", imageFile);
+            var imageRes = await fetch("/api/upload/content-image", {
+              method: "POST",
+              body: imageFd,
+            });
+            var imageData = await imageRes.json();
+            if (!imageData.url) {
+              throw new Error(
+                (imageData.error && imageData.error.message) ||
+                  "Image upload failed"
+              );
+            }
+            nextImageUrl = imageData.url;
+          }
+
+          var pdfFile = newPdfFileInput.files && newPdfFileInput.files[0];
+          if (pdfFile) {
+            addStatus.textContent = "Uploading PDF...";
+            var pdfFd = new FormData();
+            pdfFd.append("upload", pdfFile);
+            var pdfRes = await fetch("/api/upload/content-pdf", {
+              method: "POST",
+              body: pdfFd,
+            });
+            var pdfData = await pdfRes.json();
+            if (!pdfData.url) {
+              throw new Error(
+                (pdfData.error && pdfData.error.message) || "PDF upload failed"
+              );
+            }
+            nextPdfUrl = pdfData.url;
+          }
+
+          if (!nextImageUrl) {
+            throw new Error("Image URL or upload is required");
+          }
+          if (!nextPdfUrl || !isPdfHrefValue(nextPdfUrl)) {
+            throw new Error("Valid PDF URL or PDF upload is required");
+          }
+
+          var nextHtml = appendIrReportItemToHtml(getHtml(), tab.tabId, {
+            tagName: nextTagName,
+            title: nextTitle,
+            date: nextDate,
+            img: nextImageUrl,
+            url: nextPdfUrl,
+            linkText: "Download",
+          });
+
+          setHtml(nextHtml);
+
+          addStatus.className = "small text-success";
+          addStatus.textContent = "Added";
+          setTimeout(recheck, 120);
+        } catch (err) {
+          addStatus.className = "small text-danger";
+          addStatus.textContent = String(err.message || err);
+        } finally {
+          addBtn.disabled = false;
+          addBtn.textContent = "Add PDF";
+        }
+      });
+
+      addWrap.appendChild(addTagRow);
+      addActions.appendChild(addBtn);
+      addActions.appendChild(addStatus);
+
+      addWrap.appendChild(addRowA);
+      addWrap.appendChild(addRowB);
+      addWrap.appendChild(addRowC);
+      addWrap.appendChild(addActions);
+      section.appendChild(addWrap);
+
+      panel.appendChild(section);
+    });
+
+    container.appendChild(panel);
+  }
+
+  function renderCardListEditor(container, items, getHtml, setHtml, recheck) {
+    var panel = document.createElement("div");
+    panel.className = "border rounded p-3 bg-white mb-2";
+
+    var heading = document.createElement("div");
+    heading.className = "fw-semibold mb-1";
+    heading.textContent = "Charter & Governance PDFs";
+
+    var subHeading = document.createElement("div");
+    subHeading.className = "small text-muted mb-3";
+    subHeading.textContent = "Manage PDF items and keep API data synchronized.";
+
+    panel.appendChild(heading);
+    panel.appendChild(subHeading);
+
+    var section = document.createElement("div");
+    section.className = "border rounded p-3 mb-3 bg-light";
+
+    var title = document.createElement("div");
+    title.className = "d-flex align-items-center justify-content-between mb-2";
+    title.innerHTML =
+      '<span class="fw-semibold">Existing PDFs</span>' +
+      '<span class="badge bg-secondary">' +
+      items.length +
+      " PDF</span>";
+    section.appendChild(title);
+
+    var existingList = document.createElement("div");
+    existingList.className = "d-flex flex-column gap-2 mb-3";
+
+    if (!items.length) {
+      var emptyState = document.createElement("div");
+      emptyState.className = "small text-muted";
+      emptyState.textContent = "No PDF items yet.";
+      existingList.appendChild(emptyState);
+    }
+
+    items.forEach(function (item, idx) {
+      var itemRow = document.createElement("div");
+      itemRow.className =
+        "d-flex align-items-start gap-2 p-2 border rounded bg-white flex-wrap";
+
+      var indexSpan = document.createElement("div");
+      indexSpan.className = "small fw-semibold text-muted";
+      indexSpan.style.minWidth = "20px";
+      indexSpan.textContent = "#" + (idx + 1);
+
+      var editor = document.createElement("div");
+      editor.className = "d-flex flex-column gap-2";
+      editor.style.flex = "1";
+      editor.style.minWidth = "320px";
+
+      var tagRow = document.createElement("div");
+      tagRow.className = "d-flex align-items-center gap-2 flex-wrap";
+
+      var tagInput = document.createElement("input");
+      tagInput.type = "text";
+      tagInput.className = "form-control form-control-sm";
+      tagInput.placeholder = "Tag (N/A for Charter)";
+      tagInput.value = item.tagName || "";
+      tagInput.style.maxWidth = "200px";
+      tagInput.disabled = true;
+
+      tagRow.appendChild(tagInput);
+
+      var rowA = document.createElement("div");
+      rowA.className = "d-flex align-items-center gap-2 flex-wrap";
+
+      var titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.className = "form-control form-control-sm";
+      titleInput.placeholder = "Title";
+      titleInput.value = item.title || "";
+      titleInput.style.flex = "1";
+      titleInput.style.minWidth = "220px";
+
+      var dateInput = document.createElement("input");
+      dateInput.type = "text";
+      dateInput.className = "form-control form-control-sm";
+      dateInput.placeholder = "Date (DD/MM/YYYY)";
+      dateInput.value = item.date || "";
+      dateInput.style.maxWidth = "140px";
+
+      rowA.appendChild(titleInput);
+      rowA.appendChild(dateInput);
+
+      var rowB = document.createElement("div");
+      rowB.className = "d-flex align-items-center gap-2 flex-wrap";
+
+      var urlInput = document.createElement("input");
+      urlInput.type = "text";
+      urlInput.className = "form-control form-control-sm";
+      urlInput.placeholder = "PDF URL";
+      urlInput.value = item.url || "";
+      urlInput.style.flex = "1";
+      urlInput.style.minWidth = "280px";
+
+      var pdfFileInput = document.createElement("input");
+      pdfFileInput.type = "file";
+      pdfFileInput.accept = ".pdf,application/pdf";
+      pdfFileInput.style.display = "none";
+
+      var chooseFileBtn = document.createElement("button");
+      chooseFileBtn.type = "button";
+      chooseFileBtn.className = "btn btn-sm btn-outline-secondary";
+      chooseFileBtn.textContent = "Choose File";
+      chooseFileBtn.style.flexShrink = "0";
+
+      var itemFileNameDisplay = document.createElement("div");
+      itemFileNameDisplay.className = "small text-muted";
+      itemFileNameDisplay.style.minWidth = "100px";
+      itemFileNameDisplay.style.flexShrink = "0";
+      itemFileNameDisplay.textContent = "No file chosen";
+
+      chooseFileBtn.addEventListener("click", function () {
+        pdfFileInput.click();
+      });
+
+      pdfFileInput.addEventListener("change", function () {
+        if (
+          pdfFileInput.files &&
+          pdfFileInput.files[0] &&
+          pdfFileInput.files[0].name
+        ) {
+          itemFileNameDisplay.textContent = String(
+            pdfFileInput.files[0].name || ""
+          ).trim();
+        } else {
+          itemFileNameDisplay.textContent = "No file chosen";
+        }
+      });
+
+      rowB.appendChild(urlInput);
+      rowB.appendChild(chooseFileBtn);
+      rowB.appendChild(itemFileNameDisplay);
+
+      var actions = document.createElement("div");
+      actions.className = "d-flex align-items-center gap-1 flex-wrap";
+
+      var saveBtn = document.createElement("button");
+      saveBtn.className = "btn btn-sm btn-outline-primary";
+      saveBtn.textContent = "Save";
+
+      var deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn btn-sm btn-outline-danger";
+      deleteBtn.textContent = "Delete";
+
+      var status = document.createElement("div");
+      status.className = "small text-muted";
+
+      saveBtn.type = "button";
+      saveBtn.addEventListener("click", async function () {
+        try {
+          saveBtn.disabled = true;
+          saveBtn.textContent = "Saving...";
+          status.textContent = "";
+
+          var nextTitle = String(titleInput.value || "").trim();
+          var nextDate = String(dateInput.value || "").trim();
+          var nextUrl = String(urlInput.value || "").trim();
+
+          if (pdfFileInput.files && pdfFileInput.files[0]) {
+            status.className = "small text-muted";
+            status.textContent = "Uploading PDF...";
+            var pdfFd = new FormData();
+            pdfFd.append("upload", pdfFileInput.files[0]);
+            var pdfRes = await fetch("/api/upload/content-pdf", {
+              method: "POST",
+              body: pdfFd,
+            });
+            var pdfData = await pdfRes.json();
+            if (!pdfData.url) {
+              throw new Error(
+                (pdfData.error && pdfData.error.message) || "PDF upload failed"
+              );
+            }
+            nextUrl = pdfData.url;
+          }
+
+          if (!nextUrl || !nextUrl.toLowerCase().endsWith(".pdf")) {
+            throw new Error("Valid PDF URL is required");
+          }
+
+          var nextHtml = updateCardListItemInHtml(getHtml(), idx, {
+            title: nextTitle,
+            date: nextDate,
+            url: nextUrl,
+          });
+
+          setHtml(nextHtml);
+          urlInput.value = nextUrl;
+          pdfFileInput.value = "";
+          itemFileNameDisplay.textContent = "No file chosen";
+          status.className = "small text-success";
+          status.textContent = "Saved";
+          setTimeout(recheck, 120);
+        } catch (err) {
+          status.className = "small text-danger";
+          status.textContent = String(err.message || err);
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = "Save";
+        }
+      });
+
+      deleteBtn.type = "button";
+      deleteBtn.addEventListener("click", function () {
+        setHtml(deleteCardListItemInHtml(getHtml(), idx));
+        setTimeout(recheck, 120);
+      });
+
+      actions.appendChild(saveBtn);
+      actions.appendChild(deleteBtn);
+      actions.appendChild(status);
+
+      editor.appendChild(tagRow);
+      editor.appendChild(rowA);
+      editor.appendChild(rowB);
+      editor.appendChild(actions);
+
+      itemRow.appendChild(indexSpan);
+      itemRow.appendChild(editor);
+      existingList.appendChild(itemRow);
+    });
+
+    section.appendChild(existingList);
+
+    var addWrap = document.createElement("div");
+    addWrap.className = "border-top pt-3";
+
+    var addTitle = document.createElement("div");
+    addTitle.className = "small fw-semibold mb-2";
+    addTitle.textContent = "Add PDF item";
+    addWrap.appendChild(addTitle);
+
+    var addTagRow = document.createElement("div");
+    addTagRow.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+    var newTagInput = document.createElement("input");
+    newTagInput.type = "text";
+    newTagInput.className = "form-control form-control-sm";
+    newTagInput.placeholder = "Tag (N/A for Charter)";
+    newTagInput.value = "";
+    newTagInput.style.maxWidth = "200px";
+    newTagInput.disabled = true;
+
+    addTagRow.appendChild(newTagInput);
+
+    var addRowA = document.createElement("div");
+    addRowA.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+    var newTitleInput = document.createElement("input");
+    newTitleInput.type = "text";
+    newTitleInput.className = "form-control form-control-sm";
+    newTitleInput.placeholder = "Title";
+    newTitleInput.style.flex = "1";
+    newTitleInput.style.minWidth = "220px";
+
+    var newDateInput = document.createElement("input");
+    newDateInput.type = "text";
+    newDateInput.className = "form-control form-control-sm";
+    newDateInput.placeholder = "Date";
+    newDateInput.style.maxWidth = "140px";
+
+    addRowA.appendChild(newTitleInput);
+    addRowA.appendChild(newDateInput);
+
+    var addRowB = document.createElement("div");
+    addRowB.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+    var newUrlInput = document.createElement("input");
+    newUrlInput.type = "text";
+    newUrlInput.className = "form-control form-control-sm";
+    newUrlInput.placeholder = "PDF URL";
+    newUrlInput.style.flex = "1";
+    newUrlInput.style.minWidth = "280px";
+
+    var newPdfFileInput = document.createElement("input");
+    newPdfFileInput.type = "file";
+    newPdfFileInput.accept = ".pdf,application/pdf";
+    newPdfFileInput.style.display = "none";
+
+    var chooseFileBtn = document.createElement("button");
+    chooseFileBtn.type = "button";
+    chooseFileBtn.className = "btn btn-sm btn-outline-secondary";
+    chooseFileBtn.textContent = "Choose File";
+    chooseFileBtn.style.flexShrink = "0";
+
+    var fileNameDisplay = document.createElement("div");
+    fileNameDisplay.className = "small text-muted";
+    fileNameDisplay.style.minWidth = "100px";
+    fileNameDisplay.style.flexShrink = "0";
+    fileNameDisplay.textContent = "No file chosen";
+
+    chooseFileBtn.addEventListener("click", function () {
+      newPdfFileInput.click();
+    });
+
+    newPdfFileInput.addEventListener("change", function () {
+      if (
+        newPdfFileInput.files &&
+        newPdfFileInput.files[0] &&
+        newPdfFileInput.files[0].name
+      ) {
+        var fileName = String(newPdfFileInput.files[0].name || "").trim();
+        fileNameDisplay.textContent = fileName;
+      } else {
+        fileNameDisplay.textContent = "No file chosen";
+      }
+    });
+
+    addRowB.appendChild(newUrlInput);
+    addRowB.appendChild(chooseFileBtn);
+    addRowB.appendChild(fileNameDisplay);
+
+    var addActions = document.createElement("div");
+    addActions.className = "d-flex align-items-center gap-1 flex-wrap";
+
+    var addBtn = document.createElement("button");
+    addBtn.className = "btn btn-sm btn-success";
+    addBtn.textContent = "Add PDF";
+
+    var addStatus = document.createElement("div");
+    addStatus.className = "small text-muted";
+
+    addBtn.addEventListener("click", async function () {
+      try {
+        addBtn.disabled = true;
+        addBtn.textContent = "Adding...";
+        addStatus.textContent = "";
+
+        var nextTitle = String(newTitleInput.value || "").trim();
+        var nextDate = String(newDateInput.value || "").trim();
+        var nextUrl = String(newUrlInput.value || "").trim();
+
+        if (newPdfFileInput.files && newPdfFileInput.files[0]) {
+          addStatus.textContent = "Uploading PDF...";
+          var pdfFd = new FormData();
+          pdfFd.append("upload", newPdfFileInput.files[0]);
+          var pdfRes = await fetch("/api/upload/content-pdf", {
+            method: "POST",
+            body: pdfFd,
+          });
+          var pdfData = await pdfRes.json();
+          if (!pdfData.url) {
+            throw new Error(
+              (pdfData.error && pdfData.error.message) || "PDF upload failed"
+            );
+          }
+          nextUrl = pdfData.url;
+        }
+
+        if (!nextUrl || !nextUrl.toLowerCase().endsWith(".pdf")) {
+          throw new Error("Valid PDF URL or PDF upload is required");
+        }
+
+        var nextHtml = appendCardListItemToHtml(getHtml(), {
+          title: nextTitle,
+          date: nextDate,
+          url: nextUrl,
+        });
+
+        setHtml(nextHtml);
+
+        newTitleInput.value = "";
+        newDateInput.value = "";
+        newUrlInput.value = "";
+        newPdfFileInput.value = "";
+        fileNameDisplay.textContent = "No file chosen";
+
+        addStatus.className = "small text-success";
+        addStatus.textContent = "Added";
+        setTimeout(recheck, 120);
+      } catch (err) {
+        addStatus.className = "small text-danger";
+        addStatus.textContent = String(err.message || err);
+      } finally {
+        addBtn.disabled = false;
+        addBtn.textContent = "Add PDF";
+      }
+    });
+
+    addActions.appendChild(addBtn);
+    addActions.appendChild(addStatus);
+
+    addWrap.appendChild(addTagRow);
+    addWrap.appendChild(addRowA);
+    addWrap.appendChild(addRowB);
+    addWrap.appendChild(addActions);
+
+    section.appendChild(addWrap);
+    panel.appendChild(section);
+    container.appendChild(panel);
+  }
+
+  function renderDisclosureListEditor(
+    container,
+    items,
+    getHtml,
+    setHtml,
+    recheck
+  ) {
+    var panel = document.createElement("div");
+    panel.className = "border rounded p-3 bg-white mb-2";
+
+    var heading = document.createElement("div");
+    heading.className = "fw-semibold mb-1";
+    heading.textContent = "Disclosure PDFs";
+
+    var subHeading = document.createElement("div");
+    subHeading.className = "small text-muted mb-3";
+    subHeading.textContent =
+      "Manage disclosure announcements/reports/notices and keep API data synchronized.";
+
+    panel.appendChild(heading);
+    panel.appendChild(subHeading);
+
+    var section = document.createElement("div");
+    section.className = "border rounded p-3 mb-3 bg-light";
+
+    var title = document.createElement("div");
+    title.className = "d-flex align-items-center justify-content-between mb-2";
+    title.innerHTML =
+      '<span class="fw-semibold">Existing PDFs</span>' +
+      '<span class="badge bg-secondary">' +
+      items.length +
+      " PDF</span>";
+    section.appendChild(title);
+
+    var existingList = document.createElement("div");
+    existingList.className = "d-flex flex-column gap-2 mb-3";
+
+    if (!items.length) {
+      var emptyState = document.createElement("div");
+      emptyState.className = "small text-muted";
+      emptyState.textContent = "No disclosure items yet.";
+      existingList.appendChild(emptyState);
+    }
+
+    items.forEach(function (item, idx) {
+      var itemRow = document.createElement("div");
+      itemRow.className =
+        "d-flex align-items-start gap-2 p-2 border rounded bg-white flex-wrap";
+
+      var indexSpan = document.createElement("div");
+      indexSpan.className = "small fw-semibold text-muted";
+      indexSpan.style.minWidth = "20px";
+      indexSpan.textContent = "#" + (idx + 1);
+
+      var editor = document.createElement("div");
+      editor.className = "d-flex flex-column gap-2";
+      editor.style.flex = "1";
+      editor.style.minWidth = "320px";
+
+      var rowA = document.createElement("div");
+      rowA.className = "d-flex align-items-center gap-2 flex-wrap";
+
+      var itemTagSelect = document.createElement("select");
+      itemTagSelect.className = "form-select form-select-sm";
+      itemTagSelect.style.maxWidth = "220px";
+
+      var itemTagInput = document.createElement("input");
+      itemTagInput.type = "text";
+      itemTagInput.className = "form-control form-control-sm";
+      itemTagInput.placeholder = "Choose or create new tagName";
+      itemTagInput.value = item.tagName || item.type || "";
+      itemTagInput.style.maxWidth = "260px";
+
+      fillIrTagSelect(itemTagSelect, item.tagName || item.type);
+      itemTagSelect.addEventListener("change", function () {
+        if (itemTagSelect.value) {
+          itemTagInput.value = itemTagSelect.value;
+        }
+      });
+
+      var dateInput = document.createElement("input");
+      dateInput.type = "text";
+      dateInput.className = "form-control form-control-sm";
+      dateInput.placeholder = "Date";
+      dateInput.value = item.date || "";
+      dateInput.style.maxWidth = "160px";
+
+      rowA.appendChild(itemTagSelect);
+      rowA.appendChild(itemTagInput);
+      rowA.appendChild(dateInput);
+
+      var rowB = document.createElement("div");
+      rowB.className = "d-flex align-items-center gap-2 flex-wrap";
+
+      var titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.className = "form-control form-control-sm";
+      titleInput.placeholder = "Title";
+      titleInput.value = item.title || "";
+      titleInput.style.flex = "1";
+      titleInput.style.minWidth = "280px";
+
+      rowB.appendChild(titleInput);
+
+      var rowC = document.createElement("div");
+      rowC.className = "d-flex align-items-center gap-2 flex-wrap";
+
+      var urlInput = document.createElement("input");
+      urlInput.type = "text";
+      urlInput.className = "form-control form-control-sm";
+      urlInput.placeholder = "PDF URL";
+      urlInput.value = item.url || "";
+      urlInput.style.flex = "1";
+      urlInput.style.minWidth = "280px";
+
+      var pdfFileInput = document.createElement("input");
+      pdfFileInput.type = "file";
+      pdfFileInput.accept = ".pdf,application/pdf";
+      pdfFileInput.style.display = "none";
+
+      var chooseFileBtn = document.createElement("button");
+      chooseFileBtn.type = "button";
+      chooseFileBtn.className = "btn btn-sm btn-outline-secondary";
+      chooseFileBtn.textContent = "Choose File";
+      chooseFileBtn.style.flexShrink = "0";
+
+      var fileNameDisplay = document.createElement("div");
+      fileNameDisplay.className = "small text-muted";
+      fileNameDisplay.style.minWidth = "100px";
+      fileNameDisplay.style.flexShrink = "0";
+      fileNameDisplay.textContent = "No file chosen";
+
+      chooseFileBtn.addEventListener("click", function () {
+        pdfFileInput.click();
+      });
+      pdfFileInput.addEventListener("change", function () {
+        if (
+          pdfFileInput.files &&
+          pdfFileInput.files[0] &&
+          pdfFileInput.files[0].name
+        ) {
+          fileNameDisplay.textContent = String(
+            pdfFileInput.files[0].name || ""
+          ).trim();
+        } else {
+          fileNameDisplay.textContent = "No file chosen";
+        }
+      });
+
+      rowC.appendChild(urlInput);
+      rowC.appendChild(chooseFileBtn);
+      rowC.appendChild(fileNameDisplay);
+
+      var actions = document.createElement("div");
+      actions.className = "d-flex align-items-center gap-1 flex-wrap";
+
+      var saveBtn = document.createElement("button");
+      saveBtn.type = "button";
+      saveBtn.className = "btn btn-sm btn-outline-primary";
+      saveBtn.textContent = "Save";
+
+      var deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "btn btn-sm btn-outline-danger";
+      deleteBtn.textContent = "Delete";
+
+      var status = document.createElement("div");
+      status.className = "small text-muted";
+
+      saveBtn.addEventListener("click", async function () {
+        try {
+          saveBtn.disabled = true;
+          saveBtn.textContent = "Saving...";
+          status.textContent = "";
+
+          var nextTitle = String(titleInput.value || "").trim();
+          var nextDate =
+            String(dateInput.value || "").trim() || getTodayDisplayDate();
+          var nextTagName = getIrSelectedTagName(
+            itemTagSelect,
+            itemTagInput,
+            item.tagName || item.type
+          );
+          var nextUrl = String(urlInput.value || "").trim();
+
+          if (!nextTagName) throw new Error("tagName is required");
+          nextTagName = await ensureIrTagExists(nextTagName);
+          var nextType = toDisclosureTypeValue(nextTagName);
+          var nextYear = getYearFromDateValue(nextDate);
+
+          if (pdfFileInput.files && pdfFileInput.files[0]) {
+            status.className = "small text-muted";
+            status.textContent = "Uploading PDF...";
+            var pdfFd = new FormData();
+            pdfFd.append("upload", pdfFileInput.files[0]);
+            var pdfRes = await fetch("/api/upload/content-pdf", {
+              method: "POST",
+              body: pdfFd,
+            });
+            var pdfData = await pdfRes.json();
+            if (!pdfData.url) {
+              throw new Error(
+                (pdfData.error && pdfData.error.message) || "PDF upload failed"
+              );
+            }
+            nextUrl = pdfData.url;
+          }
+
+          if (!nextTitle) throw new Error("Title is required");
+          if (!nextUrl || !isPdfHrefValue(nextUrl)) {
+            throw new Error("Valid PDF URL is required");
+          }
+
+          var nextHtml = updateDisclosureListItemInHtml(getHtml(), idx, {
+            tagName: nextTagName,
+            type: nextType,
+            year: nextYear,
+            date: nextDate,
+            title: nextTitle,
+            url: nextUrl,
+            style: item.style,
+            linkClass: item.linkClass,
+          });
+
+          setHtml(nextHtml);
+          urlInput.value = nextUrl;
+          pdfFileInput.value = "";
+          fileNameDisplay.textContent = "No file chosen";
+          status.className = "small text-success";
+          status.textContent = "Saved";
+          setTimeout(recheck, 120);
+        } catch (err) {
+          status.className = "small text-danger";
+          status.textContent = String(err.message || err);
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = "Save";
+        }
+      });
+
+      deleteBtn.addEventListener("click", function () {
+        setHtml(deleteDisclosureListItemInHtml(getHtml(), idx));
+        setTimeout(recheck, 120);
+      });
+
+      actions.appendChild(saveBtn);
+      actions.appendChild(deleteBtn);
+      actions.appendChild(status);
+
+      editor.appendChild(rowA);
+      editor.appendChild(rowB);
+      editor.appendChild(rowC);
+      editor.appendChild(actions);
+
+      itemRow.appendChild(indexSpan);
+      itemRow.appendChild(editor);
+      existingList.appendChild(itemRow);
+    });
+
+    section.appendChild(existingList);
+
+    var addWrap = document.createElement("div");
+    addWrap.className = "border-top pt-3";
+
+    var addTitle = document.createElement("div");
+    addTitle.className = "small fw-semibold mb-2";
+    addTitle.textContent = "Add PDF item";
+    addWrap.appendChild(addTitle);
+
+    var addRowA = document.createElement("div");
+    addRowA.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+    var newTagSelect = document.createElement("select");
+    newTagSelect.className = "form-select form-select-sm";
+    newTagSelect.style.maxWidth = "220px";
+
+    var newTagInput = document.createElement("input");
+    newTagInput.type = "text";
+    newTagInput.className = "form-control form-control-sm";
+    newTagInput.placeholder = "Choose or create new tagName";
+    newTagInput.style.maxWidth = "260px";
+
+    fillIrTagSelect(newTagSelect, "");
+    newTagSelect.addEventListener("change", function () {
+      if (newTagSelect.value) {
+        newTagInput.value = newTagSelect.value;
+      }
+    });
+
+    var newDateInput = document.createElement("input");
+    newDateInput.type = "text";
+    newDateInput.className = "form-control form-control-sm";
+    newDateInput.placeholder = "Date";
+    newDateInput.style.maxWidth = "160px";
+
+    addRowA.appendChild(newTagSelect);
+    addRowA.appendChild(newTagInput);
+    addRowA.appendChild(newDateInput);
+
+    var addRowB = document.createElement("div");
+    addRowB.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+    var newTitleInput = document.createElement("input");
+    newTitleInput.type = "text";
+    newTitleInput.className = "form-control form-control-sm";
+    newTitleInput.placeholder = "Title";
+    newTitleInput.style.flex = "1";
+    newTitleInput.style.minWidth = "280px";
+    addRowB.appendChild(newTitleInput);
+
+    var addRowC = document.createElement("div");
+    addRowC.className = "d-flex align-items-center gap-2 flex-wrap mb-2";
+
+    var newUrlInput = document.createElement("input");
+    newUrlInput.type = "text";
+    newUrlInput.className = "form-control form-control-sm";
+    newUrlInput.placeholder = "PDF URL";
+    newUrlInput.style.flex = "1";
+    newUrlInput.style.minWidth = "280px";
+
+    var newPdfFileInput = document.createElement("input");
+    newPdfFileInput.type = "file";
+    newPdfFileInput.accept = ".pdf,application/pdf";
+    newPdfFileInput.style.display = "none";
+
+    var chooseFileBtn = document.createElement("button");
+    chooseFileBtn.type = "button";
+    chooseFileBtn.className = "btn btn-sm btn-outline-secondary";
+    chooseFileBtn.textContent = "Choose File";
+    chooseFileBtn.style.flexShrink = "0";
+
+    var fileNameDisplay = document.createElement("div");
+    fileNameDisplay.className = "small text-muted";
+    fileNameDisplay.style.minWidth = "100px";
+    fileNameDisplay.style.flexShrink = "0";
+    fileNameDisplay.textContent = "No file chosen";
+
+    chooseFileBtn.addEventListener("click", function () {
+      newPdfFileInput.click();
+    });
+    newPdfFileInput.addEventListener("change", function () {
+      if (
+        newPdfFileInput.files &&
+        newPdfFileInput.files[0] &&
+        newPdfFileInput.files[0].name
+      ) {
+        fileNameDisplay.textContent = String(
+          newPdfFileInput.files[0].name || ""
+        ).trim();
+      } else {
+        fileNameDisplay.textContent = "No file chosen";
+      }
+    });
+
+    addRowC.appendChild(newUrlInput);
+    addRowC.appendChild(chooseFileBtn);
+    addRowC.appendChild(fileNameDisplay);
+
+    var addActions = document.createElement("div");
+    addActions.className = "d-flex align-items-center gap-1 flex-wrap";
+
+    var addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "btn btn-sm btn-success";
+    addBtn.textContent = "Add PDF";
+
+    var addStatus = document.createElement("div");
+    addStatus.className = "small text-muted";
+
+    addBtn.addEventListener("click", async function () {
+      try {
+        addBtn.disabled = true;
+        addBtn.textContent = "Adding...";
+        addStatus.textContent = "";
+
+        var nextDate =
+          String(newDateInput.value || "").trim() || getTodayDisplayDate();
+        var nextTagName = getIrSelectedTagName(newTagSelect, newTagInput, "");
+        var nextTitle = String(newTitleInput.value || "").trim();
+        var nextUrl = String(newUrlInput.value || "").trim();
+
+        if (!nextTagName) throw new Error("tagName is required");
+        nextTagName = await ensureIrTagExists(nextTagName);
+        var nextType = toDisclosureTypeValue(nextTagName);
+        var nextYear = getYearFromDateValue(nextDate);
+
+        if (newPdfFileInput.files && newPdfFileInput.files[0]) {
+          addStatus.textContent = "Uploading PDF...";
+          var pdfFd = new FormData();
+          pdfFd.append("upload", newPdfFileInput.files[0]);
+          var pdfRes = await fetch("/api/upload/content-pdf", {
+            method: "POST",
+            body: pdfFd,
+          });
+          var pdfData = await pdfRes.json();
+          if (!pdfData.url) {
+            throw new Error(
+              (pdfData.error && pdfData.error.message) || "PDF upload failed"
+            );
+          }
+          nextUrl = pdfData.url;
+        }
+
+        if (!nextTitle) throw new Error("Title is required");
+        if (!nextUrl || !isPdfHrefValue(nextUrl)) {
+          throw new Error("Valid PDF URL or PDF upload is required");
+        }
+
+        var nextHtml = appendDisclosureListItemToHtml(getHtml(), {
+          tagName: nextTagName,
+          type: nextType,
+          year: nextYear,
+          date: nextDate,
+          title: nextTitle,
+          url: nextUrl,
+        });
+
+        setHtml(nextHtml);
+        newTagInput.value = "";
+        newDateInput.value = "";
+        newTitleInput.value = "";
+        newUrlInput.value = "";
+        newPdfFileInput.value = "";
+        fileNameDisplay.textContent = "No file chosen";
+
+        addStatus.className = "small text-success";
+        addStatus.textContent = "Added";
+        setTimeout(recheck, 120);
+      } catch (err) {
+        addStatus.className = "small text-danger";
+        addStatus.textContent = String(err.message || err);
+      } finally {
+        addBtn.disabled = false;
+        addBtn.textContent = "Add PDF";
+      }
+    });
+
+    addActions.appendChild(addBtn);
+    addActions.appendChild(addStatus);
+
+    addWrap.appendChild(addRowA);
+    addWrap.appendChild(addRowB);
+    addWrap.appendChild(addRowC);
+    addWrap.appendChild(addActions);
+
+    section.appendChild(addWrap);
+    panel.appendChild(section);
+    container.appendChild(panel);
+  }
   // ─────────────────────────────────────────────────────────────────────────────
 
   function extractUnresolvedServerImgs(html) {
@@ -828,11 +2874,36 @@
     var pdfGroupForHtml = !forceShowPanel
       ? detectPdfArticleGroup(getHtml())
       : null;
+    var irReportTabsForHtml = !forceShowPanel
+      ? extractIrReportTabItems(getHtml())
+      : [];
     var pdfGroupItemsForHtml =
       !forceShowPanel && pdfGroupForHtml
         ? extractPdfArticleItems(getHtml())
         : [];
     var hiddenAssetSources = {};
+    irReportTabsForHtml.forEach(function (tab) {
+      (tab.items || []).forEach(function (item) {
+        var imageSrc = String((item && item.img) || "").trim();
+        var pdfSrc = String((item && item.url) || "").trim();
+        if (imageSrc) hiddenAssetSources[imageSrc] = true;
+        if (pdfSrc) hiddenAssetSources[pdfSrc] = true;
+      });
+    });
+    var cardListItemsForHtml = !forceShowPanel
+      ? extractCardListItems(getHtml())
+      : [];
+    cardListItemsForHtml.forEach(function (item) {
+      var pdfSrc = String((item && item.url) || "").trim();
+      if (pdfSrc) hiddenAssetSources[pdfSrc] = true;
+    });
+    var disclosureItemsForHtml = !forceShowPanel
+      ? extractDisclosureListItems(getHtml())
+      : [];
+    disclosureItemsForHtml.forEach(function (item) {
+      var pdfSrc = String((item && item.url) || "").trim();
+      if (pdfSrc) hiddenAssetSources[pdfSrc] = true;
+    });
     pdfGroupItemsForHtml.forEach(function (item) {
       var imageSrc = String((item && item.imageUrl) || "").trim();
       var pdfSrc = String((item && item.pdfUrl) || "").trim();
@@ -867,8 +2938,41 @@
     container.appendChild(header);
 
     if (!forceShowPanel) {
+      var irReportTabs = detectIrReportTabs(getHtml());
+      if (irReportTabs) {
+        renderIrReportTabsEditor(
+          container,
+          irReportTabsForHtml,
+          getHtml,
+          setHtml,
+          recheck
+        );
+      }
+
+      var cardListGroup = detectCardListGroup(getHtml());
+      var disclosureListGroup = detectDisclosureListGroup(getHtml());
+      if (disclosureListGroup && !irReportTabs) {
+        renderDisclosureListEditor(
+          container,
+          disclosureItemsForHtml,
+          getHtml,
+          setHtml,
+          recheck
+        );
+      }
+      if (cardListGroup && !irReportTabs && !disclosureListGroup) {
+        var cardListItems = extractCardListItems(getHtml());
+        renderCardListEditor(
+          container,
+          cardListItems,
+          getHtml,
+          setHtml,
+          recheck
+        );
+      }
+
       var pdfGroup = pdfGroupForHtml;
-      if (pdfGroup) {
+      if (pdfGroup && !irReportTabs && !cardListGroup && !disclosureListGroup) {
         var existingPdfItems = pdfGroupItemsForHtml;
 
         var pdfBuilder = document.createElement("div");

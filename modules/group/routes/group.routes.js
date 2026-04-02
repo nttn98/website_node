@@ -236,6 +236,8 @@ router.get("/menu/:menuId", controller.showGroupByMenu);
  *                   properties:
  *                     videoShareList:
  *                       $ref: '#/components/schemas/VideoShareList'
+ *                     pdfList:
+ *                       $ref: '#/components/schemas/GroupPdfDataList'
  */
 router.get("/:id", controller.getById);
 

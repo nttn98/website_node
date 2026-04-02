@@ -5,20 +5,49 @@ const {
 } = require("../../../utils/pagination");
 
 exports.getAllTags = async (req, res) => {
-  const params = getPaginationParams(req, { defaultLimit: 50, maxLimit: 300 });
-  let tags = await tagService.getAllTags();
-  const searchTerm = (req.query.search || "").trim().toLowerCase();
+  try {
+    const params = getPaginationParams(req, { defaultLimit: 50, maxLimit: 300 });
+    let tags = await tagService.getAllTags({
+      targetType: req.query.targetType,
+      specificId: req.query.specificId,
+    });
+    const searchTerm = (req.query.search || "").trim().toLowerCase();
 
-  if (searchTerm) {
-    tags = tags.filter(
-      (tag) =>
-        (tag.name || "").toLowerCase().includes(searchTerm) ||
-        (tag.slug || "").toLowerCase().includes(searchTerm)
-    );
+    if (searchTerm) {
+      tags = tags.filter(
+        (tag) =>
+          (tag.name || "").toLowerCase().includes(searchTerm) ||
+          (tag.slug || "").toLowerCase().includes(searchTerm) ||
+          (tag.targetType || "").toLowerCase().includes(searchTerm) ||
+          (tag.specificName || "").toLowerCase().includes(searchTerm) ||
+          String(tag.specificId || "")
+            .toLowerCase()
+            .includes(searchTerm) ||
+          (Array.isArray(tag.specificTargets) ? tag.specificTargets : []).some(
+            (target) =>
+              String(target?.specificName || "")
+                .toLowerCase()
+                .includes(searchTerm) ||
+              String(target?.specificId || "")
+                .toLowerCase()
+                .includes(searchTerm) ||
+              String(target?.targetType || "")
+                .toLowerCase()
+                .includes(searchTerm)
+          )
+      );
+    }
+
+    const paged = paginateArray(tags, params);
+    res.json({ success: true, data: paged.items, pagination: paged.pagination });
+  } catch (err) {
+    const status =
+      err.message === "Target type is invalid" ||
+      err.message === "Specific target is invalid"
+        ? 400
+        : 500;
+    res.status(status).json({ success: false, message: err.message });
   }
-
-  const paged = paginateArray(tags, params);
-  res.json({ success: true, data: paged.items, pagination: paged.pagination });
 };
 
 exports.getTagById = async (req, res) => {
@@ -36,7 +65,10 @@ exports.createTag = async (req, res) => {
     res.status(201).json({ success: true, data: tag });
   } catch (err) {
     const status =
-      err.message === "Name is required" || err.message === "Tag already exists"
+      err.message === "Name is required" ||
+      err.message === "Tag already exists" ||
+      err.message === "Target type is invalid" ||
+      err.message === "Specific target is invalid"
         ? 400
         : 500;
     res.status(status).json({ success: false, message: err.message });
@@ -53,7 +85,10 @@ exports.updateTag = async (req, res) => {
     res.json({ success: true, data: tag });
   } catch (err) {
     const status =
-      err.message === "Name is required" || err.message === "Tag already exists"
+      err.message === "Name is required" ||
+      err.message === "Tag already exists" ||
+      err.message === "Target type is invalid" ||
+      err.message === "Specific target is invalid"
         ? 400
         : 500;
     res.status(status).json({ success: false, message: err.message });

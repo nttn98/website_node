@@ -224,7 +224,7 @@
     .catch((err) => console.error("Failed to load parent categories:", err));
 
   // Load tags from database and render dropdown options
-  fetch("/api/tags?limit=300")
+  fetch("/api/tags?limit=300&targetType=menu")
     .then((res) => res.json())
     .then((resp) => {
       const tagSelect = document.getElementById("tagIdSelect");

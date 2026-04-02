@@ -9,6 +9,7 @@ const {
   getPaginationParams,
   paginateArray,
 } = require("../../../utils/pagination");
+const { withDerivedGroupData } = require("../../../utils/group-content-data");
 
 function extractHost(value) {
   const input = String(value || "").trim();
@@ -121,13 +122,7 @@ function validateVideoShareList(list) {
 }
 
 function withVideoShareList(group) {
-  if (!group || typeof group !== "object") return group;
-  return {
-    ...group,
-    videoShareList: Array.isArray(group.videoShareList)
-      ? group.videoShareList
-      : [],
-  };
+  return withDerivedGroupData(group);
 }
 
 exports.toggleStatus = async (req, res) => {

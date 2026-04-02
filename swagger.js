@@ -27,6 +27,21 @@ const options = {
             $ref: "#/components/schemas/VideoShareItem",
           },
         },
+        GroupPdfDataItem: {
+          type: "object",
+          properties: {
+            tagName: { type: "string" },
+            img: { type: "string" },
+            url: { type: "string" },
+            date: { type: "string" },
+          },
+        },
+        GroupPdfDataList: {
+          type: "array",
+          items: {
+            $ref: "#/components/schemas/GroupPdfDataItem",
+          },
+        },
       },
     },
     tags: [

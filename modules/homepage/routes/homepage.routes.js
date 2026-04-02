@@ -39,6 +39,8 @@ const homepageController = require("../controllers/homepage.controllers");
  *                       properties:
  *                         videoShareList:
  *                           $ref: '#/components/schemas/VideoShareList'
+ *                         pdfList:
+ *                           $ref: '#/components/schemas/GroupPdfDataList'
  *                 pagination:
  *                   type: object
  *       500:
@@ -135,6 +137,8 @@ router.get("/bottom-menus", homepageController.getBottomMenus);
  *                   properties:
  *                     videoShareList:
  *                       $ref: '#/components/schemas/VideoShareList'
+ *                     pdfList:
+ *                       $ref: '#/components/schemas/GroupPdfDataList'
  *       500:
  *         description: Server error
  */

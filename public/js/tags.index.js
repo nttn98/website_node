@@ -5,6 +5,8 @@
   let currentPage = 1;
   let currentLimit = 5;
   let totalPages = 1;
+  let menuTargets = [];
+  let groupTargets = [];
 
   function toSlug(value) {
     return String(value || "")
@@ -59,14 +61,249 @@
     paginationDiv.innerHTML = paginationHtml;
   }
 
+  function normalizeTitle(value, fallback) {
+    return String(value || fallback || "").trim();
+  }
+
+  function summarizeSpecificValues(values) {
+    const normalizedValues = Array.isArray(values) ? values : [];
+    if (!normalizedValues.length) {
+      return {
+        text: "all menus",
+        title: "all menus",
+      };
+    }
+
+    const labels = normalizedValues.map((value) => {
+      const { targetType, specificId } = parseSpecificValue(value);
+      if (!specificId) {
+        return targetType === "group" ? "all groups" : "all menus";
+      }
+
+      const source = targetType === "group" ? groupTargets : menuTargets;
+      const matched = source.find((item) => String(item.id) === String(specificId));
+      const name = matched?.name || specificId;
+      return `${targetType === "group" ? "group" : "menu"} | ${name}`;
+    });
+
+    if (labels.length === 1) {
+      return {
+        text: labels[0],
+        title: labels[0],
+      };
+    }
+
+    const summary = {
+      menu: 0,
+      group: 0,
+      allMenus: false,
+      allGroups: false,
+    };
+
+    normalizedValues.forEach((value) => {
+      const { targetType, specificId } = parseSpecificValue(value);
+      if (targetType === "group") {
+        if (!specificId) summary.allGroups = true;
+        else summary.group += 1;
+        return;
+      }
+
+      if (!specificId) summary.allMenus = true;
+      else summary.menu += 1;
+    });
+
+    const parts = [];
+    if (summary.allMenus) parts.push("all menus");
+    else if (summary.menu) parts.push(`${summary.menu} menu${summary.menu > 1 ? "s" : ""}`);
+
+    if (summary.allGroups) parts.push("all groups");
+    else if (summary.group) parts.push(`${summary.group} group${summary.group > 1 ? "s" : ""}`);
+
+    return {
+      text: parts.join(", ") || `${labels.length} targets`,
+      title: labels.join("\n"),
+    };
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function composeSpecificValue(targetType, specificId) {
+    const normalizedType = targetType === "group" ? "group" : "menu";
+    return `${normalizedType}:${String(specificId || "")}`;
+  }
+
+  function parseSpecificValue(value) {
+    const [rawType, ...rest] = String(value || "menu:").split(":");
+    const targetType = rawType === "group" ? "group" : "menu";
+    const specificId = rest.join(":").trim();
+    return {
+      targetType,
+      specificId,
+    };
+  }
+
+  function getSelectedSpecificValues(tr) {
+    const select = tr?.querySelector('select[name="specificTargets"]');
+    if (!select) return ["menu:"];
+
+    const values = Array.from(select.selectedOptions || [])
+      .map((option) => option.value)
+      .filter(Boolean);
+
+    return values.length ? values : ["menu:"];
+  }
+
+  function getSpecificOptionsMarkup(selectedValues) {
+    const selectedSet = new Set(
+      (Array.isArray(selectedValues) ? selectedValues : [selectedValues || "menu:"])
+        .map((value) => String(value || "menu:"))
+    );
+    let html = "";
+
+    const globalOptions = [
+      { value: "menu:", label: "all menus" },
+      { value: "group:", label: "all groups" },
+    ];
+
+    globalOptions.forEach((option) => {
+      html += `<option value="${option.value}" ${
+        selectedSet.has(option.value) ? "selected" : ""
+      }>${escapeHtml(option.label)}</option>`;
+    });
+
+    if (menuTargets.length) {
+      html += '<optgroup label="menus">';
+      menuTargets.forEach((item) => {
+        const value = composeSpecificValue("menu", item.id);
+        html += `<option value="${value}" ${
+          selectedSet.has(value) ? "selected" : ""
+        }>menu | ${escapeHtml(item.name || item.id)}</option>`;
+      });
+      html += "</optgroup>";
+    }
+
+    if (groupTargets.length) {
+      html += '<optgroup label="groups">';
+      groupTargets.forEach((item) => {
+        const value = composeSpecificValue("group", item.id);
+        html += `<option value="${value}" ${
+          selectedSet.has(value) ? "selected" : ""
+        }>group | ${escapeHtml(item.name || item.id)}</option>`;
+      });
+      html += "</optgroup>";
+    }
+
+    return html;
+  }
+
+  async function loadSpecificTargets() {
+    const [menuResp, groupResp] = await Promise.all([
+      fetch("/api/menus?limit=300"),
+      fetch("/groups?limit=300"),
+    ]);
+
+    const [menuData, groupData] = await Promise.all([
+      menuResp.json(),
+      groupResp.json(),
+    ]);
+
+    const menuList = Array.isArray(menuData?.data)
+      ? menuData.data
+      : Array.isArray(menuData)
+      ? menuData
+      : [];
+
+    const groupList = Array.isArray(groupData?.groups)
+      ? groupData.groups
+      : Array.isArray(groupData?.data)
+      ? groupData.data
+      : Array.isArray(groupData)
+      ? groupData
+      : [];
+
+    menuTargets = menuList.map((menu) => ({
+      id: menu?._id || "",
+      name: normalizeTitle(menu?.title?.en || menu?.title, menu?._id),
+    }));
+
+    groupTargets = groupList.map((group) => ({
+      id: group?._id || "",
+      name: normalizeTitle(group?.title?.en || group?.title, group?._id),
+    }));
+  }
+
   window.tagGoToPage = function (page) {
     currentPage = page;
     fetchItems();
   };
 
+  function initSpecificSelectSearch() {
+    if (typeof window.jQuery === "undefined") return;
+    if (typeof window.jQuery.fn.select2 !== "function") return;
+
+    function updateSpecificSummary($select) {
+      const values = $select.val() || [];
+      const summary = summarizeSpecificValues(values);
+      const $container = $select.next(".select2-container");
+      const $selection = $container.find(".select2-selection--multiple");
+      let $summary = $selection.find(".tag-select-summary");
+
+      if (!$summary.length) {
+        $summary = window.jQuery('<span class="tag-select-summary"></span>');
+        $selection.append($summary);
+      }
+
+      $summary.text(summary.text);
+      $summary.attr("title", summary.title);
+    }
+
+    window.jQuery(container)
+      .find('select[name="specificTargets"]')
+      .each(function () {
+        const $select = window.jQuery(this);
+        if ($select.hasClass("select2-hidden-accessible")) {
+          $select.select2("destroy");
+        }
+
+        $select.select2({
+          width: "100%",
+          dropdownAutoWidth: true,
+          placeholder: "Search specific...",
+          closeOnSelect: false,
+          minimumResultsForSearch: 0,
+        });
+
+        updateSpecificSummary($select);
+        $select.off("select2:open.searchFocus");
+        $select.on("select2:open.searchFocus", function () {
+          setTimeout(() => {
+            const searchInput = document.querySelector(
+              ".select2-container--open .select2-search__field"
+            );
+            if (searchInput) {
+              searchInput.focus();
+              searchInput.select();
+            }
+          }, 0);
+        });
+
+        $select.off("change.selectSummary select2:close.selectSummary");
+        $select.on("change.selectSummary select2:close.selectSummary", function () {
+          updateSpecificSummary($select);
+        });
+      });
+  }
+
   function render(items) {
     let html =
-      '<table class="table-clean"><thead><tr><th>Name</th><th>Slug</th><th class="text-center">Status</th><th class="text-end">Actions</th></tr></thead><tbody id="tag-list-body">';
+      '<table class="table-clean"><thead><tr><th>Name</th><th>Slug</th><th>Specific</th><th class="text-center">Status</th><th class="text-end">Actions</th></tr></thead><tbody id="tag-list-body">';
 
     html += `
       <tr class="new-item-row" data-id="new" style="display:none;">
@@ -75,6 +312,11 @@
         </td>
         <td>
           <input type="text" name="slug" class="inline-input small" placeholder="auto-from-name" value="" readonly />
+        </td>
+        <td>
+          <select name="specificTargets" class="tag-specific-select" multiple>
+            ${getSpecificOptionsMarkup(["menu:"])}
+          </select>
         </td>
         <td class="text-center">
           <span class="badge-minimal badge-active">SHOW</span>
@@ -94,6 +336,13 @@
 
     if (items && items.length) {
       items.forEach((it) => {
+        const selectedSpecificValues = Array.isArray(it.specificTargets) &&
+          it.specificTargets.length
+          ? it.specificTargets.map((target) =>
+              composeSpecificValue(target.targetType || "menu", target.specificId || "")
+            )
+          : [composeSpecificValue(it.targetType || "menu", it.specificId || "")];
+
         html += `
           <tr data-id="${it._id}">
             <td>
@@ -105,6 +354,11 @@
               <input type="text" name="slug" class="inline-input small" value="${
                 it.slug || ""
               }" readonly />
+            </td>
+            <td>
+              <select name="specificTargets" class="tag-specific-select" multiple>
+                ${getSpecificOptionsMarkup(selectedSpecificValues)}
+              </select>
             </td>
             <td class="text-center">
               <span class="badge-minimal ${
@@ -132,7 +386,7 @@
     } else {
       html += `
         <tr>
-          <td colspan="4" class="text-center p-5 text-muted">
+          <td colspan="5" class="text-center p-5 text-muted">
             No tags found. Click "ADD TAG" to create your first one.
           </td>
         </tr>
@@ -141,6 +395,7 @@
 
     html += "</tbody></table>";
     container.innerHTML = html;
+    initSpecificSelectSearch();
     renderPagination();
   }
 
@@ -248,6 +503,7 @@
       btn.disabled = true;
 
       const name = tr.querySelector('input[name="name"]')?.value.trim() || "";
+      const specificTargets = getSelectedSpecificValues(tr);
       const isStatus =
         tr.querySelector('input[name="isStatus"]')?.value === "true";
 
@@ -261,7 +517,7 @@
         const r = await fetch("/api/tags", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
+          body: JSON.stringify({ name, specificTargets }),
         });
         const d = await r.json();
 
@@ -282,6 +538,13 @@
         tr.querySelectorAll('input[type="text"]').forEach((inp) => {
           inp.value = "";
         });
+        const specificTargetsSelect = tr.querySelector(
+          'select[name="specificTargets"]'
+        );
+        if (specificTargetsSelect) {
+          specificTargetsSelect.innerHTML = getSpecificOptionsMarkup(["menu:"]);
+          initSpecificSelectSearch();
+        }
         const statusInput = tr.querySelector('input[name="isStatus"]');
         const badge = tr.querySelector(".badge-minimal");
         if (statusInput) statusInput.value = "true";
@@ -304,6 +567,13 @@
       tr.querySelectorAll('input[type="text"]').forEach((inp) => {
         inp.value = "";
       });
+      const specificTargetsSelect = tr.querySelector(
+        'select[name="specificTargets"]'
+      );
+      if (specificTargetsSelect) {
+        specificTargetsSelect.innerHTML = getSpecificOptionsMarkup(["menu:"]);
+        initSpecificSelectSearch();
+      }
       const statusInput = tr.querySelector('input[name="isStatus"]');
       const badge = tr.querySelector(".badge-minimal");
       if (statusInput) statusInput.value = "true";
@@ -320,6 +590,7 @@
     const tr = saveBtn.closest("tr");
     const id = tr.dataset.id;
     const name = tr.querySelector('input[name="name"]')?.value.trim() || "";
+    const specificTargets = getSelectedSpecificValues(tr);
     if (!name) {
       showToast("Name is required", true);
       return;
@@ -330,7 +601,7 @@
       const r = await fetch(`/api/tags/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, specificTargets }),
       });
       const d = await r.json();
       if (d.success) {
@@ -382,6 +653,14 @@
       currentPage = 1;
       fetchItems();
     });
+
+  try {
+    await loadSpecificTargets();
+  } catch (err) {
+    menuTargets = [];
+    groupTargets = [];
+    showToast("Cannot load menu/group targets", true);
+  }
 
   await fetchItems();
 })();

@@ -10,3 +10,196 @@ input[name="slug"][readonly] {
   color: #8a8a8a;
   cursor: not-allowed;
 }
+
+.table-clean thead th:nth-child(2),
+.table-clean tbody td:nth-child(2) {
+  width: 170px;
+}
+
+.table-clean thead th:nth-child(3),
+.table-clean tbody td:nth-child(3) {
+  min-width: 260px;
+}
+
+.tag-specific-select {
+  width: 100%;
+  max-width: 360px;
+  padding: 8px 10px;
+  border: 1px solid #dde2ea;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ui-navy);
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.tag-specific-select:focus {
+  border-color: var(--ui-navy);
+  box-shadow: 0 0 0 2px rgba(15, 36, 68, 0.08);
+}
+
+.tag-specific-select option,
+.tag-specific-select optgroup {
+  font-size: 0.85rem;
+}
+
+.table-clean .select2-container {
+  width: 100% !important;
+  max-width: 360px;
+}
+
+.table-clean .select2-container .select2-selection--single {
+  height: 38px;
+  border: 1px solid #dde2ea;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.table-clean .select2-container .select2-selection__rendered {
+  color: var(--ui-navy);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 36px;
+}
+
+.table-clean .select2-container .select2-selection__arrow {
+  height: 36px;
+}
+
+.table-clean .select2-container .select2-selection--multiple {
+  min-height: 40px;
+  border: 1px solid #dde2ea;
+  border-radius: 8px;
+  padding: 3px 10px;
+  position: relative;
+  background: #fff;
+}
+
+.table-clean .select2-container--default .select2-selection--multiple .select2-selection__choice {
+  display: none;
+}
+
+.table-clean .select2-container--default .select2-search--inline .select2-search__field {
+  margin-top: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ui-navy);
+  height: 32px;
+}
+
+.table-clean
+  .select2-container--default:not(.select2-container--open)
+  .select2-selection--multiple {
+  padding-right: 28px;
+}
+
+.table-clean
+  .select2-container--default:not(.select2-container--open)
+  .select2-selection--multiple
+  .select2-search--inline {
+  display: none;
+}
+
+.tag-select-summary {
+  display: none;
+}
+
+.table-clean
+  .select2-container--default:not(.select2-container--open)
+  .select2-selection--multiple
+  .tag-select-summary {
+  display: block;
+  max-width: calc(100% - 6px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ui-navy);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 34px;
+  padding-right: 18px;
+}
+
+.table-clean
+  .select2-container--default.select2-container--open
+  .select2-selection--multiple
+  .tag-select-summary {
+  display: none;
+}
+
+.table-clean
+  .select2-container--default.select2-container--open
+  .select2-selection--multiple {
+  border-color: var(--ui-navy);
+  box-shadow: 0 0 0 2px rgba(15, 36, 68, 0.08);
+}
+
+.table-clean
+  .select2-container--default.select2-container--open
+  .select2-selection--multiple
+  .select2-search--inline {
+  display: inline-block;
+  width: 100%;
+}
+
+.table-clean
+  .select2-container--default.select2-container--open
+  .select2-selection--multiple
+  .select2-search__field {
+  width: 100% !important;
+}
+
+.select2-dropdown {
+  border: 1px solid #dde2ea;
+  border-radius: 12px;
+  box-shadow: 0 18px 44px rgba(15, 36, 68, 0.12);
+  overflow: hidden;
+}
+
+.select2-results__option {
+  font-size: 0.85rem;
+  padding: 10px 12px;
+  position: relative;
+}
+
+.select2-container--default .select2-results__option--group {
+  color: #667085;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  padding-top: 12px;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background: rgba(15, 36, 68, 0.08);
+  color: var(--ui-navy);
+}
+
+.select2-container--default .select2-results__option[aria-selected="true"] {
+  background: rgba(15, 36, 68, 0.12);
+  color: var(--ui-navy);
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--ui-navy);
+}
+
+.select2-container--default .select2-results__option[aria-selected="true"]::after {
+  content: "check";
+  font-family: "bootstrap-icons";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  color: var(--ui-navy);
+}
+
+@media (max-width: 768px) {
+  .table-clean thead th:nth-child(3),
+  .table-clean tbody td:nth-child(3) {
+    min-width: 220px;
+  }
+}

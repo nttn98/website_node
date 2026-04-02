@@ -369,7 +369,7 @@
 
   parentSelect.addEventListener('change', syncTypeWithParent);
 
-  fetch('/api/tags?limit=300')
+  fetch('/api/tags?limit=300&targetType=menu')
     .then((res) => res.json())
     .then((resp) => {
       const tagSelect = document.getElementById('tagIdSelect');
